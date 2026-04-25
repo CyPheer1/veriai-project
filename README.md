@@ -347,3 +347,271 @@ Spring Boot :
 | Infrastructure | Docker Compose |
 | Auth | JWT (jjwt 0.12.6) |
 | API Docs | Swagger (springdoc-openapi) |
+
+
+
+---
+
+**Detection Layers:**
+| Layer | Method | Weight |
+|-------|--------|--------|
+| Layer 1 | RoBERTa fine-tuned classifier | 60% |
+| Layer 2 | Stylistic features (LogReg) | 20% |
+| Layer 3 | GPT-2 perplexity + entropy | 20% |
+
+
+---
+
+## Prerequisites
+
+Before you start, make sure you have **all of these installed**:
+
+| Tool | Version | Download |
+|------|---------|----------|
+| **Git** | Any | https://git-scm.com |
+| **Docker Desktop** | Latest | https://www.docker.com/products/docker-desktop |
+| **Docker Compose** | Included with Docker Desktop | — |
+
+> ✅ That's it! Docker will handle Python, Java, Node.js, Redis, and PostgreSQL automatically.
+
+**Check if Docker is running:**
+```bash
+docker --version
+docker compose version
+```
+
+---
+
+## Quick Start (Recommended)
+
+> ⏱️ First launch takes **5–10 minutes** (downloading AI models ~3GB). Be patient!
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/CyPheer1/veriai-project.git
+
+# 2. Go into the project folder
+cd veriai-project
+
+# 3. Copy the environment file
+cp .env.example .env
+
+# 4. Launch everything with Docker
+docker compose up --build
+```
+
+**Wait until you see these messages in the logs:**
+```
+✅ "Models loaded at FastAPI startup"
+✅ "Worker process initialized with loaded models"
+✅ "Started Application in X seconds"
+```
+
+Then open your browser: **http://localhost:3000** 🎉
+
+---
+
+## Step-by-Step Setup
+
+### Step 1 — Clone the project
+
+```bash
+git clone https://github.com/CyPheer1/veriai-project.git
+cd veriai-project
+```
+
+### Step 2 — Set up the environment file
+
+```bash
+# On Linux / macOS
+cp .env.example .env
+
+# On Windows (CMD)
+copy .env.example .env
+
+# On Windows (PowerShell)
+Copy-Item .env.example .env
+```
+
+> ⚠️ The `.env` file contains secrets. **Never commit it to GitHub.**
+
+### Step 3 — Build and start all services
+
+```bash
+docker compose up --build
+```
+
+This command will:
+- Build the Java Spring Boot backend
+- Build the Python FastAPI AI service
+- Build the React frontend
+- Start PostgreSQL, Redis, Prometheus, Grafana
+- Download AI models from HuggingFace (first time only)
+
+### Step 4 — Wait for startup
+
+Watch the logs for these confirmation messages:
+
+```
+ai-service      | Models loaded at FastAPI startup
+detection-worker| Worker process initialized with loaded models
+backend-java    | Started BackendJavaApplication in X.XXX seconds
+frontend        | Local: http://localhost:3000/
+```
+
+### Step 5 — Open the app
+
+Go to: **http://localhost:3000**
+
+---
+
+## Access the App
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| 🌐 **Frontend** | http://localhost:3000 | Main web app |
+| 🔧 **Backend API** | http://localhost:8080 | REST API |
+| 📚 **Swagger Docs** | http://localhost:8080/swagger-ui.html | API documentation |
+| 📊 **Grafana** | http://localhost:3001 | Monitoring dashboard |
+| 🔍 **Prometheus** | http://localhost:9090 | Metrics |
+
+---
+
+## Useful Commands
+
+### Start the project
+```bash
+docker compose up --build
+```
+
+### Start in background (detached mode)
+```bash
+docker compose up --build -d
+```
+
+### View logs
+```bash
+# All services
+docker compose logs -f
+
+# Specific service
+docker compose logs -f ai-service
+docker compose logs -f backend-java
+docker compose logs -f frontend
+```
+
+### Stop the project
+```bash
+# Stop but keep data
+docker compose down
+
+# Stop and delete all data (fresh start)
+docker compose down -v
+```
+
+### Scale AI workers for more performance
+```bash
+docker compose up --scale detection-worker=3
+```
+
+### Rebuild a specific service
+```bash
+docker compose up --build ai-service
+```
+
+---
+
+## Test the API (Optional)
+
+```bash
+# 1. Register an account
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@test.com","password":"Test1234!","plan":"FREE"}'
+
+# 2. Login and get JWT token
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@test.com","password":"Test1234!"}'
+
+# 3. Submit text for analysis (replace YOUR_TOKEN)
+curl -X POST http://localhost:8080/api/v1/submissions/text \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"text":"The quick brown fox jumps over the lazy dog..."}'
+
+# 4. Get result (replace SUBMISSION_ID and YOUR_TOKEN)
+curl http://localhost:8080/api/v1/submissions/SUBMISSION_ID \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Frontend | React + Vite + TailwindCSS |
+| Backend | Spring Boot 3.4 + Java 21 |
+| AI Service | FastAPI + Python 3.11 + Celery |
+| ML Models | HuggingFace Transformers + PyTorch + scikit-learn |
+| Database | PostgreSQL 16 |
+| Cache/Queue | Redis 7 |
+| Monitoring | Prometheus + Grafana |
+| Infrastructure | Docker Compose |
+
+---
+
+## Troubleshooting
+
+### ❌ `docker: command not found`
+→ Install Docker Desktop from https://www.docker.com/products/docker-desktop and make sure it's running.
+
+### ❌ Port already in use (e.g., port 3000 or 8080)
+→ Stop any other apps using those ports, or change the ports in `docker-compose.yml`.
+
+### ❌ AI models not loading / timeout
+→ First launch downloads ~3GB of AI models. Wait longer or check your internet connection.
+```bash
+docker compose logs -f ai-service
+```
+
+### ❌ `no space left on device`
+→ Free up disk space. Docker images + AI models need ~5GB.
+```bash
+docker system prune  # Clean unused Docker data
+```
+
+### ❌ Database connection error on first start
+→ PostgreSQL may still be initializing. Wait 30 seconds and retry, or restart:
+```bash
+docker compose restart backend-java
+```
+
+### 🔄 Fresh Reset (if something is broken)
+```bash
+docker compose down -v    # Remove all containers + data
+docker compose up --build # Rebuild from scratch
+```
+
+---
+
+## Project Structure
+
+```
+veriai-project/
+├── frontend/          # React app (port 3000)
+├── backend-java/      # Spring Boot API (port 8080)
+├── SERVICE IA/        # FastAPI + Celery AI workers (port 8000)
+├── infra/             # PostgreSQL schema, Prometheus, Grafana config
+├── docker-compose.yml # Orchestrates all 9 services
+├── .env.example       # Environment template (copy to .env)
+└── README.md          # This file
+```
+---
+
+<div align="center">
+
+**Built with ❤️ — VeriAI Team**
+
+</div>
