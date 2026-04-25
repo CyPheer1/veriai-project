@@ -1,0 +1,265 @@
+services:
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: >-
+      sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3000"
+    environment:
+      NODE_ENV: development
+      VITE_API_BASE_URL: http://localhost:${BACKEND_PORT}
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "${FRONTEND_PORT}:3000"
+    depends_on:
+      - backend-java
+    networks:
+      - veriai-internal
+    restart: unless-stopped
+
+  backend-java:
+    image: maven:3.9.9-eclipse-temurin-21
+    working_dir: /app
+    command: >-
+      sh -c "./mvnw spring-boot:run"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_DDL_AUTO}
+      SPRING_JPA_SHOW_SQL: ${SPRING_JPA_SHOW_SQL}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: ${SPRING_ACTUATOR_EXPOSURE}
+      MANAGEMENT_METRICS_TAGS_APPLICATION: veriai-backend
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_SECONDS: ${JWT_EXPIRATION_SECONDS}
+      APP_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN}
+      FREE_PLAN_DAILY_LIMIT: ${FREE_PLAN_DAILY_LIMIT}
+      AI_SERVICE_BASE_URL: ${AI_SERVICE_BASE_URL}
+      AI_SERVICE_ENQUEUE_PATH: ${AI_SERVICE_ENQUEUE_PATH}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+    volumes:
+      - ./backend-java:/app
+      - maven_cache:/root/.m2
+    ports:
+      - "${BACKEND_PORT}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+    networks:
+      - veriai-internal
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ./SERVICE IA
+      dockerfile: Dockerfile
+    image: veriai-ai-service:latest
+    working_dir: /app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      APP_ENV: ${APP_ENV}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+      REDIS_URL: ${REDIS_URL}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      HUGGINGFACE_MODEL_NAME: ${HUGGINGFACE_MODEL_NAME}
+      GPT2_MODEL_NAME: ${GPT2_MODEL_NAME}
+      HF_HOME: ${HF_HOME}
+      LOAD_MODELS_ON_STARTUP: ${LOAD_MODELS_ON_STARTUP}
+      CHUNK_MIN_WORDS: ${CHUNK_MIN_WORDS}
+      CHUNK_MAX_WORDS: ${CHUNK_MAX_WORDS}
+      CHUNK_MIN_PROCESS_WORDS: ${CHUNK_MIN_PROCESS_WORDS}
+      RELIABILITY_MIN_WORDS: ${RELIABILITY_MIN_WORDS}
+      FULL_MODE_LAYER1_WEIGHT: ${FULL_MODE_LAYER1_WEIGHT}
+      FULL_MODE_LAYER2_WEIGHT: ${FULL_MODE_LAYER2_WEIGHT}
+      FULL_MODE_LAYER3_WEIGHT: ${FULL_MODE_LAYER3_WEIGHT}
+      AI_LABEL_THRESHOLD: ${AI_LABEL_THRESHOLD}
+      DEFAULT_CONFIDENCE: ${DEFAULT_CONFIDENCE}
+      CELERY_TASK_MAX_RETRIES: ${CELERY_TASK_MAX_RETRIES}
+      CELERY_RETRY_BACKOFF_BASE: ${CELERY_RETRY_BACKOFF_BASE}
+      CELERY_WATCHDOG_SCHEDULE_SECONDS: ${CELERY_WATCHDOG_SCHEDULE_SECONDS}
+      CELERY_WATCHDOG_STUCK_MINUTES: ${CELERY_WATCHDOG_STUCK_MINUTES}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - huggingface_model_cache:${HF_HOME}
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - veriai-internal
+    restart: unless-stopped
+
+  detection-worker:
+    image: veriai-ai-service:latest
+    working_dir: /app
+    command: celery -A celery_app.celery_app:celery_app worker --loglevel=INFO
+    environment:
+      APP_ENV: ${APP_ENV}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+      REDIS_URL: ${REDIS_URL}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      HUGGINGFACE_MODEL_NAME: ${HUGGINGFACE_MODEL_NAME}
+      GPT2_MODEL_NAME: ${GPT2_MODEL_NAME}
+      HF_HOME: ${HF_HOME}
+      LOAD_MODELS_ON_STARTUP: ${LOAD_MODELS_ON_STARTUP}
+      CHUNK_MIN_WORDS: ${CHUNK_MIN_WORDS}
+      CHUNK_MAX_WORDS: ${CHUNK_MAX_WORDS}
+      CHUNK_MIN_PROCESS_WORDS: ${CHUNK_MIN_PROCESS_WORDS}
+      RELIABILITY_MIN_WORDS: ${RELIABILITY_MIN_WORDS}
+      FULL_MODE_LAYER1_WEIGHT: ${FULL_MODE_LAYER1_WEIGHT}
+      FULL_MODE_LAYER2_WEIGHT: ${FULL_MODE_LAYER2_WEIGHT}
+      FULL_MODE_LAYER3_WEIGHT: ${FULL_MODE_LAYER3_WEIGHT}
+      AI_LABEL_THRESHOLD: ${AI_LABEL_THRESHOLD}
+      DEFAULT_CONFIDENCE: ${DEFAULT_CONFIDENCE}
+      CELERY_TASK_MAX_RETRIES: ${CELERY_TASK_MAX_RETRIES}
+      CELERY_RETRY_BACKOFF_BASE: ${CELERY_RETRY_BACKOFF_BASE}
+      CELERY_WATCHDOG_SCHEDULE_SECONDS: ${CELERY_WATCHDOG_SCHEDULE_SECONDS}
+      CELERY_WATCHDOG_STUCK_MINUTES: ${CELERY_WATCHDOG_STUCK_MINUTES}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - huggingface_model_cache:${HF_HOME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+    networks:
+      - veriai-internal
+    restart: unless-stopped
+
+  detection-beat:
+    image: veriai-ai-service:latest
+    working_dir: /app
+    command: celery -A celery_app.celery_app:celery_app beat --loglevel=INFO
+    environment:
+      APP_ENV: ${APP_ENV}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+      REDIS_URL: ${REDIS_URL}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      HUGGINGFACE_MODEL_NAME: ${HUGGINGFACE_MODEL_NAME}
+      GPT2_MODEL_NAME: ${GPT2_MODEL_NAME}
+      HF_HOME: ${HF_HOME}
+      LOAD_MODELS_ON_STARTUP: ${LOAD_MODELS_ON_STARTUP}
+      CHUNK_MIN_WORDS: ${CHUNK_MIN_WORDS}
+      CHUNK_MAX_WORDS: ${CHUNK_MAX_WORDS}
+      CHUNK_MIN_PROCESS_WORDS: ${CHUNK_MIN_PROCESS_WORDS}
+      RELIABILITY_MIN_WORDS: ${RELIABILITY_MIN_WORDS}
+      FULL_MODE_LAYER1_WEIGHT: ${FULL_MODE_LAYER1_WEIGHT}
+      FULL_MODE_LAYER2_WEIGHT: ${FULL_MODE_LAYER2_WEIGHT}
+      FULL_MODE_LAYER3_WEIGHT: ${FULL_MODE_LAYER3_WEIGHT}
+      AI_LABEL_THRESHOLD: ${AI_LABEL_THRESHOLD}
+      DEFAULT_CONFIDENCE: ${DEFAULT_CONFIDENCE}
+      CELERY_TASK_MAX_RETRIES: ${CELERY_TASK_MAX_RETRIES}
+      CELERY_RETRY_BACKOFF_BASE: ${CELERY_RETRY_BACKOFF_BASE}
+      CELERY_WATCHDOG_SCHEDULE_SECONDS: ${CELERY_WATCHDOG_SCHEDULE_SECONDS}
+      CELERY_WATCHDOG_STUCK_MINUTES: ${CELERY_WATCHDOG_STUCK_MINUTES}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - huggingface_model_cache:${HF_HOME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      detection-worker:
+        condition: service_started
+    networks:
+      - veriai-internal
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - veriai-internal
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - veriai-internal
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.4.2
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    expose:
+      - "9090"
+    depends_on:
+      - backend-java
+      - ai-service
+    networks:
+      - veriai-internal
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:12.0.0
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - veriai-internal
+    restart: unless-stopped
+
+volumes:
+  frontend_node_modules:
+  maven_cache:
+  postgres_data:
+  redis_data:
+  huggingface_model_cache:
+  grafana_data:
+
+networks:
+  veriai-internal:
+    driver: bridge

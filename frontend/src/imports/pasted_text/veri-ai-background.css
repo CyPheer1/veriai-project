@@ -1,0 +1,103 @@
+Design a full-page animated background for a premium AI Content Detection platform called "VeriAI". This background sits behind ALL content on the page (behind glassmorphism cards, behind the navbar, behind everything). It must feel alive, intelligent, and deeply connected to the AI/neural-network domain.
+
+The background must convey: "An AI brain is working behind the scenes, analyzing and processing text in real-time."
+
+═══════════════════════════════════════════
+DARK MODE BACKGROUND (PRIMARY — Design this first)
+═══════════════════════════════════════════
+
+Build the background with 4 LAYERS stacked on top of each other:
+
+【LAYER 1 — Deep Void Base】
+- Solid color: a rich near-black with a cold blue undertone
+- Color: #06070D (NOT pure black — it must feel like deep space, not emptiness)
+- Apply a very subtle radial gradient from center: #06070D center → #030408 edges
+- This creates depth, like looking into an infinite abyss of intelligence
+
+【LAYER 2 — Neural Network Node Graph (THE KEY ELEMENT)】
+- This is the signature element that makes the background scream "AI Platform"
+- Draw 50-80 small dots (nodes) scattered across the entire viewport
+- Each node: 2-3px diameter, color rgba(99, 102, 241, 0.15) — very subtle indigo
+- Connect nearby nodes with thin lines (0.5-0.8px) when they are within 150-180px of each other
+- Line color: rgba(99, 102, 241, 0.06) — extremely subtle, like ghost connections
+- THE ANIMATION: All nodes drift slowly and continuously in random organic directions (speed: 0.2-0.4px per frame). When nodes come close, new connections form. When they drift apart, connections dissolve. This creates a living, breathing neural network
+- Some nodes (10-15 of them) should be slightly brighter "pulse nodes": rgba(139, 92, 246, 0.25) — they glow gently with a slow pulse animation (2-3 second cycle)
+- The overall effect looks like watching an AI's neural pathways firing and forming connections in real-time
+- This layer must be VERY SUBTLE — it's atmospheric, not distracting. The user should notice it subconsciously, not stare at it
+
+【LAYER 3 — Ambient Fluid Gradient Orbs】
+- 3 large, very soft, blurred color orbs that drift extremely slowly across the canvas
+- ORB 1 (top-center area): Electric Indigo, rgba(79, 70, 229, 0.08), size ~60vw × 50vh, blur: 150px, drifts slowly right-to-left over 20 seconds then reverses
+- ORB 2 (bottom-right area): Deep Sapphire Blue, rgba(30, 58, 138, 0.06), size ~50vw × 45vh, blur: 180px, drifts in a slow circular orbit over 25 seconds
+- ORB 3 (top-left area): Soft Violet, rgba(124, 58, 237, 0.05), size ~40vw × 35vh, blur: 140px, slow diagonal drift over 18 seconds
+- These orbs give the background a "living nebula" quality — you can barely see them but they create shifting color temperatures across the page
+- Together with the neural nodes on top, it looks like neural networks are floating inside a cosmic AI consciousness
+
+【LAYER 4 — Micro-Texture Overlay (top layer)】
+- A very faint dot-grid pattern covering the entire viewport
+- Dots: 1px circles, spaced 30-32px apart, color rgba(255, 255, 255, 0.03)
+- This gives the background a subtle "digital matrix" / "scanning grid" texture
+- It prevents the background from feeling too smooth/empty and adds that extra layer of tech sophistication
+- Think of it as the "scanning grid" that VeriAI uses to analyze content
+
+【BONUS — Scan Line Effect (optional but stunning)】
+- A single very faint horizontal light line that slowly sweeps from top to bottom of the page
+- Takes about 8-10 seconds to traverse the full height, then repeats
+- Color: a horizontal gradient line, 1px tall, rgba(79, 70, 229, 0.04) that expands to rgba(79, 70, 229, 0.08) at center then back to 0.04
+- This creates the feeling that the AI is continuously "scanning" the page
+- Extremely subtle — almost invisible, just enough to add that alive feeling
+
+═══════════════════════════════════════════
+LIGHT MODE BACKGROUND
+═══════════════════════════════════════════
+
+Same 4-layer architecture but with inverted, light-mode-appropriate colors:
+
+【LAYER 1 — Crystal Base】
+- Color: #F7F8FC — NOT pure white, slightly cool-tinted
+- Subtle radial gradient from center: #FAFBFF → #F0F1F8 at edges
+
+【LAYER 2 — Neural Network (same behavior, different colors)】
+- Node dots: rgba(79, 70, 229, 0.10) — soft indigo dots
+- Connection lines: rgba(79, 70, 229, 0.04) — barely visible
+- Pulse nodes: rgba(79, 70, 229, 0.18)
+- Same slow drifting animation as dark mode
+
+【LAYER 3 — Ambient Light Orbs】
+- ORB 1: Soft Lavender, rgba(224, 231, 255, 0.50), blur: 200px
+- ORB 2: Pale Sky Blue, rgba(219, 234, 254, 0.40), blur: 220px  
+- ORB 3: Blush Pink, rgba(252, 231, 243, 0.25), blur: 180px
+- Larger blur values, more visible than dark mode (because light mode needs more visual interest)
+
+【LAYER 4 — Dot Grid Overlay】
+- Dots: rgba(0, 0, 0, 0.025) — very faint dark dots on light background
+- Same 30-32px spacing
+
+═══════════════════════════════════════════
+IMPORTANT DESIGN RULES
+═══════════════════════════════════════════
+
+1. The neural node network is THE hero of this background — it directly communicates "AI platform" to anyone who sees it. But it must remain subtle and atmospheric — never competing with the UI content
+
+2. The background should feel like 3 things at once:
+   - A living AI neural network quietly processing
+   - A cosmic nebula of intelligence
+   - A precision scanning grid analyzing data
+
+3. ALL dashboard cards will sit ON TOP of this background using glassmorphism (backdrop-blur). So the background will be visible through semi-transparent cards — meaning it must look beautiful when partially obscured and blurred
+
+4. The total visual weight of the background should be about 15-20% — subtle enough that a CEO would approve it for an enterprise product, but visible enough that designers would say "wow, that background is incredible"
+
+5. No harsh neon glows, no gaming aesthetics, no cyberpunk. This is ENTERPRISE — think: Palantir, Vercel, Linear, Stripe. Sophisticated intelligence, not flashy effects.
+
+6. The motion must be SLOW. Everything moves like it's underwater or in zero gravity. Fast movement = cheap. Slow, deliberate movement = premium.
+
+═══════════════════════════════════════════
+DELIVERABLE
+═══════════════════════════════════════════
+
+Show me the full-page background in isolation (no UI cards on top) at 1440×900px:
+1. DARK MODE version — the primary design
+2. LIGHT MODE version — the secondary variant
+
+For each, clearly show all 4 layers and indicate which elements animate and how. The background should make someone stop and say "wait... is the background moving? That's beautiful."
