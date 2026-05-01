@@ -1,0 +1,24 @@
+project_id = "your-gcp-project-id"
+region = "europe-west3"
+
+service_name_prefix = "veriai"
+
+frontend_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai/frontend:latest"
+backend_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai/backend-java:latest"
+ai_service_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai/ai-service:latest"
+detection_worker_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai/detection-worker:latest"
+detection_beat_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai/detection-beat:latest"
+
+frontend_url = "https://your-frontend-url"
+
+database_url = "postgresql+psycopg2://user:password@your-neon-host:5432/veriai"
+spring_datasource_url = "jdbc:postgresql://your-neon-host:5432/veriai?sslmode=require"
+spring_datasource_username = "your-db-user"
+spring_datasource_password = "your-db-password"
+
+redis_tier = "BASIC"
+redis_memory_gb = 1
+
+internal_service_token = "change-me-internal-service-token"
+jwt_secret = "change-me-super-long-random-jwt-secret"
+grafana_admin_password = "change-me-grafana-password"
