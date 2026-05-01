@@ -281,6 +281,7 @@ terraform apply
 
 - Les images sont poussées dans Artifact Registry: `REGION-docker.pkg.dev/PROJECT_ID/veriai-images/...`
 - Le connecteur VPC utilise `PRIVATE_RANGES_ONLY` pour garder l'accès internet (téléchargement des modèles)
+- Si le backend répond `403` sur `OPTIONS` après ajout du domaine, mets `frontend_url` sur l'origine exacte du navigateur, par exemple `https://veri4i.tech`. En transition, tu peux utiliser `backend_cors_allowed_origins` avec plusieurs origines séparées par des virgules.
 - Pour un domaine personnalisé frontend, déploie le service frontend dans une région Cloud Run compatible, par exemple `europe-west1`, puis mappe le domaine sur ce service frontend.
 - Si la région frontend diffère, garde les images dans le dépôt Artifact Registry principal, par défaut `veriai-images`.
 - Les secrets ne sont pas commités (Terraform lit `terraform.tfvars`)

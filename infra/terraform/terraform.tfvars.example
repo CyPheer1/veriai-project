@@ -11,6 +11,7 @@ detection_worker_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai
 detection_beat_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai-images/detection-beat:latest"
 
 frontend_url = "https://your-frontend-url"
+backend_cors_allowed_origins = "https://your-frontend-url"
 
 database_url = "postgresql+psycopg2://user:password@your-neon-host:5432/veriai"
 spring_datasource_url = "jdbc:postgresql://your-neon-host:5432/veriai?sslmode=require"

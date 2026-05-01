@@ -19,6 +19,7 @@ Database is **not** created in GCP by default. Provide Neon/Supabase connection 
 You must provide both:
 - `database_url` (SQLAlchemy URL for Python)
 - `spring_datasource_url` + `spring_datasource_username/password` (JDBC for Spring)
+- `frontend_url` for backend CORS, or `backend_cors_allowed_origins` if you need multiple origins during a domain cutover
 
 ## Quick start
 
@@ -61,5 +62,6 @@ terraform apply
 - The AI service and workers are deployed in the same VPC connector so they can reach Redis.
 - Artifact Registry image paths must use `${service_name_prefix}-images` as the repo name, for example `europe-west3-docker.pkg.dev/<project-id>/veriai-images/frontend:latest`.
 - VPC connector egress is set to `PRIVATE_RANGES_ONLY` so Cloud Run can still reach the internet for model downloads.
+- If backend preflight requests return `403`, make sure `frontend_url` matches the real browser origin exactly, for example `https://veri4i.tech`. During migration you can set `backend_cors_allowed_origins = "https://veri4i.tech,https://<frontend-service>.run.app"`.
 - If you need a custom frontend domain, deploy the frontend service in a supported region such as `europe-west1` via `frontend_region`, then attach the domain to that frontend Cloud Run service.
 - If you want Cloud SQL later, swap `DATABASE_URL` to a Cloud SQL connector URL and add a private IP.

@@ -51,6 +51,12 @@ variable "frontend_url" {
   description = "Public frontend URL for CORS"
 }
 
+variable "backend_cors_allowed_origins" {
+  type        = string
+  description = "Optional comma-separated CORS allowlist for the backend. Defaults to frontend_url."
+  default     = ""
+}
+
 variable "database_url" {
   type        = string
   description = "Postgres connection string"

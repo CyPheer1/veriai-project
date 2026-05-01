@@ -124,9 +124,10 @@ resource "google_vpc_access_connector" "connector" {
 }
 
 locals {
-  frontend_region   = var.frontend_region != "" ? var.frontend_region : var.region
-  redis_url         = "redis://${google_redis_instance.redis.host}:6379/0"
-  redis_backend_url = "redis://${google_redis_instance.redis.host}:6379/1"
+  frontend_region      = var.frontend_region != "" ? var.frontend_region : var.region
+  cors_allowed_origins = trimspace(var.backend_cors_allowed_origins) != "" ? var.backend_cors_allowed_origins : var.frontend_url
+  redis_url            = "redis://${google_redis_instance.redis.host}:6379/0"
+  redis_backend_url    = "redis://${google_redis_instance.redis.host}:6379/1"
 }
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -200,7 +201,7 @@ resource "google_cloud_run_v2_service" "backend" {
       }
       env {
         name  = "APP_CORS_ALLOWED_ORIGINS"
-        value = var.frontend_url
+        value = local.cors_allowed_origins
       }
       env {
         name  = "FREE_PLAN_DAILY_LIMIT"
