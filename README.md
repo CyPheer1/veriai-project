@@ -227,6 +227,64 @@ docker compose up --build
 # et "Worker process initialized with loaded models"
 ```
 
+---
+
+## 10. Déploiement GCP (Cloud Run + Terraform)
+
+### Prérequis
+
+- Un projet GCP actif
+- `gcloud` et `terraform` installés
+- Une base PostgreSQL managée (Supabase/Neon)
+
+### Étapes rapides
+
+1) Configure les variables Terraform:
+
+```bash
+cp infra/terraform/terraform.tfvars.example infra/terraform/terraform.tfvars
+```
+
+2) Initialise et applique l'infra:
+
+```bash
+cd infra/terraform
+terraform init
+terraform apply
+```
+
+3) Build + push des images (première fois avec URL placeholder):
+
+```bash
+export PROJECT_ID=your-gcp-project-id
+export REGION=europe-west3
+export BACKEND_URL=https://placeholder.example
+./deploy.sh
+```
+
+4) Re-applique pour déployer Cloud Run:
+
+```bash
+terraform apply
+```
+
+5) Récupère l'URL backend et rebuild du frontend:
+
+```bash
+terraform output backend_url
+export BACKEND_URL=https://your-backend-url
+./deploy.sh
+terraform apply
+```
+
+### Notes importantes
+
+- Les images sont poussées dans Artifact Registry: `REGION-docker.pkg.dev/PROJECT_ID/veriai-images/...`
+- Le connecteur VPC utilise `PRIVATE_RANGES_ONLY` pour garder l'accès internet (téléchargement des modèles)
+- Pour un domaine personnalisé frontend, déploie le service frontend dans une région Cloud Run compatible, par exemple `europe-west1`, puis mappe le domaine sur ce service frontend.
+- Si la région frontend diffère, garde les images dans le dépôt Artifact Registry principal, par défaut `veriai-images`.
+- Les secrets ne sont pas commités (Terraform lit `terraform.tfvars`)
+
 ### Accès
 | Service | URL |
 |---|---|

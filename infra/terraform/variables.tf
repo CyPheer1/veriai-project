@@ -9,6 +9,12 @@ variable "region" {
   default     = "europe-west3"
 }
 
+variable "frontend_region" {
+  type        = string
+  description = "Optional separate GCP region for the frontend Cloud Run service"
+  default     = ""
+}
+
 variable "service_name_prefix" {
   type        = string
   description = "Prefix for service names"

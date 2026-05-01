@@ -1,13 +1,14 @@
 project_id = "your-gcp-project-id"
 region = "europe-west3"
+frontend_region = "europe-west1"
 
 service_name_prefix = "veriai"
 
-frontend_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai/frontend:latest"
-backend_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai/backend-java:latest"
-ai_service_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai/ai-service:latest"
-detection_worker_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai/detection-worker:latest"
-detection_beat_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai/detection-beat:latest"
+frontend_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai-images/frontend:latest"
+backend_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai-images/backend-java:latest"
+ai_service_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai-images/ai-service:latest"
+detection_worker_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai-images/detection-worker:latest"
+detection_beat_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai-images/detection-beat:latest"
 
 frontend_url = "https://your-frontend-url"
 

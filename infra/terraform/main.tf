@@ -35,7 +35,7 @@ resource "google_project_iam_member" "secret_access" {
 }
 
 resource "google_secret_manager_secret" "database_url" {
-  secret_id  = "${var.service_name_prefix}-database-url"
+  secret_id = "${var.service_name_prefix}-database-url"
   replication {
     auto {}
   }
@@ -47,7 +47,7 @@ resource "google_secret_manager_secret_version" "database_url" {
 }
 
 resource "google_secret_manager_secret" "spring_datasource_url" {
-  secret_id  = "${var.service_name_prefix}-spring-datasource-url"
+  secret_id = "${var.service_name_prefix}-spring-datasource-url"
   replication {
     auto {}
   }
@@ -59,7 +59,7 @@ resource "google_secret_manager_secret_version" "spring_datasource_url" {
 }
 
 resource "google_secret_manager_secret" "spring_datasource_username" {
-  secret_id  = "${var.service_name_prefix}-spring-datasource-username"
+  secret_id = "${var.service_name_prefix}-spring-datasource-username"
   replication {
     auto {}
   }
@@ -71,7 +71,7 @@ resource "google_secret_manager_secret_version" "spring_datasource_username" {
 }
 
 resource "google_secret_manager_secret" "spring_datasource_password" {
-  secret_id  = "${var.service_name_prefix}-spring-datasource-password"
+  secret_id = "${var.service_name_prefix}-spring-datasource-password"
   replication {
     auto {}
   }
@@ -83,7 +83,7 @@ resource "google_secret_manager_secret_version" "spring_datasource_password" {
 }
 
 resource "google_secret_manager_secret" "internal_service_token" {
-  secret_id  = "${var.service_name_prefix}-internal-token"
+  secret_id = "${var.service_name_prefix}-internal-token"
   replication {
     auto {}
   }
@@ -95,7 +95,7 @@ resource "google_secret_manager_secret_version" "internal_service_token" {
 }
 
 resource "google_secret_manager_secret" "jwt_secret" {
-  secret_id  = "${var.service_name_prefix}-jwt-secret"
+  secret_id = "${var.service_name_prefix}-jwt-secret"
   replication {
     auto {}
   }
@@ -107,12 +107,12 @@ resource "google_secret_manager_secret_version" "jwt_secret" {
 }
 
 resource "google_redis_instance" "redis" {
-  name           = "${var.service_name_prefix}-redis"
-  tier           = var.redis_tier
-  memory_size_gb = var.redis_memory_gb
-  region         = var.region
+  name               = "${var.service_name_prefix}-redis"
+  tier               = var.redis_tier
+  memory_size_gb     = var.redis_memory_gb
+  region             = var.region
   authorized_network = "projects/${var.project_id}/global/networks/default"
-  depends_on     = [google_project_service.services]
+  depends_on         = [google_project_service.services]
 }
 
 resource "google_vpc_access_connector" "connector" {
@@ -124,7 +124,8 @@ resource "google_vpc_access_connector" "connector" {
 }
 
 locals {
-  redis_url = "redis://${google_redis_instance.redis.host}:6379/0"
+  frontend_region   = var.frontend_region != "" ? var.frontend_region : var.region
+  redis_url         = "redis://${google_redis_instance.redis.host}:6379/0"
   redis_backend_url = "redis://${google_redis_instance.redis.host}:6379/1"
 }
 
@@ -376,7 +377,7 @@ resource "google_cloud_run_v2_service" "ai_service" {
     service_account = google_service_account.veriai.email
     vpc_access {
       connector = google_vpc_access_connector.connector.id
-      egress    = "ALL_TRAFFIC"
+      egress    = "PRIVATE_RANGES_ONLY"
     }
   }
 
@@ -400,7 +401,7 @@ resource "google_cloud_run_v2_service" "detection_worker" {
       "run.googleapis.com/cpu-throttling" = "false"
     }
     containers {
-      image = var.detection_worker_image
+      image   = var.detection_worker_image
       command = ["/app/scripts/run_celery_worker.sh"]
       ports {
         container_port = 8080
@@ -526,7 +527,7 @@ resource "google_cloud_run_v2_service" "detection_worker" {
     service_account = google_service_account.veriai.email
     vpc_access {
       connector = google_vpc_access_connector.connector.id
-      egress    = "ALL_TRAFFIC"
+      egress    = "PRIVATE_RANGES_ONLY"
     }
   }
 
@@ -550,7 +551,7 @@ resource "google_cloud_run_v2_service" "detection_beat" {
       "run.googleapis.com/cpu-throttling" = "false"
     }
     containers {
-      image = var.detection_beat_image
+      image   = var.detection_beat_image
       command = ["/app/scripts/run_celery_beat.sh"]
       ports {
         container_port = 8080
@@ -676,7 +677,7 @@ resource "google_cloud_run_v2_service" "detection_beat" {
     service_account = google_service_account.veriai.email
     vpc_access {
       connector = google_vpc_access_connector.connector.id
-      egress    = "ALL_TRAFFIC"
+      egress    = "PRIVATE_RANGES_ONLY"
     }
   }
 
@@ -689,7 +690,7 @@ resource "google_cloud_run_v2_service" "detection_beat" {
 
 resource "google_cloud_run_v2_service" "frontend" {
   name     = "${var.service_name_prefix}-frontend"
-  location = var.region
+  location = local.frontend_region
 
   template {
     annotations = {
