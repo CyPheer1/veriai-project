@@ -32,6 +32,8 @@ terraform init
 terraform apply
 ```
 
+If you already created the GCP resources manually or from another machine and the local Terraform state is missing, import the existing resources before applying. At minimum, import the Artifact Registry repo, service account, Secret Manager secrets, Redis instance, VPC connector, and Cloud Run services instead of trying to recreate them.
+
 3) Build + push images (see `infra/terraform/deploy.sh`). Use a placeholder URL for the first build.
 
 ```bash
@@ -56,6 +58,8 @@ export BACKEND_URL=https://your-backend-url
 terraform apply
 ```
 
+6) If the frontend still serves the placeholder backend URL, build and push a uniquely tagged frontend image and point `frontend_image` to that exact tag before the next `terraform apply`. Do not rely on reusing `frontend:latest` for this final cutover.
+
 ## Notes
 
 - Cloud Run uses 8Gi/2CPU for AI services by default.
@@ -64,4 +68,5 @@ terraform apply
 - VPC connector egress is set to `PRIVATE_RANGES_ONLY` so Cloud Run can still reach the internet for model downloads.
 - If backend preflight requests return `403`, make sure `frontend_url` matches the real browser origin exactly, for example `https://veri4i.tech`. During migration you can set `backend_cors_allowed_origins = "https://veri4i.tech,https://<frontend-service>.run.app"`.
 - If you need a custom frontend domain, deploy the frontend service in a supported region such as `europe-west1` via `frontend_region`, then attach the domain to that frontend Cloud Run service.
+- The public IAM binding for the frontend Cloud Run service must use `frontend_region`, not the main `region`, otherwise Terraform will target the wrong regional service during custom-domain deployments.
 - If you want Cloud SQL later, swap `DATABASE_URL` to a Cloud SQL connector URL and add a private IP.

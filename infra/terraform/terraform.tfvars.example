@@ -10,6 +10,10 @@ ai_service_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai-image
 detection_worker_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai-images/detection-worker:latest"
 detection_beat_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai-images/detection-beat:latest"
 
+# For the final frontend cutover after replacing the placeholder backend URL,
+# prefer a unique frontend tag such as:
+# frontend_image = "europe-west3-docker.pkg.dev/your-gcp-project-id/veriai-images/frontend:fix20260502-120000"
+
 frontend_url = "https://your-frontend-url"
 backend_cors_allowed_origins = "https://your-frontend-url"
 

@@ -277,12 +277,15 @@ export BACKEND_URL=https://your-backend-url
 terraform apply
 ```
 
+6) Si le frontend continue à appeler `placeholder.example`, rebuild l'image frontend avec un tag unique, mets ce tag exact dans `frontend_image`, puis relance `terraform apply`. Ne réutilise pas `frontend:latest` pour ce dernier cutover.
+
 ### Notes importantes
 
 - Les images sont poussées dans Artifact Registry: `REGION-docker.pkg.dev/PROJECT_ID/veriai-images/...`
 - Le connecteur VPC utilise `PRIVATE_RANGES_ONLY` pour garder l'accès internet (téléchargement des modèles)
 - Si le backend répond `403` sur `OPTIONS` après ajout du domaine, mets `frontend_url` sur l'origine exacte du navigateur, par exemple `https://veri4i.tech`. En transition, tu peux utiliser `backend_cors_allowed_origins` avec plusieurs origines séparées par des virgules.
 - Pour un domaine personnalisé frontend, déploie le service frontend dans une région Cloud Run compatible, par exemple `europe-west1`, puis mappe le domaine sur ce service frontend.
+- Si l'infra existe déjà dans GCP mais que la machine a perdu `terraform.tfstate`, il faut importer les ressources existantes dans Terraform avant de relancer `terraform apply`.
 - Si la région frontend diffère, garde les images dans le dépôt Artifact Registry principal, par défaut `veriai-images`.
 - Les secrets ne sont pas commités (Terraform lit `terraform.tfvars`)
 
