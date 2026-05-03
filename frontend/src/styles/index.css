@@ -1,3 +1,148 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+@layer components {
+  .veriai-academic-bg {
+    background:
+      radial-gradient(circle at 14% 0%, rgba(137, 161, 196, 0.18), transparent 32rem),
+      radial-gradient(circle at 88% 12%, rgba(208, 218, 231, 0.38), transparent 28rem),
+      linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
+  }
+
+  .veriai-paper-bg {
+    background:
+      linear-gradient(rgba(16, 24, 40, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(16, 24, 40, 0.018) 1px, transparent 1px),
+      #ffffff;
+    background-size: 32px 32px;
+  }
+
+  .veriai-card-surface {
+    border: 1px solid rgba(166, 181, 205, 0.7);
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow:
+      0 22px 70px rgba(45, 67, 98, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .veriai-ink-shadow {
+    box-shadow:
+      0 24px 70px rgba(23, 37, 61, 0.16),
+      0 2px 0 rgba(255, 255, 255, 0.55) inset;
+  }
+
+  .veriai-display-font {
+    font-family: 'Source Serif 4', Georgia, serif;
+  }
+
+  .veriai-document-font {
+    font-family: 'Source Serif 4', Georgia, serif;
+  }
+
+  .veriai-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .veriai-pressable {
+    transition:
+      transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
+      background-color 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease,
+      box-shadow 160ms ease,
+      opacity 160ms ease;
+  }
+
+  .veriai-pressable:active:not(:disabled) {
+    transform: scale(0.975);
+  }
+
+  .veriai-icon-button {
+    transition:
+      transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  .veriai-icon-button:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+
+  .veriai-panel-enter {
+    animation: veriai-panel-enter 260ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  }
+
+  .veriai-panel-enter:nth-child(2) {
+    animation-delay: 45ms;
+  }
+
+  .veriai-panel-enter:nth-child(3) {
+    animation-delay: 90ms;
+  }
+
+  .veriai-panel-enter:nth-child(4) {
+    animation-delay: 135ms;
+  }
+
+  .veriai-bar-fill {
+    transform-origin: left center;
+    animation: veriai-bar-fill 420ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  }
+
+  .veriai-highlight-row {
+    transition:
+      transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+      filter 160ms ease,
+      opacity 160ms ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .veriai-highlight-row:hover {
+      transform: translateX(2px);
+      filter: saturate(1.05);
+    }
+  }
+
+  @keyframes veriai-panel-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes veriai-bar-fill {
+    from {
+      transform: scaleX(0.08);
+      opacity: 0.55;
+    }
+    to {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .veriai-pressable,
+    .veriai-icon-button,
+    .veriai-highlight-row {
+      transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+
+    .veriai-panel-enter,
+    .veriai-bar-fill {
+      animation: none;
+    }
+
+    .veriai-pressable:active:not(:disabled),
+    .veriai-icon-button:active:not(:disabled),
+    .veriai-highlight-row:hover {
+      transform: none;
+    }
+  }
+}

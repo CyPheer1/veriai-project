@@ -1,24 +1,13 @@
 import { createBrowserRouter, Outlet } from "react-router";
-import { AppProvider, useApp } from "./context/AppContext";
-import { AmbientBackground } from "./components/AmbientBackground";
-import { NeuralBackground } from "./components/NeuralBackground";
+import { AppProvider } from "./context/AppContext";
 import { LoginPage } from "./pages/LoginPage";
 import { GuestDashboard } from "./pages/GuestDashboard";
 import { LoggedInDashboard } from "./pages/LoggedInDashboard";
 
 function Root() {
-  const { isDark } = useApp();
-
   return (
-    <div
-      className="min-h-screen font-['Inter',sans-serif] transition-colors duration-300"
-      style={{ background: isDark ? "#050505" : "#FBFBFD" }}
-    >
-      <AmbientBackground />
-      <NeuralBackground />
-      <div className="relative z-10">
-        <Outlet />
-      </div>
+    <div className="min-h-screen bg-[#f4f7fb] font-['Outfit',system-ui,sans-serif] text-[#101828] antialiased">
+      <Outlet />
     </div>
   );
 }

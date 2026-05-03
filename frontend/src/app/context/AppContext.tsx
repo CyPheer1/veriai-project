@@ -32,7 +32,7 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType>({
-  isDark: true,
+  isDark: false,
   toggleTheme: () => {},
   isLoggedIn: false,
   authLoading: false,
@@ -51,7 +51,7 @@ const TOKEN_STORAGE_KEY = "veriai.auth.token";
 const USER_STORAGE_KEY = "veriai.auth.user";
 
 function getStoredTheme(): boolean {
-  return localStorage.getItem(THEME_STORAGE_KEY) !== "light";
+  return localStorage.getItem(THEME_STORAGE_KEY) === "dark";
 }
 
 function getStoredToken(): string | null {
