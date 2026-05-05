@@ -25,11 +25,8 @@ export function Header({ variant = "landing" }: HeaderProps) {
     return (
       <header className="sticky top-0 z-20 border-b border-[#d8e0ec] bg-[#fbfcff]/88 backdrop-blur-xl">
 
-        <div className="grid h-[72px] w-full grid-cols-[auto_1fr_auto] items-center gap-4 px-6">
-          <button type="button" onClick={() => navigate("/dashboard")} className="veriai-pressable flex items-center gap-4 rounded-lg text-left">
-            <Logo className="h-[46px] w-auto" />
-          </button>
-          <div className="hidden min-w-0 justify-center gap-3 text-[14px] font-semibold text-[#274169] md:flex">
+        <div className="grid h-[72px] w-full grid-cols-[1fr_auto] items-center gap-4 px-6">
+          <div className="hidden min-w-0 justify-start gap-3 text-[14px] font-semibold text-[#274169] md:flex">
             <span className="text-[#0d1526]">Essay review</span>
             <span className="text-[#94a3b8]">•</span>
             <span>May 14, 2025</span>
@@ -67,33 +64,39 @@ export function Header({ variant = "landing" }: HeaderProps) {
   }
 
   return (
-    <header className="h-[92px] border-b border-[#d7e0ee] bg-[#fbfcff]/92 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 h-[84px] border-b border-[#d7e0ee] bg-[#fbfcff]/92 backdrop-blur-xl">
       <div className="mx-auto flex h-full max-w-[1390px] items-center justify-between px-6">
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="rounded-xl transition-transform duration-150 active:scale-[0.98]"
-        >
-          <Logo />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="veriai-icon-button rounded-[14px] p-1.5"
+          >
+            <Logo className="h-[46px] w-auto" />
+          </button>
+          <div className="hidden sm:block">
+            <p className="text-[15px] font-semibold tracking-[-0.01em] text-[#1d2a44]">VeriAI Review</p>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6b7b94]">Academic integrity</p>
+          </div>
+        </div>
 
-        <p className="hidden max-w-[48ch] text-center text-[15px] font-medium leading-6 text-[#31446f] lg:block">
+        <p className="hidden max-w-[48ch] text-center text-[14px] font-medium leading-6 text-[#31446f] lg:block">
           AI text detection for academic review workflows
         </p>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => navigate(isLoggedIn ? "/dashboard" : "/login")}
-            className="text-[19px] font-semibold text-[#07112f] transition-colors hover:text-[#2563EB] active:scale-[0.98]"
+            className="veriai-pressable h-[40px] rounded-[10px] border border-transparent px-3 text-[14px] font-semibold text-[#0f1a2f] hover:border-[#d7e0ee] hover:bg-white"
           >
             {isLoggedIn ? "Dashboard" : "Sign in"}
           </button>
           {variant === "landing" && (
             <button
               type="button"
-              onClick={() => navigate("/login")}
-              className="hidden h-[52px] rounded-lg bg-[#2563EB] px-7 text-[18px] font-semibold text-white shadow-[0_10px_24px_-14px_rgba(37,99,235,0.9)] transition-transform duration-150 hover:bg-[#1554df] active:scale-[0.98] sm:block"
+              onClick={() => navigate("/signup")}
+              className="veriai-pressable hidden h-[44px] items-center rounded-[10px] bg-[#2563EB] px-5 text-[14px] font-semibold text-white shadow-[0_12px_26px_-18px_rgba(37,99,235,0.9)] hover:bg-[#1554df] sm:inline-flex"
             >
               Get started
             </button>

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DownloadIcon,
   FontBoldIcon,
@@ -22,6 +22,7 @@ interface InputPanelProps {
   isAnalyzing: boolean;
   errorMessage?: string | null;
   userPlan?: string | null;
+  resetKey?: number;
 }
 
 const sampleText = `The rapid advancement of artificial intelligence has sparked both optimism and concern across academic and professional fields. While AI systems have demonstrated remarkable capabilities in language generation, their reliability and ethical implications remain subjects of ongoing debate. This paper explores the impact of generative models on education, focusing on their potential benefits, inherent limitations, and the responsibilities of users.
@@ -78,6 +79,7 @@ export function InputPanel({
   isAnalyzing,
   errorMessage = null,
   userPlan = null,
+  resetKey = 0,
 }: InputPanelProps) {
   const [mode, setMode] = useState<"text" | "file">("text");
   const [text, setText] = useState(sampleText);
@@ -92,6 +94,17 @@ export function InputPanel({
   const canSubmitText = mode === "text" && text.trim().length > 0;
   const canSubmitFile = mode === "file" && Boolean(file) && isPro;
   const showHighlights = mode === "text" && !hasEdited && text === sampleText;
+
+  useEffect(() => {
+    if (resetKey === 0) return;
+
+    setMode("text");
+    setText("");
+    setFile(null);
+    setLocalError(null);
+    setHasEdited(true);
+    setStatusExpanded(true);
+  }, [resetKey]);
 
   const selectFile = (selectedFile: File | null) => {
     setLocalError(null);

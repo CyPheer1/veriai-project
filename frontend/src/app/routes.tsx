@@ -1,6 +1,7 @@
 import { createBrowserRouter, Outlet } from "react-router";
 import { AppProvider } from "./context/AppContext";
 import { LoginPage } from "./pages/LoginPage";
+import { SignupPage } from "./pages/SignupPage";
 import { GuestDashboard } from "./pages/GuestDashboard";
 import { LoggedInDashboard } from "./pages/LoggedInDashboard";
 
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: GuestDashboard },
       { path: "login", Component: LoginPage },
+      { path: "signup", Component: SignupPage },
       { path: "dashboard", Component: LoggedInDashboard },
     ],
   },

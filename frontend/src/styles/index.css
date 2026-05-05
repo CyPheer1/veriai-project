@@ -98,6 +98,70 @@
       opacity 160ms ease;
   }
 
+  .veriai-reveal {
+    opacity: 1;
+    transform: translateY(0);
+    transition: transform 420ms cubic-bezier(0.23, 1, 0.32, 1), opacity 360ms ease;
+    @starting-style {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+
+  .veriai-reveal-slow {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: transform 520ms cubic-bezier(0.23, 1, 0.32, 1), opacity 420ms ease;
+    @starting-style {
+      opacity: 0;
+      transform: translateY(18px) scale(0.98);
+    }
+  }
+
+  .veriai-stagger > * {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: veriai-stagger-in 420ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .veriai-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .veriai-stagger > *:nth-child(2) { animation-delay: 60ms; }
+  .veriai-stagger > *:nth-child(3) { animation-delay: 120ms; }
+  .veriai-stagger > *:nth-child(4) { animation-delay: 180ms; }
+  .veriai-stagger > *:nth-child(5) { animation-delay: 240ms; }
+
+  .veriai-glide {
+    transition: transform 260ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 260ms ease;
+  }
+
+  .veriai-hover-lift {
+    transition: transform 240ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 240ms ease, border-color 240ms ease;
+  }
+
+  .veriai-hero-float {
+    animation: veriai-hero-float 6s cubic-bezier(0.23, 1, 0.32, 1) infinite alternate;
+  }
+
+  .veriai-hero-float-subtle {
+    animation: veriai-hero-float 7.5s cubic-bezier(0.23, 1, 0.32, 1) infinite alternate;
+  }
+
+  @keyframes veriai-stagger-in {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes veriai-hero-float {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-10px);
+    }
+  }
+
   @media (hover: hover) and (pointer: fine) {
     .veriai-highlight-row:hover {
       transform: translateX(2px);
@@ -134,6 +198,22 @@
       transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease, border-color 120ms ease;
     }
 
+    .veriai-reveal,
+    .veriai-reveal-slow {
+      transition: opacity 120ms ease;
+    }
+
+    .veriai-stagger > * {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+
+    .veriai-hero-float,
+    .veriai-hero-float-subtle {
+      animation: none;
+    }
+
     .veriai-panel-enter,
     .veriai-bar-fill {
       animation: none;
@@ -143,6 +223,16 @@
     .veriai-icon-button:active:not(:disabled),
     .veriai-highlight-row:hover {
       transform: none;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .veriai-hover-lift:hover {
+      transform: translateY(-4px);
+      box-shadow:
+        0 22px 50px rgba(28, 45, 68, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      border-color: rgba(129, 151, 187, 0.55);
     }
   }
 }

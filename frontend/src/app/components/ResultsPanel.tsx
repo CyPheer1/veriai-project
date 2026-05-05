@@ -1,4 +1,5 @@
-import { CalendarIcon, DownloadIcon, InfoCircledIcon } from "@radix-ui/react-icons";
+import { useState } from "react";
+import { InfoCircledIcon } from "@radix-ui/react-icons";
 import { ModelLogo } from "./DesignIcons";
 
 interface Segment { text: string; isAI: boolean; }
@@ -84,23 +85,210 @@ function MiniBars({ tone }: { tone: "human" | "mixed" | "ai" }) {
 }
 
 export function ResultsPanel({ data, isAnalyzing = false }: { data?: ResultsData | null; isAnalyzing?: boolean }) {
+  const [activeTab, setActiveTab] = useState<"analysis" | "report">("analysis");
+  const [reportSections, setReportSections] = useState({
+    verdict: true,
+    models: true,
+    highlights: true,
+    layers: true,
+    interpretation: true,
+  });
+  const [reportStep, setReportStep] = useState(0);
   const display = data ?? previewData;
   const score = clampScore(isAnalyzing ? 32 : display.aiScore);
   const models = display.modelAttributions ?? [];
   const chunks = display.chunks?.length ? display.chunks : previewData.chunks;
+  const primaryModel = models[0]?.name ?? display.model;
+  const submittedDate = display.submittedAt ? new Date(display.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "Not submitted";
+  const setReportSection = (key: keyof typeof reportSections, value: boolean) => {
+    setReportSections((current) => ({ ...current, [key]: value }));
+  };
+  const reportSteps: { key: keyof typeof reportSections; question: string; block: string; detail: string }[] = [
+    { key: "verdict", question: "Include the verdict summary?", block: "Verdict summary", detail: "AI signal, label, top model, and submission date." },
+    { key: "models", question: "Include model attribution?", block: "Model attribution", detail: "Ranked confidence scores for GPT, Claude, Gemini, and Llama signals." },
+    { key: "highlights", question: "Include sentence evidence?", block: "Sentence evidence", detail: "Counts for likely human-written, uncertain, and likely AI-generated sentences." },
+    { key: "layers", question: "Include detection layers?", block: "Detection layers", detail: "RoBERTa classifier, stylistic analysis, and statistical analysis contributions." },
+    { key: "interpretation", question: "Include interpretation guidance?", block: "Interpretation note", detail: "Responsible academic review language that frames the result as probabilistic." },
+  ];
+  const isPreviewStep = reportStep >= reportSteps.length;
+  const currentReportStep = reportSteps[Math.min(reportStep, reportSteps.length - 1)];
+  const reportText = [
+    "Veri4i review report",
+    reportSections.verdict ? `Verdict: ${display.label}. AI signal: ${score}%. Top model: ${primaryModel}. Date: ${submittedDate}.` : null,
+    reportSections.interpretation ? "Interpretation: The submitted text shows a high AI-generation signal. Review highlighted sentences and layer scores before making an academic decision." : null,
+    reportSections.models ? `Model attribution: ${models.slice(0, 4).map((model) => `${model.name} ${clampScore(model.score)}%`).join(", ")}.` : null,
+    reportSections.highlights ? "Sentence evidence: 12 likely human-written sentences, 5 uncertain sentences, 7 likely AI-generated sentences." : null,
+    reportSections.layers ? `Detection layers: ${chunks.slice(0, 3).map((chunk) => `${chunk.text} ${clampScore(chunk.score)}%`).join(", ")}.` : null,
+  ].filter(Boolean).join("\n\n");
+  const downloadReport = () => {
+    const blob = new Blob([reportText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "veri4i-review-report.txt";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+  const tabHeader = (
+    <div className="flex h-[58px] items-center border-b border-[#d7dfed] bg-[#fbfcff]/75 px-7">
+      <div className="flex h-full gap-12" role="tablist" aria-label="Result view">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "analysis"}
+          onClick={() => setActiveTab("analysis")}
+          className={`border-b-2 px-1 text-[16px] font-semibold transition-colors ${
+            activeTab === "analysis" ? "border-[#1263F1] text-[#1263F1]" : "border-transparent text-[#52627a] hover:text-[#0d1526]"
+          }`}
+        >
+          Analysis
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "report"}
+          onClick={() => setActiveTab("report")}
+          className={`border-b-2 px-1 text-[16px] font-semibold transition-colors ${
+            activeTab === "report" ? "border-[#1263F1] text-[#1263F1]" : "border-transparent text-[#52627a] hover:text-[#0d1526]"
+          }`}
+        >
+          Report
+        </button>
+      </div>
+    </div>
+  );
+
+  if (activeTab === "report") {
+    return (
+      <div className="grid h-full min-h-0 grid-rows-[58px_1fr] overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)]">
+        {tabHeader}
+        <section className="min-h-0 overflow-hidden">
+          {!isPreviewStep ? (
+            <div className="grid h-full min-h-0 grid-rows-[1fr_auto] px-7 py-6">
+              <div className="flex min-h-0 items-center justify-center">
+                <div className="w-full max-w-[560px] rounded-[14px] border border-[#d7dfed] bg-[#f8fafc]/75 p-6 shadow-[0_18px_42px_rgba(31,45,71,0.08)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="veriai-mono text-[12px] font-semibold text-[#7185a3]">Question {reportStep + 1} of {reportSteps.length}</span>
+                    <span className="rounded-[8px] border border-[#d7dfed] bg-white px-2.5 py-1 text-[12px] font-semibold text-[#274169]">{currentReportStep.block}</span>
+                  </div>
+                  <h2 className="mt-6 text-[24px] font-semibold leading-[1.15] tracking-[-0.035em] text-[#07112f]">{currentReportStep.question}</h2>
+                  <p className="mt-3 text-[14px] font-medium leading-7 text-[#52627a]">{currentReportStep.detail}</p>
+                  <div className="mt-6 grid grid-cols-2 gap-3">
+                    {[
+                      [true, "Include", "Add this block to the final report"],
+                      [false, "Skip", "Leave this block out"],
+                    ].map(([value, label, help]) => {
+                      const selected = reportSections[currentReportStep.key] === value;
+                      return (
+                        <button
+                          key={String(value)}
+                          type="button"
+                          onClick={() => setReportSection(currentReportStep.key, Boolean(value))}
+                          className={`rounded-[12px] border px-4 py-4 text-left transition-colors ${
+                            selected ? "border-[#1263F1] bg-[#edf4ff] text-[#1263F1]" : "border-[#d7dfed] bg-white text-[#274169] hover:bg-[#f7fbff]"
+                          }`}
+                        >
+                          <span className="block text-[15px] font-semibold">{label}</span>
+                          <span className="mt-1 block text-[12px] font-medium leading-5 text-[#7185a3]">{help}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-5 rounded-[12px] border border-[#d7dfed] bg-white p-4">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7185a3]">Block preview</span>
+                    {currentReportStep.key === "verdict" && (
+                      <div className="mt-3 grid grid-cols-3 gap-2">
+                        {[
+                          ["Verdict", display.label],
+                          ["Top model", primaryModel],
+                          ["Date", submittedDate],
+                        ].map(([label, value]) => (
+                          <div key={label} className="rounded-[9px] border border-[#d7dfed] bg-[#f8fafc]/75 px-3 py-2.5">
+                            <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#7185a3]">{label}</span>
+                            <strong className="mt-1 block truncate text-[12px] font-semibold text-[#07112f]">{value}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {currentReportStep.key === "models" && (
+                      <div className="mt-3 grid gap-2">
+                        {models.slice(0, 4).map((model) => (
+                          <div key={model.name} className="grid grid-cols-[1fr_auto] items-center gap-3 text-[12px] font-semibold">
+                            <span className="truncate text-[#274169]">{model.name}</span>
+                            <span className="veriai-mono text-[#1263F1]">{clampScore(model.score)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {currentReportStep.key === "highlights" && (
+                      <div className="mt-3 grid gap-2 text-[12px] font-semibold text-[#274169]">
+                        <div className="flex justify-between"><span>Likely human-written</span><span>12 sentences</span></div>
+                        <div className="flex justify-between"><span>Uncertain</span><span>5 sentences</span></div>
+                        <div className="flex justify-between"><span>Likely AI-generated</span><span>7 sentences</span></div>
+                      </div>
+                    )}
+                    {currentReportStep.key === "layers" && (
+                      <div className="mt-3 grid gap-2">
+                        {chunks.slice(0, 3).map((chunk) => (
+                          <div key={chunk.text} className="grid grid-cols-[1fr_auto] items-center gap-3 text-[12px] font-semibold">
+                            <span className="truncate text-[#274169]">{chunk.text}</span>
+                            <span className="veriai-mono text-[#1263F1]">{clampScore(chunk.score)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {currentReportStep.key === "interpretation" && (
+                      <p className="mt-3 text-[13px] font-medium leading-6 text-[#274169]">
+                        The submitted text shows a high AI-generation signal. Review highlighted sentences and layer scores before making an academic decision.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between border-t border-[#d7dfed] pt-4">
+                <button
+                  type="button"
+                  onClick={() => setReportStep((step) => Math.max(0, step - 1))}
+                  disabled={reportStep === 0}
+                  className="flex h-10 items-center gap-2 rounded-[9px] border border-[#d7dfed] bg-white px-4 text-[14px] font-semibold text-[#274169] hover:bg-[#f7fbff] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReportStep((step) => Math.min(reportSteps.length, step + 1))}
+                  className="flex h-10 items-center gap-2 rounded-[9px] bg-[#1263F1] px-4 text-[14px] font-semibold text-white shadow-[0_14px_26px_-20px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5]"
+                >
+                  {reportStep === reportSteps.length - 1 ? "Preview" : "Next"} →
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid h-full min-h-0 grid-rows-[auto_1fr] px-7 py-6">
+              <div className="flex items-center justify-between gap-4 border-b border-[#d7dfed] pb-4">
+                <div>
+                  <h2 className="text-[20px] font-semibold tracking-[-0.025em] text-[#07112f]">Report preview</h2>
+                  <p className="mt-1 text-[13px] font-medium text-[#64748b]">Review selected blocks before downloading.</p>
+                </div>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setReportStep(reportSteps.length - 1)} className="h-10 rounded-[9px] border border-[#d7dfed] bg-white px-4 text-[14px] font-semibold text-[#274169] hover:bg-[#f7fbff]">← Edit</button>
+                  <button type="button" onClick={downloadReport} className="h-10 rounded-[9px] bg-[#1263F1] px-4 text-[14px] font-semibold text-white shadow-[0_14px_26px_-20px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5]">Download</button>
+                </div>
+              </div>
+              <div className="min-h-0 overflow-y-auto py-5">
+                <pre className="veriai-document-font whitespace-pre-wrap rounded-[12px] border border-[#d7dfed] bg-[#f8fafc]/75 p-5 text-[14px] font-medium leading-7 text-[#274169]">{reportText}</pre>
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
+    );
+  }
 
   return (
         <div className="grid h-full min-h-0 overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] grid-rows-[238px_226px_178px_minmax(198px,1fr)]">
           <section className="min-h-0 overflow-hidden border-b border-[#d7dfed]">
-            <div className="flex h-[58px] items-center justify-between border-b border-[#d7dfed] bg-[#fbfcff]/75 px-7">
-              <div className="flex h-full gap-12">
-                <button type="button" className="border-b-2 border-[#1263F1] px-1 text-[16px] font-semibold text-[#1263F1]">Analysis</button>
-                <button type="button" className="border-b-2 border-transparent px-1 text-[16px] font-medium text-[#52627a]">Report</button>
-              </div>
-              <button type="button" aria-label="Download report" className="veriai-icon-button flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#d7dfed] text-[#274169] hover:bg-[#eef3f9]">
-                <DownloadIcon className="h-5 w-5" />
-              </button>
-            </div>
+            {tabHeader}
 
 
             <div className="grid h-[180px] grid-cols-[142px_1fr] items-center gap-5 px-7">

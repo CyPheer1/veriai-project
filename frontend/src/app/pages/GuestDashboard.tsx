@@ -62,7 +62,7 @@ const trustFeatures = [
 
 function FeatureTile({ title, text, icon, large = false }: { title: string; text: string; icon: ReactNode; large?: boolean }) {
     return (
-        <article className={`veriai-card-surface rounded-[16px] p-6 ${large ? "md:col-span-2" : ""}`}>
+        <article className={`veriai-card-surface veriai-hover-lift rounded-[16px] p-6 ${large ? "md:col-span-2" : ""}`}>
             <div className="flex h-11 w-11 items-center justify-center rounded-[10px] bg-[#e7eef8] text-[#1f5cc4]">
                 {icon}
             </div>
@@ -109,32 +109,32 @@ export function GuestDashboard() {
             <Header variant="landing" />
 
             <main>
-                <section className="mx-auto grid max-w-[1420px] gap-10 px-5 pb-20 pt-12 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:px-8">
+                <section className="veriai-reveal mx-auto grid max-w-[1320px] gap-10 px-5 pb-14 pt-8 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:px-8">
                     <div className="max-w-[680px]">
                         <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#667892]">Academic AI evidence review</p>
-                        <h1 className="veriai-display-font mt-5 text-[50px] font-semibold leading-[0.96] tracking-[-0.045em] text-[#0d1526] text-balance md:text-[76px]">
+                        <h1 className="veriai-display-font mt-4 text-[46px] font-semibold leading-[0.98] tracking-[-0.045em] text-[#0d1526] text-balance md:text-[66px]">
                             Verify writing without losing the document context.
                         </h1>
-                        <p className="mt-7 max-w-[58ch] text-[18px] leading-8 text-[#40516d]">
+                        <p className="mt-4 max-w-[56ch] text-[16px] leading-7 text-[#40516d]">
                             VeriAI brings paste, upload, probability scoring, model attribution, and passage highlights into one clean academic workflow.
                         </p>
 
-                        <div className="mt-8 flex flex-wrap gap-4">
+                        <div className="veriai-stagger mt-7 flex flex-wrap gap-3">
                             <button
-                                onClick={() => navigate("/login")}
-                                className="veriai-pressable flex h-12 items-center gap-3 rounded-[9px] bg-[#1f5cc4] px-5 text-[15px] font-semibold text-white shadow-[0_14px_28px_-18px_rgba(31,92,196,0.95)] hover:bg-[#174ca8]"
+                                onClick={() => navigate("/signup")}
+                                className="veriai-pressable flex h-11 items-center gap-3 rounded-[9px] bg-[#1f5cc4] px-5 text-[15px] font-semibold text-white shadow-[0_14px_28px_-18px_rgba(31,92,196,0.95)] hover:bg-[#174ca8]"
                             >
                                 <DocumentSearchButtonIcon className="h-5 w-5" /> Start review
                             </button>
                             <button
                                 onClick={() => document.getElementById("workflow")?.scrollIntoView({ behavior: "smooth" })}
-                                className="veriai-pressable flex h-12 items-center gap-3 rounded-[9px] border border-[#cbd7ea] bg-white/80 px-5 text-[15px] font-semibold text-[#172033] hover:bg-white"
+                                className="veriai-pressable flex h-11 items-center gap-3 rounded-[9px] border border-[#cbd7ea] bg-white/80 px-5 text-[15px] font-semibold text-[#172033] hover:bg-white"
                             >
                                 See workflow <ArrowRightIcon className="h-4 w-4" />
                             </button>
                         </div>
 
-                        <div className="veriai-card-surface mt-9 grid max-w-[520px] grid-cols-3 overflow-hidden rounded-[12px] text-center">
+                        <div className="veriai-card-surface veriai-reveal mt-7 grid max-w-[500px] grid-cols-3 overflow-hidden rounded-[12px] text-center">
                             <div className="px-3 py-4">
                                 <strong className="veriai-mono block text-[21px] text-[#0d1526]">3</strong>
                                 <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#64748b]">Free scans</span>
@@ -150,24 +150,26 @@ export function GuestDashboard() {
                         </div>
                     </div>
 
-                    <div className="relative">
+                    <div className="veriai-reveal-slow relative">
                         <img
                             src="/assets/generated/academic-desk.png"
                             alt="Academic desk with an annotated paper and AI detection review notes"
-                            className="veriai-ink-shadow aspect-[16/10] w-full rounded-[20px] border border-[#cbd7ea] object-cover"
+                            className="veriai-ink-shadow veriai-hero-float aspect-[16/10] w-full rounded-[18px] border border-[#cbd7ea] object-cover"
                             draggable={false}
                         />
-                        <div className="mt-4 lg:absolute lg:bottom-6 lg:left-6 lg:w-[520px]">
-                            <HighlightPreview />
+                        <div className="mt-4 lg:absolute lg:bottom-6 lg:left-6 lg:w-[500px]">
+                            <div className="veriai-hero-float-subtle">
+                                <HighlightPreview />
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                <section id="workflow" className="border-y border-[#d7dfed] bg-[#fbfcff]/72 backdrop-blur">
-                    <div className="mx-auto grid max-w-[1420px] gap-10 px-5 py-16 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:px-8">
+                <section id="workflow" className="veriai-reveal border-y border-[#d7dfed] bg-[#fbfcff]/72 backdrop-blur">
+                    <div className="mx-auto grid max-w-[1320px] gap-10 px-5 py-14 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:px-8">
                         <div>
                             <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-[#64748b]">The review flow</p>
-                            <h2 className="veriai-display-font mt-4 max-w-[620px] text-[44px] font-semibold leading-[1.02] tracking-[-0.04em] text-[#0d1526] text-balance">
+                            <h2 className="veriai-display-font mt-4 max-w-[620px] text-[40px] font-semibold leading-[1.05] tracking-[-0.04em] text-[#0d1526] text-balance">
                                 Built around the source document, not a detached score.
                             </h2>
                             <div className="mt-8 space-y-5">
@@ -182,30 +184,30 @@ export function GuestDashboard() {
                         <img
                             src="/assets/generated/document-closeup.png"
                             alt="Close-up of a digital document with AI detection highlights"
-                            className="veriai-ink-shadow aspect-[4/3] w-full rounded-[20px] border border-[#cbd7ea] object-cover"
+                            className="veriai-ink-shadow aspect-[4/3] w-full rounded-[18px] border border-[#cbd7ea] object-cover"
                             draggable={false}
                         />
                     </div>
                 </section>
 
-                <section className="mx-auto max-w-[1420px] px-5 py-16 sm:px-6 lg:px-8">
-                    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <section className="veriai-reveal mx-auto max-w-[1320px] px-5 py-14 sm:px-6 lg:px-8">
+                    <div className="veriai-stagger grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                         {coreFeatures.map((feature, index) => (
                             <FeatureTile key={feature.title} {...feature} large={index === 0} />
                         ))}
                     </div>
                 </section>
 
-                <section className="mx-auto grid max-w-[1420px] gap-8 px-5 pb-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch lg:px-8">
+                <section className="veriai-reveal mx-auto grid max-w-[1320px] gap-8 px-5 pb-14 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch lg:px-8">
                     <img
                         src="/assets/generated/study-setting.png"
                         alt="Quiet university study setting for academic writing review"
-                        className="veriai-ink-shadow h-full min-h-[420px] rounded-[20px] border border-[#cbd7ea] object-cover"
+                        className="veriai-ink-shadow h-full min-h-[420px] rounded-[18px] border border-[#cbd7ea] object-cover"
                         draggable={false}
                     />
-                    <div className="veriai-card-surface rounded-[20px] p-6 sm:p-8">
+                    <div className="veriai-card-surface veriai-reveal rounded-[18px] p-6 sm:p-7">
                         <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-[#64748b]">Institutional trust</p>
-                        <h2 className="veriai-display-font mt-4 text-[42px] font-semibold leading-[1.04] tracking-[-0.04em] text-[#0d1526]">
+                        <h2 className="veriai-display-font mt-4 text-[38px] font-semibold leading-[1.06] tracking-[-0.04em] text-[#0d1526]">
                             Serious enough for a classroom showcase.
                         </h2>
                         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -220,17 +222,17 @@ export function GuestDashboard() {
                     </div>
                 </section>
 
-                <section className="bg-[#101828] px-5 py-12 text-white sm:px-6 lg:px-8">
-                    <div className="mx-auto flex max-w-[1420px] flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                <section className="veriai-reveal bg-[#101828] px-5 py-10 text-white sm:px-6 lg:px-8">
+                    <div className="mx-auto flex max-w-[1320px] flex-col gap-6 md:flex-row md:items-center md:justify-between">
                         <div>
                             <p className="flex items-center gap-2 text-[13px] font-bold text-[#9bb8f7]"><CheckCircledIcon className="h-4 w-4" /> Frontend ready for the existing backend</p>
-                            <h2 className="veriai-display-font mt-3 text-[36px] font-semibold tracking-[-0.035em]">Start with a scan, then review the evidence.</h2>
+                            <h2 className="veriai-display-font mt-3 text-[32px] font-semibold tracking-[-0.035em]">Start with a scan, then review the evidence.</h2>
                         </div>
                         <button
-                            onClick={() => navigate("/login")}
-                            className="veriai-pressable h-12 rounded-[9px] bg-white px-6 text-[15px] font-semibold text-[#0d1526] hover:bg-[#eaf2ff]"
+                            onClick={() => navigate("/signup")}
+                            className="veriai-pressable h-11 rounded-[9px] bg-white px-6 text-[15px] font-semibold text-[#0d1526] hover:bg-[#eaf2ff]"
                         >
-                            Open VeriAI
+                            Create account
                         </button>
                     </div>
                 </section>

@@ -2,15 +2,16 @@ import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { useNavigate } from "react-router";
 import {
-  BarChartIcon,
   CheckCircledIcon,
   EnvelopeClosedIcon,
   EyeClosedIcon,
   EyeOpenIcon,
   LockClosedIcon,
-  MagnifyingGlassIcon,
+  RocketIcon,
+  TimerIcon,
 } from "@radix-ui/react-icons";
 import { Header, Logo } from "../components/Header";
+import { ShieldCheckIcon } from "../components/DesignIcons";
 import { useApp } from "../context/AppContext";
 
 function Feature({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
@@ -27,8 +28,8 @@ function Feature({ icon, title, text }: { icon: ReactNode; title: string; text: 
   );
 }
 
-export function LoginPage() {
-  const { login, authError, clearAuthError } = useApp();
+export function SignupPage() {
+  const { register, authError, clearAuthError } = useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,19 +52,18 @@ export function LoginPage() {
     clearAuthError();
 
     try {
-      await login(trimmedEmail, trimmedPassword);
+      await register(trimmedEmail, trimmedPassword, "FREE");
       navigate("/dashboard");
     } catch (error) {
       if (error instanceof Error) {
         setFormError(error.message);
       } else {
-        setFormError("Authentication failed.");
+        setFormError("Unable to create account.");
       }
     } finally {
       setIsLoading(false);
     }
   };
-
 
   return (
     <div className="veriai-academic-bg min-h-screen">
@@ -82,34 +82,34 @@ export function LoginPage() {
             <div className="veriai-reveal-slow veriai-hero-float-subtle relative">
               <Logo className="h-11 w-auto" />
               <h1 className="veriai-display-font mt-8 max-w-[520px] text-[44px] font-semibold leading-[1.02] tracking-[-0.045em] text-[#0d1526] text-balance md:text-[58px]">
-                Sign in to continue academic AI review.
+                Create your academic review workspace.
               </h1>
               <p className="mt-4 max-w-[540px] text-[16px] leading-7 text-[#40516d]">
-                Access the review workspace for source documents, probability scoring, model attribution, and highlighted evidence.
+                Launch a free VeriAI account to review documents, track submissions, and interpret evidence with clarity.
               </p>
 
               <div className="veriai-stagger mt-8 space-y-6">
-                <Feature icon={<LockClosedIcon className="h-5 w-5" />} title="Secure sign-in" text="Your analysis history and account access stay protected by the existing authentication flow." />
-                <Feature icon={<MagnifyingGlassIcon className="h-5 w-5" />} title="Document-first review" text="Once inside, paste or upload a source and read the evidence beside the text." />
-                <Feature icon={<BarChartIcon className="h-5 w-5" />} title="Transparent results" text="Scores, model attribution, and highlighted passages stay grouped for easier interpretation." />
+                <Feature icon={<ShieldCheckIcon className="h-5 w-5" />} title="Secure by default" text="Authentication stays tied to your institutional email with encrypted session storage." />
+                <Feature icon={<TimerIcon className="h-5 w-5" />} title="Fast onboarding" text="Start your first scan in minutes and keep results aligned with your review workflow." />
+                <Feature icon={<RocketIcon className="h-5 w-5" />} title="Ready for reviewers" text="Evidence-first layouts keep highlights, scores, and model signals in one place." />
               </div>
 
               <div className="veriai-reveal mt-10 max-w-[480px] rounded-[14px] border border-[#d7dfed] bg-white/72 p-5 shadow-[0_14px_34px_rgba(39,65,105,0.08)] backdrop-blur">
                 <p className="flex items-center gap-2 text-[13px] font-semibold text-[#17633f]">
-                  <CheckCircledIcon className="h-4 w-4" /> Privacy first
+                  <CheckCircledIcon className="h-4 w-4" /> Free plan includes 3 scans
                 </p>
                 <p className="mt-3 text-[14px] leading-6 text-[#40516d]">
-                  Data is encrypted, access is controlled, and review activity stays tied to your academic account.
+                  Upgrade any time to unlock PDF and DOCX uploads for deeper document review.
                 </p>
               </div>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="bg-white/88 px-6 py-10 sm:px-12 lg:px-14 lg:py-14">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#64748b]">VeriAI access</p>
-            <h2 className="veriai-display-font mt-3 text-[36px] font-semibold leading-none tracking-[-0.04em] text-[#0F172A]">Sign in to your account</h2>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#64748b]">Create your account</p>
+            <h2 className="veriai-display-font mt-3 text-[36px] font-semibold leading-none tracking-[-0.04em] text-[#0F172A]">Start with a free account</h2>
             <p className="mt-3 max-w-[48ch] text-[14px] leading-6 text-[#40516d]">
-              Use your existing account, or create a new account in a dedicated signup flow.
+              Use your institutional email. We will set up a reviewer workspace in seconds.
             </p>
 
             <label className="mt-8 block text-[14px] font-semibold text-[#0F172A]">
@@ -136,8 +136,8 @@ export function LoginPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
+                  placeholder="Create a password"
+                  autoComplete="new-password"
                   required
                   className="w-full bg-transparent text-[15px] text-[#0F172A] outline-none placeholder:text-[#94a3b8]"
                 />
@@ -163,20 +163,20 @@ export function LoginPage() {
               disabled={isLoading}
               className="veriai-pressable mt-8 h-[54px] w-full rounded-[10px] bg-[#1f5cc4] text-[16px] font-semibold text-white shadow-[0_14px_28px_-18px_rgba(31,92,196,0.95)] hover:bg-[#174ca8] disabled:opacity-60"
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? "Creating account..." : "Create free account"}
             </button>
 
             <button
               type="button"
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/login")}
               disabled={isLoading}
               className="veriai-pressable mt-3 h-[50px] w-full rounded-[10px] border border-[#cbd7ea] bg-white text-[15px] font-semibold text-[#172033] hover:bg-[#f8fbff] disabled:opacity-60"
             >
-              Create free account
+              Already have an account? Sign in
             </button>
 
             <p className="mt-8 text-center text-[13px] leading-6 text-[#40516d]">
-              By signing in, you agree to our <span className="font-semibold text-[#1f5cc4]">Terms of Service</span> and <span className="font-semibold text-[#1f5cc4]">Privacy Policy</span>.
+              By creating an account, you agree to our <span className="font-semibold text-[#1f5cc4]">Terms of Service</span> and <span className="font-semibold text-[#1f5cc4]">Privacy Policy</span>.
             </p>
           </form>
         </section>
