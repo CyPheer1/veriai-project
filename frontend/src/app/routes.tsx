@@ -4,6 +4,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { GuestDashboard } from "./pages/GuestDashboard";
 import { LoggedInDashboard } from "./pages/LoggedInDashboard";
+import { ScanHistoryPage } from "./pages/ScanHistoryPage";
 
 function Root() {
   return (
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
       { path: "login", Component: LoginPage },
       { path: "signup", Component: SignupPage },
       { path: "dashboard", Component: LoggedInDashboard },
+      { path: "history", Component: ScanHistoryPage },
     ],
   },
 ]);

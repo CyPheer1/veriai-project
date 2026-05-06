@@ -10,7 +10,7 @@ import {
   LockClosedIcon,
   MagnifyingGlassIcon,
 } from "@radix-ui/react-icons";
-import { Header, Logo } from "../components/Header";
+import { Logo } from "../components/Header";
 import { useApp } from "../context/AppContext";
 
 function Feature({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
@@ -67,10 +67,8 @@ export function LoginPage() {
 
   return (
     <div className="veriai-academic-bg min-h-screen">
-      <Header variant="login" />
-
-      <main className="veriai-reveal mx-auto max-w-[1280px] px-5 pb-8 pt-6 sm:px-6 lg:px-8">
-        <section className="veriai-card-surface grid overflow-hidden rounded-[18px] lg:grid-cols-[0.98fr_1.02fr]">
+      <main className="veriai-reveal mx-auto flex min-h-screen max-w-[1280px] items-center px-5 pb-12 pt-10 sm:px-6 lg:px-8">
+        <section className="veriai-card-surface grid w-full overflow-hidden rounded-[20px] lg:grid-cols-[0.98fr_1.02fr]">
           <div className="relative min-h-[720px] overflow-hidden bg-[#f8fafc] p-6 sm:p-10">
             <img
               src="/assets/generated/study-setting.png"

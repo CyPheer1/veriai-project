@@ -1,12 +1,22 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { BellIcon, CheckCircledIcon, ExitIcon, QuestionMarkCircledIcon } from "@radix-ui/react-icons";
+import {
+  BellIcon,
+  CheckCircledIcon,
+  ExitIcon,
+  QuestionMarkCircledIcon,
+} from "@radix-ui/react-icons";
 import { useApp } from "../context/AppContext";
 
 interface HeaderProps {
   variant?: "landing" | "login" | "dashboard";
 }
 
-export function Logo({ className = "h-[60px] w-auto" }: { className?: string }) {
+export function Logo({
+  className = "h-[60px] w-auto",
+}: {
+  className?: string;
+}) {
   return (
     <img
       src="/assets/veri4i-logo.png"
@@ -20,18 +30,32 @@ export function Logo({ className = "h-[60px] w-auto" }: { className?: string }) 
 export function Header({ variant = "landing" }: HeaderProps) {
   const navigate = useNavigate();
   const { isLoggedIn, user, logout } = useApp();
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    if (variant === "dashboard") return;
+
+    const onScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [variant]);
 
   if (variant === "dashboard") {
     return (
       <header className="sticky top-0 z-20 border-b border-[#d8e0ec] bg-[#fbfcff]/88 backdrop-blur-xl">
-
         <div className="grid h-[72px] w-full grid-cols-[1fr_auto] items-center gap-4 px-6">
           <div className="hidden min-w-0 justify-start gap-3 text-[14px] font-semibold text-[#274169] md:flex">
             <span className="text-[#0d1526]">Essay review</span>
             <span className="text-[#94a3b8]">•</span>
             <span>May 14, 2025</span>
             <span className="text-[#94a3b8]">•</span>
-            <span className="flex items-center gap-1.5 text-[#17633f]"><CheckCircledIcon className="h-4 w-4" /> Saved</span>
+            <span className="flex items-center gap-1.5 text-[#17633f]">
+              <CheckCircledIcon className="h-4 w-4" /> Saved
+            </span>
           </div>
           <div className="flex min-w-0 items-center justify-end gap-3 text-[#111827]">
             <div
@@ -43,46 +67,107 @@ export function Header({ variant = "landing" }: HeaderProps) {
                 <span className="ml-1 text-[#52627a]">credits</span>
               </span>
             </div>
-            <button type="button" aria-label="Help" className="veriai-icon-button hidden h-9 w-9 items-center justify-center rounded-[9px] text-[#274169] hover:bg-[#eef3f9] lg:flex">
+            <button
+              type="button"
+              aria-label="Help"
+              className="veriai-icon-button hidden h-9 w-9 items-center justify-center rounded-[9px] text-[#274169] hover:bg-[#eef3f9] lg:flex"
+            >
               <QuestionMarkCircledIcon className="h-5 w-5" />
             </button>
-            <button type="button" aria-label="Notifications" className="veriai-icon-button hidden h-9 w-9 items-center justify-center rounded-[9px] text-[#274169] hover:bg-[#eef3f9] lg:flex">
+            <button
+              type="button"
+              aria-label="Notifications"
+              className="veriai-icon-button hidden h-9 w-9 items-center justify-center rounded-[9px] text-[#274169] hover:bg-[#eef3f9] lg:flex"
+            >
               <BellIcon className="h-5 w-5" />
             </button>
             <div className="flex min-w-0 items-center gap-2 border-l border-[#d8e0ec] pl-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#edf4ff] text-[12px] font-bold text-[#193b8f]">{user?.initials ?? "AK"}</span>
-              <span className="hidden max-w-[180px] truncate text-[13px] font-semibold text-[#172033] md:block">{user?.name ?? user?.email ?? "Reviewer"}</span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#edf4ff] text-[12px] font-bold text-[#193b8f]">
+                {user?.initials ?? "AK"}
+              </span>
+              <span className="hidden max-w-[180px] truncate text-[13px] font-semibold text-[#172033] md:block">
+                {user?.name ?? user?.email ?? "Reviewer"}
+              </span>
             </div>
-            <button type="button" onClick={() => { logout(); navigate("/"); }} className="veriai-icon-button flex h-9 items-center justify-center gap-2 rounded-lg px-3 text-[13px] font-semibold text-[#42526f] hover:bg-[#eef3f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]">
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                navigate("/");
+              }}
+              className="veriai-icon-button flex h-9 items-center justify-center gap-2 rounded-lg px-3 text-[13px] font-semibold text-[#42526f] hover:bg-[#eef3f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+            >
               <ExitIcon className="h-4 w-4" />
             </button>
           </div>
         </div>
-
       </header>
     );
   }
 
+  const clamp = (value: number, min: number, max: number) =>
+    Math.min(Math.max(value, min), max);
+  const shrinkEnd = 140;
+  const shrinkProgress = clamp(scrollY / shrinkEnd, 0, 1);
+
+  const headerHeight = 84 - 24 * shrinkProgress;
+  const containerWidth = 1390 - (1390 - 980) * shrinkProgress;
+  const containerRadius = 18 + 28 * shrinkProgress;
+  const containerPaddingY = 18 - 6 * shrinkProgress;
+  const containerPaddingX = 24 + 12 * shrinkProgress;
+
   return (
-    <header className="sticky top-0 z-20 h-[84px] border-b border-[#d7e0ee] bg-[#fbfcff]/92 backdrop-blur-xl">
-      <div className="mx-auto flex h-full max-w-[1390px] items-center justify-between px-6">
+    <header
+      className="sticky top-0 z-20 backdrop-blur-xl"
+      style={{
+        height: `${headerHeight}px`,
+        borderBottom: `1px solid rgba(215, 224, 238, ${1 - shrinkProgress})`,
+        backgroundColor: `rgba(251, 252, 255, ${0.92 * (1 - shrinkProgress)})`,
+        transition: "height 700ms cubic-bezier(0.23,1,0.32,1)",
+      }}
+    >
+      <div
+        className="mx-auto flex items-center justify-between gap-4 transition-[max-width,box-shadow,border-color,background-color,padding] duration-700 ease-out"
+        style={{
+          maxWidth: `${containerWidth}px`,
+          paddingTop: `${containerPaddingY}px`,
+          paddingBottom: `${containerPaddingY}px`,
+          paddingLeft: `${containerPaddingX}px`,
+          paddingRight: `${containerPaddingX}px`,
+          borderRadius: `${containerRadius}px`,
+          border:
+            shrinkProgress > 0
+              ? "1px solid rgba(215, 224, 238, 0.7)"
+              : "1px solid transparent",
+          boxShadow:
+            shrinkProgress > 0 ? "0 14px 36px rgba(15,23,42,0.12)" : "none",
+          backgroundColor:
+            shrinkProgress > 0 ? "rgba(255, 255, 255, 0.75)" : "transparent",
+        }}
+      >
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => navigate("/")}
             className="veriai-icon-button rounded-[14px] p-1.5"
           >
-            <Logo className="h-[46px] w-auto" />
+            <Logo
+              className={
+                shrinkProgress > 0 ? "h-[40px] w-auto" : "h-[46px] w-auto"
+              }
+            />
           </button>
           <div className="hidden sm:block">
-            <p className="text-[15px] font-semibold tracking-[-0.01em] text-[#1d2a44]">VeriAI Review</p>
-            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6b7b94]">Academic integrity</p>
+            <p className="text-[15px] font-semibold tracking-[-0.01em] text-[#1d2a44]">
+              VeriAI Review
+            </p>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6b7b94]">
+              Academic integrity
+            </p>
           </div>
         </div>
 
-        <p className="hidden max-w-[48ch] text-center text-[14px] font-medium leading-6 text-[#31446f] lg:block">
-          AI text detection for academic review workflows
-        </p>
+        <div className="hidden lg:block" aria-hidden="true" />
 
         <div className="flex items-center gap-3">
           <button

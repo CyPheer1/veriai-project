@@ -30,11 +30,13 @@ function ScanDock({
     activeId,
     onNewScan,
     onRestore,
+    onHistory,
 }: {
     history: ScanHistoryItem[];
     activeId: string | null;
     onNewScan: () => void;
     onRestore: (item: ScanHistoryItem) => void;
+    onHistory: () => void;
 }) {
     return (
 
@@ -60,6 +62,7 @@ function ScanDock({
             <div className="flex w-full flex-col items-center gap-2">
                 <button
                     type="button"
+                    onClick={onHistory}
                     className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#c8daf2] bg-[#edf4ff] text-[#1263F1] shadow-[0_10px_22px_-22px_rgba(18,99,241,0.75)] transition-colors hover:bg-[#e5efff]"
                     aria-label="Scan history"
                     title="Scan history"
@@ -177,12 +180,13 @@ export function LoggedInDashboard() {
     return (
         <div className="veriai-academic-bg h-screen overflow-hidden text-[#121a2b]">
             <div className="grid h-screen min-h-0 grid-cols-[80px_1fr] overflow-hidden">
-                <ScanDock
-                    history={scanHistory}
-                    activeId={activeScanId}
-                    onNewScan={handleNewScan}
-                    onRestore={restoreScan}
-                />
+                    <ScanDock
+                        history={scanHistory}
+                        activeId={activeScanId}
+                        onNewScan={handleNewScan}
+                        onRestore={restoreScan}
+                        onHistory={() => navigate("/history")}
+                    />
 
                 <div className="min-w-0 overflow-hidden">
                     <Header variant="dashboard" />
