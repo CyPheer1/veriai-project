@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import type { FormEvent, ReactNode } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -14,7 +15,15 @@ import { Logo } from "../components/Header";
 import { ShieldCheckIcon } from "../components/DesignIcons";
 import { useApp } from "../context/AppContext";
 
-function Feature({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+function Feature({
+  icon,
+  title,
+  text,
+}: {
+  icon: ReactNode;
+  title: string;
+  text: string;
+}) {
   return (
     <div className="flex gap-4">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-[#d7dfed] bg-white/88 text-[#1f5cc4]">
@@ -22,7 +31,9 @@ function Feature({ icon, title, text }: { icon: ReactNode; title: string; text: 
       </div>
       <div>
         <h3 className="text-[15px] font-semibold text-[#0F172A]">{title}</h3>
-        <p className="mt-1 max-w-[330px] text-[13px] leading-6 text-[#40516d]">{text}</p>
+        <p className="mt-1 max-w-[330px] text-[13px] leading-6 text-[#40516d]">
+          {text}
+        </p>
       </div>
     </div>
   );
@@ -78,36 +89,65 @@ export function SignupPage() {
             />
             <div className="absolute inset-0 bg-gradient-to-br from-[#fbfcff]/95 via-[#f4f7fb]/82 to-[#dfe8f4]/64" />
             <div className="veriai-reveal-slow veriai-hero-float-subtle relative">
-              <Logo className="h-11 w-auto" />
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="veriai-icon-button inline-flex rounded-[10px] p-0.5"
+              >
+                <Logo className="h-11 w-auto" />
+              </button>
               <h1 className="veriai-display-font mt-8 max-w-[520px] text-[44px] font-semibold leading-[1.02] tracking-[-0.045em] text-[#0d1526] text-balance md:text-[58px]">
                 Create your academic review workspace.
               </h1>
               <p className="mt-4 max-w-[540px] text-[16px] leading-7 text-[#40516d]">
-                Launch a free VeriAI account to review documents, track submissions, and interpret evidence with clarity.
+                Launch a free VeriAI account to review documents, track
+                submissions, and interpret evidence with clarity.
               </p>
 
               <div className="veriai-stagger mt-8 space-y-6">
-                <Feature icon={<ShieldCheckIcon className="h-5 w-5" />} title="Secure by default" text="Authentication stays tied to your institutional email with encrypted session storage." />
-                <Feature icon={<TimerIcon className="h-5 w-5" />} title="Fast onboarding" text="Start your first scan in minutes and keep results aligned with your review workflow." />
-                <Feature icon={<RocketIcon className="h-5 w-5" />} title="Ready for reviewers" text="Evidence-first layouts keep highlights, scores, and model signals in one place." />
+                <Feature
+                  icon={<ShieldCheckIcon className="h-5 w-5" />}
+                  title="Secure by default"
+                  text="Authentication stays tied to your institutional email with encrypted session storage."
+                />
+                <Feature
+                  icon={<TimerIcon className="h-5 w-5" />}
+                  title="Fast onboarding"
+                  text="Start your first scan in minutes and keep results aligned with your review workflow."
+                />
+                <Feature
+                  icon={<RocketIcon className="h-5 w-5" />}
+                  title="Ready for reviewers"
+                  text="Evidence-first layouts keep highlights, scores, and model signals in one place."
+                />
               </div>
 
               <div className="veriai-reveal mt-10 max-w-[480px] rounded-[14px] border border-[#d7dfed] bg-white/72 p-5 shadow-[0_14px_34px_rgba(39,65,105,0.08)] backdrop-blur">
                 <p className="flex items-center gap-2 text-[13px] font-semibold text-[#17633f]">
-                  <CheckCircledIcon className="h-4 w-4" /> Free plan includes 3 scans
+                  <CheckCircledIcon className="h-4 w-4" /> Free plan includes 3
+                  scans
                 </p>
                 <p className="mt-3 text-[14px] leading-6 text-[#40516d]">
-                  Upgrade any time to unlock PDF and DOCX uploads for deeper document review.
+                  Upgrade any time to unlock PDF and DOCX uploads for deeper
+                  document review.
                 </p>
               </div>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="bg-white/88 px-6 py-10 sm:px-12 lg:px-14 lg:py-14">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#64748b]">Create your account</p>
-            <h2 className="veriai-display-font mt-3 text-[36px] font-semibold leading-none tracking-[-0.04em] text-[#0F172A]">Start with a free account</h2>
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white/88 px-6 py-10 sm:px-12 lg:px-14 lg:py-14"
+          >
+            <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#64748b]">
+              Create your account
+            </p>
+            <h2 className="veriai-display-font mt-3 text-[36px] font-semibold leading-none tracking-[-0.04em] text-[#0F172A]">
+              Start with a free account
+            </h2>
             <p className="mt-3 max-w-[48ch] text-[14px] leading-6 text-[#40516d]">
-              Use your institutional email. We will set up a reviewer workspace in seconds.
+              Use your institutional email. We will set up a reviewer workspace
+              in seconds.
             </p>
 
             <label className="mt-8 block text-[14px] font-semibold text-[#0F172A]">
@@ -145,7 +185,11 @@ export function SignupPage() {
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   className="veriai-icon-button flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] text-[#40516d] hover:bg-[#f1f5f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5cc4]"
                 >
-                  {showPassword ? <EyeClosedIcon className="h-5 w-5" /> : <EyeOpenIcon className="h-5 w-5" />}
+                  {showPassword ? (
+                    <EyeClosedIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeOpenIcon className="h-5 w-5" />
+                  )}
                 </button>
               </div>
             </label>
@@ -174,7 +218,15 @@ export function SignupPage() {
             </button>
 
             <p className="mt-8 text-center text-[13px] leading-6 text-[#40516d]">
-              By creating an account, you agree to our <span className="font-semibold text-[#1f5cc4]">Terms of Service</span> and <span className="font-semibold text-[#1f5cc4]">Privacy Policy</span>.
+              By creating an account, you agree to our{" "}
+              <span className="font-semibold text-[#1f5cc4]">
+                Terms of Service
+              </span>{" "}
+              and{" "}
+              <span className="font-semibold text-[#1f5cc4]">
+                Privacy Policy
+              </span>
+              .
             </p>
           </form>
         </section>
