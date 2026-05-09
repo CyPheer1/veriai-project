@@ -281,6 +281,7 @@ export function LoggedInDashboard() {
                   <InputPanel
                     onAnalyze={handleAnalyze}
                     onDraftChange={handleDraftChange}
+                    documentTitle={documentTitle}
                     isAnalyzing={isAnalyzing}
                     errorMessage={analysisError}
                     userPlan={user?.plan}

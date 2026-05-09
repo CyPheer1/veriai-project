@@ -20,6 +20,7 @@ export type AnalyzePayload =
 interface InputPanelProps {
   onAnalyze: (payload: AnalyzePayload) => void | Promise<void>;
   onDraftChange?: () => void;
+  documentTitle?: string;
   isAnalyzing: boolean;
   errorMessage?: string | null;
   userPlan?: string | null;
@@ -37,6 +38,17 @@ function countWords(value: string): number {
   return value.trim() ? value.trim().split(/\s+/).length : 0;
 }
 
+function toExportFilename(title: string | undefined): string {
+  const normalized = (title ?? "untitled-scan")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+
+  return `${normalized || "untitled-scan"}.txt`;
+}
+
 function ToolbarButton({ children, label }: { children: React.ReactNode; label: string }) {
   return (
     <button
@@ -52,6 +64,7 @@ function ToolbarButton({ children, label }: { children: React.ReactNode; label: 
 export function InputPanel({
   onAnalyze,
   onDraftChange,
+  documentTitle,
   isAnalyzing,
   errorMessage = null,
   userPlan = null,
@@ -68,6 +81,7 @@ export function InputPanel({
   const isPro = userPlan?.toUpperCase() === "PRO";
   const canSubmitText = mode === "text" && text.trim().length > 0;
   const canSubmitFile = mode === "file" && Boolean(file) && isPro;
+  const canExportDraft = mode === "text" && text.trim().length > 0;
 
   useEffect(() => {
     if (resetKey === 0) return;
@@ -112,6 +126,19 @@ export function InputPanel({
     }
 
     if (text.trim()) void onAnalyze({ mode: "text", text: text.trim() });
+  };
+
+  const exportDraft = () => {
+    const draft = text.trim();
+    if (!draft) return;
+
+    const blob = new Blob([draft], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = toExportFilename(documentTitle);
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -226,7 +253,9 @@ export function InputPanel({
                   <span className="mx-1 h-5 w-px bg-[#cbd7e8]" aria-hidden="true" />
                   <button
                     type="button"
-                    className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9]"
+                    onClick={exportDraft}
+                    disabled={!canExportDraft || isAnalyzing}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent"
                     aria-label="Export draft"
                     title="Export draft"
                   >
