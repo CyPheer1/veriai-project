@@ -27,6 +27,8 @@ interface InputPanelProps {
   dailyCreditsRemaining?: number | null;
   textWordLimit?: number | null;
   premiumMonthlyPriceUsd?: number;
+  onUpgrade?: () => void;
+  isUpgrading?: boolean;
   resetKey?: number;
 }
 
@@ -74,6 +76,8 @@ export function InputPanel({
   dailyCreditsRemaining = null,
   textWordLimit = null,
   premiumMonthlyPriceUsd = 10,
+  onUpgrade,
+  isUpgrading = false,
   resetKey = 0,
 }: InputPanelProps) {
   const [mode, setMode] = useState<"text" | "file">("text");
@@ -323,22 +327,55 @@ export function InputPanel({
       ) : (
 
         <div className="p-6">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={!isPro || isAnalyzing}
-            className="veriai-pressable flex min-h-[420px] w-full flex-col items-center justify-center rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff] px-8 text-center hover:bg-[#f2f7ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            <UploadIcon className="h-11 w-11 text-[#1263F1]" />
-            <span className="mt-5 max-w-full">
-              <span className="block truncate text-[20px] font-semibold tracking-[-0.02em] text-[#0d1526]">
-                {file ? file.name : isPro ? "Drop a PDF or DOCX here" : "File upload requires Premium"}
+          {isPro ? (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={isAnalyzing}
+              className="veriai-pressable flex min-h-[420px] w-full flex-col items-center justify-center rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff] px-8 text-center hover:bg-[#f2f7ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <UploadIcon className="h-11 w-11 text-[#1263F1]" />
+              <span className="mt-5 max-w-full">
+                <span className="block truncate text-[20px] font-semibold tracking-[-0.02em] text-[#0d1526]">
+                  {file ? file.name : "Drop a PDF or DOCX here"}
+                </span>
+                <span className="mt-3 block text-[14px] leading-6 text-[#52627a]">
+                  {file ? formatFileSize(file.size) : "Click anywhere in this area to choose a document. Up to 10MB."}
+                </span>
               </span>
-              <span className="mt-3 block text-[14px] leading-6 text-[#52627a]">
-                {file ? formatFileSize(file.size) : isPro ? "Click anywhere in this area to choose a document. Up to 10MB." : `Premium ($${premiumMonthlyPriceUsd}/month) unlocks PDF and DOCX analysis. Text analysis is still available.`}
-              </span>
-            </span>
-          </button>
+            </button>
+          ) : (
+            <div className="relative min-h-[420px] overflow-hidden rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff]">
+              <div className="absolute inset-6 rounded-[12px] border border-[#d7dfed] bg-white/80 p-5 blur-[3px]">
+                <div className="h-8 w-44 rounded-[8px] bg-[#e7eef8]" />
+                <div className="mt-5 grid gap-3">
+                  <div className="h-4 rounded-full bg-[#dbe7f6]" />
+                  <div className="h-4 w-4/5 rounded-full bg-[#dbe7f6]" />
+                  <div className="h-4 w-2/3 rounded-full bg-[#dbe7f6]" />
+                </div>
+              </div>
+              <div className="relative z-10 flex min-h-[420px] flex-col items-center justify-center px-8 text-center">
+                <UploadIcon className="h-11 w-11 text-[#1263F1]" />
+                <h3 className="mt-5 text-[20px] font-semibold tracking-[-0.02em] text-[#0d1526]">
+                  File upload is Premium
+                </h3>
+                <p className="mt-3 max-w-[360px] text-[14px] leading-6 text-[#52627a]">
+                  Upgrade to unlock PDF and DOCX analysis. Text scans remain
+                  available on the Free plan.
+                </p>
+                {onUpgrade && (
+                  <button
+                    type="button"
+                    onClick={onUpgrade}
+                    disabled={isUpgrading}
+                    className="veriai-pressable mt-5 h-10 rounded-[9px] bg-[#1263F1] px-5 text-[13px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60"
+                  >
+                    {isUpgrading ? "Upgrading..." : `Upgrade account`}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
       )}

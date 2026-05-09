@@ -43,7 +43,7 @@ function toResults(detail: SubmissionDetailResponse): ResultsData | null {
 }
 
 export function ScanHistoryPage() {
-  const { token, isLoggedIn, user } = useApp();
+  const { token, isLoggedIn, user, upgradeToPro } = useApp();
   const navigate = useNavigate();
   const [items, setItems] = useState<SubmissionListItemResponse[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -51,6 +51,7 @@ export function ScanHistoryPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -92,6 +93,18 @@ export function ScanHistoryPage() {
     user?.plan?.toUpperCase() === "PRO"
       ? "Unlimited credits"
       : `${(user?.dailyCreditsRemaining ?? 0).toLocaleString()} / ${(user?.dailyCreditLimit ?? 3000).toLocaleString()} credits`;
+
+  const handleUpgrade = async () => {
+    setIsUpgrading(true);
+    setError(null);
+    try {
+      await upgradeToPro();
+    } catch (err) {
+      setError(getErrorMessage(err, "Unable to upgrade account."));
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
 
   return (
     <div className="veriai-academic-bg min-h-screen text-[#121a2b]">
@@ -208,7 +221,12 @@ export function ScanHistoryPage() {
                 </div>
 
                 {results ? (
-                  <ResultsPanel data={results} isAnalyzing={selectedDetail.status === "PROCESSING"} />
+                  <ResultsPanel
+                    data={results}
+                    isAnalyzing={selectedDetail.status === "PROCESSING"}
+                    onUpgrade={handleUpgrade}
+                    isUpgrading={isUpgrading}
+                  />
                 ) : (
                   <div className="veriai-card-surface rounded-[16px] p-6 text-[13px] text-[#52627a]">
                     {selectedDetail.status === "ERROR"

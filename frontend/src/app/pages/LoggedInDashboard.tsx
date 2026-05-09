@@ -143,7 +143,7 @@ function ScanDock({
 }
 
 export function LoggedInDashboard() {
-  const { isLoggedIn, authLoading, token, refreshUser, user } = useApp();
+  const { isLoggedIn, authLoading, token, refreshUser, user, upgradeToPro } = useApp();
   const navigate = useNavigate();
   const [results, setResults] = useState<ResultsData | null>(null);
 
@@ -159,6 +159,7 @@ export function LoggedInDashboard() {
   const [inputResetKey, setInputResetKey] = useState(0);
   const [documentTitle, setDocumentTitle] = useState("Untitled scan");
   const [hasDraftChanges, setHasDraftChanges] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
   const headerTitle = documentTitle;
   const headerStatus = analysisError
     ? "Failed"
@@ -260,6 +261,18 @@ export function LoggedInDashboard() {
     }
   };
 
+  const handleUpgrade = async () => {
+    setIsUpgrading(true);
+    setAnalysisError(null);
+    try {
+      await upgradeToPro();
+    } catch (error) {
+      setAnalysisError(getErrorMessage(error, "Unable to upgrade account."));
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
+
   return (
     <div className="veriai-academic-bg h-screen overflow-hidden text-[#121a2b]">
       <div className="grid h-screen min-h-0 grid-cols-[80px_1fr] overflow-hidden">
@@ -295,12 +308,19 @@ export function LoggedInDashboard() {
                     dailyCreditsRemaining={user?.dailyCreditsRemaining}
                     textWordLimit={user?.textWordLimit}
                     premiumMonthlyPriceUsd={user?.premiumMonthlyPriceUsd}
+                    onUpgrade={handleUpgrade}
+                    isUpgrading={isUpgrading}
                     resetKey={inputResetKey}
                   />
                 </div>
 
                 <div className="min-h-0 min-w-0">
-                  <ResultsPanel data={results} isAnalyzing={isAnalyzing} />
+                  <ResultsPanel
+                    data={results}
+                    isAnalyzing={isAnalyzing}
+                    onUpgrade={handleUpgrade}
+                    isUpgrading={isUpgrading}
+                  />
                 </div>
               </section>
             </div>

@@ -14,8 +14,6 @@ import { Logo } from "../components/Header";
 import { ShieldCheckIcon } from "../components/DesignIcons";
 import { useApp } from "../context/AppContext";
 
-type SignupPlan = "FREE" | "PRO";
-
 function Feature({
   icon,
   title,
@@ -46,7 +44,6 @@ export function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState<SignupPlan>("FREE");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,7 +76,7 @@ export function SignupPage() {
     clearAuthError();
 
     try {
-      await register(trimmedEmail, trimmedPassword, selectedPlan);
+      await register(trimmedEmail, trimmedPassword, "FREE");
       navigate("/dashboard");
     } catch (error) {
       if (error instanceof Error) {
@@ -144,8 +141,8 @@ export function SignupPage() {
                   3,000 daily credits
                 </p>
                 <p className="mt-3 text-[14px] leading-6 text-[#40516d]">
-                  Premium unlocks unlimited credits, PDF/DOCX uploads, and the
-                  full ensemble report.
+                  Start with text review, then upgrade from your account when
+                  you need uploads and full reports.
                 </p>
               </div>
             </div>
@@ -159,72 +156,17 @@ export function SignupPage() {
               Create your account
             </p>
             <h2 className="veriai-display-font mt-3 text-[36px] font-semibold leading-none tracking-[-0.04em] text-[#0F172A]">
-              Choose your review plan
+              Start with a Free workspace
             </h2>
             <p className="mt-3 max-w-[48ch] text-[14px] leading-6 text-[#40516d]">
               Create your workspace and start reviewing submitted writing with
               clear, evidence-focused results.
             </p>
 
-            <fieldset className="mt-8">
-              <legend className="text-[14px] font-semibold text-[#0F172A]">
-                Plan
-              </legend>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {(
-                  [
-                    {
-                      key: "FREE",
-                      title: "Free",
-                      price: "3,000 credits/day",
-                      detail: "Text only, 1,000 words per scan, Layer 1 score.",
-                    },
-                    {
-                      key: "PRO",
-                      title: "Premium",
-                      price: "$10/month",
-                      detail:
-                        "Unlimited credits, PDF/DOCX upload, full ensemble report.",
-                    },
-                  ] as const
-                ).map((plan) => {
-                  const isSelected = selectedPlan === plan.key;
-                  return (
-                    <label
-                      key={plan.key}
-                      className={`cursor-pointer rounded-[12px] border p-4 transition-colors ${
-                        isSelected
-                          ? "border-[#1f5cc4] bg-[#f4f8ff] ring-4 ring-[#1f5cc4]/10"
-                          : "border-[#cbd7ea] bg-white hover:bg-[#f8fbff]"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="plan"
-                        value={plan.key}
-                        checked={isSelected}
-                        onChange={() => setSelectedPlan(plan.key)}
-                        className="sr-only"
-                      />
-                      <span className="flex items-center justify-between gap-3">
-                        <span className="text-[15px] font-bold text-[#0F172A]">
-                          {plan.title}
-                        </span>
-                        {isSelected && (
-                          <CheckCircledIcon className="h-4 w-4 text-[#1f5cc4]" />
-                        )}
-                      </span>
-                      <span className="mt-2 block text-[13px] font-semibold text-[#1f5cc4]">
-                        {plan.price}
-                      </span>
-                      <span className="mt-2 block text-[12px] leading-5 text-[#40516d]">
-                        {plan.detail}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
+            <div className="mt-8 rounded-[12px] border border-[#d7dfed] bg-[#f8fbff] px-4 py-3 text-[13px] font-semibold text-[#274169]">
+              Free includes 3,000 daily credits and text scans up to 1,000
+              words.
+            </div>
 
             <label className="mt-7 block text-[14px] font-semibold text-[#0F172A]">
               Email
@@ -309,11 +251,7 @@ export function SignupPage() {
               disabled={isLoading}
               className="veriai-pressable mt-8 h-[54px] w-full rounded-[10px] bg-[#1f5cc4] text-[16px] font-semibold text-white shadow-[0_14px_28px_-18px_rgba(31,92,196,0.95)] hover:bg-[#174ca8] disabled:opacity-60"
             >
-              {isLoading
-                ? "Creating account..."
-                : selectedPlan === "PRO"
-                  ? "Create Premium account"
-                  : "Create Free account"}
+              {isLoading ? "Creating account..." : "Create account"}
             </button>
 
             <button

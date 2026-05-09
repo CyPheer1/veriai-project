@@ -212,6 +212,10 @@ export async function meRequest(token: string): Promise<AuthUserResponse> {
   return requestJson<AuthUserResponse>("/api/v1/auth/me", { method: "GET" }, token);
 }
 
+export async function upgradeAccountRequest(token: string): Promise<AuthUserResponse> {
+  return requestJson<AuthUserResponse>("/api/v1/auth/me/upgrade", { method: "POST" }, token);
+}
+
 export async function submitTextRequest(
   token: string,
   text: string,

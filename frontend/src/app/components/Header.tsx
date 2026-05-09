@@ -41,11 +41,12 @@ export function Header({
   usageLabel,
 }: HeaderProps) {
   const navigate = useNavigate();
-  const { isLoggedIn, user, logout } = useApp();
+  const { isLoggedIn, user, logout, upgradeToPro } = useApp();
   const [scrollY, setScrollY] = useState(0);
   const [openPanel, setOpenPanel] = useState<"help" | "notifications" | null>(
     null,
   );
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   useEffect(() => {
     if (variant === "dashboard") return;
@@ -66,6 +67,15 @@ export function Header({
         ? "Unlimited credits"
         : `${(user?.dailyCreditsRemaining ?? 0).toLocaleString()} / ${(user?.dailyCreditLimit ?? 3000).toLocaleString()} credits`);
     const planLabel = user?.plan ? user.plan.toUpperCase() : "FREE";
+    const isPro = user?.plan?.toUpperCase() === "PRO";
+    const handleUpgrade = async () => {
+      setIsUpgrading(true);
+      try {
+        await upgradeToPro();
+      } finally {
+        setIsUpgrading(false);
+      }
+    };
     const statusTone = contextStatus?.toLowerCase().includes("fail")
       ? "text-[#b32635]"
       : contextStatus?.toLowerCase().includes("analyz")
@@ -123,6 +133,16 @@ export function Header({
                 <span className="ml-1 text-[#52627a]">{planLabel}</span>
               </span>
             </div>
+            {!isPro && (
+              <button
+                type="button"
+                onClick={handleUpgrade}
+                disabled={isUpgrading}
+                className="hidden h-9 rounded-[9px] bg-[#1263F1] px-3 text-[12px] font-bold text-white shadow-[0_12px_24px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60 md:block"
+              >
+                {isUpgrading ? "Upgrading..." : "Upgrade"}
+              </button>
+            )}
             <div className="relative hidden lg:block">
               <button
                 type="button"

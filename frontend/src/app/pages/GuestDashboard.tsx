@@ -105,6 +105,15 @@ function HighlightPreview() {
   );
 }
 
+function PlanRow({ children, muted = false }: { children: ReactNode; muted?: boolean }) {
+  return (
+    <li className={`flex items-start gap-2 text-[13px] leading-6 ${muted ? "text-[#7185a3]" : "text-[#274169]"}`}>
+      <CheckCircledIcon className={`mt-1 h-4 w-4 shrink-0 ${muted ? "text-[#9aacbf]" : "text-[#1f5cc4]"}`} />
+      <span>{children}</span>
+    </li>
+  );
+}
+
 export function GuestDashboard() {
   const { isLoggedIn } = useApp();
   const navigate = useNavigate();
@@ -169,12 +178,12 @@ export function GuestDashboard() {
               <button
                 onClick={() =>
                   document
-                    .getElementById("workflow")
+                    .getElementById("plans")
                     ?.scrollIntoView({ behavior: "smooth" })
                 }
                 className="veriai-pressable flex h-11 items-center gap-3 rounded-[9px] border border-[#cbd7ea] bg-white/80 px-5 text-[15px] font-semibold text-[#172033] hover:bg-white"
               >
-                See workflow <ArrowRightIcon className="h-4 w-4" />
+                See plans <ArrowRightIcon className="h-4 w-4" />
               </button>
             </div>
 
@@ -437,6 +446,96 @@ export function GuestDashboard() {
               text="Download reports with the verdict, rationale, and model signals included."
               icon={<DocumentSearchButtonIcon className="h-6 w-6" />}
             />
+          </div>
+        </section>
+
+        <section
+          id="plans"
+          className="veriai-reveal mx-auto max-w-[1120px] px-5 py-14 sm:px-6 lg:px-8"
+        >
+          <div className="max-w-[620px]">
+            <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#64748b]">
+              Plans
+            </p>
+            <h2 className="veriai-display-font mt-3 text-[38px] font-semibold leading-[1.06] tracking-[-0.04em] text-[#0d1526]">
+              Start with text review, expand when the report needs more depth.
+            </h2>
+          </div>
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+            <article className="rounded-[16px] border border-[#d7dfed] bg-white/86 p-6 shadow-[0_18px_46px_rgba(31,45,71,0.08)]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-[22px] font-semibold tracking-[-0.025em] text-[#0d1526]">
+                    Free
+                  </h3>
+                  <p className="mt-2 text-[13px] font-medium leading-6 text-[#52627a]">
+                    Best for quick checks and text-only review.
+                  </p>
+                </div>
+                <span className="rounded-full border border-[#d7dfed] bg-[#f8fafc] px-3 py-1 text-[12px] font-bold text-[#52627a]">
+                  Included
+                </span>
+              </div>
+              <div className="mt-6 flex items-end gap-2">
+                <strong className="veriai-display-font text-[42px] font-semibold leading-none tracking-[-0.04em] text-[#0d1526]">
+                  3,000
+                </strong>
+                <span className="pb-1 text-[14px] font-semibold text-[#64748b]">
+                  credits/day
+                </span>
+              </div>
+              <ul className="mt-6 space-y-2">
+                <PlanRow>Plain text input</PlanRow>
+                <PlanRow>1,000 words per scan</PlanRow>
+                <PlanRow>Layer 1 score and label</PlanRow>
+                <PlanRow muted>PDF, DOCX, attribution, and full reports stay locked</PlanRow>
+              </ul>
+              <button
+                type="button"
+                onClick={() => navigate("/signup")}
+                className="veriai-pressable mt-7 h-11 w-full rounded-[9px] border border-[#cbd7ea] bg-white text-[14px] font-bold text-[#172033] hover:bg-[#f8fbff]"
+              >
+                Create Free account
+              </button>
+            </article>
+
+            <article className="rounded-[16px] border border-[#9bb8f7] bg-[#f8fbff] p-6 shadow-[0_22px_56px_rgba(31,92,196,0.14)]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-[22px] font-semibold tracking-[-0.025em] text-[#0d1526]">
+                    Premium
+                  </h3>
+                  <p className="mt-2 text-[13px] font-medium leading-6 text-[#52627a]">
+                    For full document evidence and unlimited review.
+                  </p>
+                </div>
+                <span className="rounded-full bg-[#1263F1] px-3 py-1 text-[12px] font-bold text-white">
+                  Full report
+                </span>
+              </div>
+              <div className="mt-6 flex items-end gap-2">
+                <strong className="veriai-display-font text-[42px] font-semibold leading-none tracking-[-0.04em] text-[#0d1526]">
+                  $10
+                </strong>
+                <span className="pb-1 text-[14px] font-semibold text-[#64748b]">
+                  per month
+                </span>
+              </div>
+              <ul className="mt-6 space-y-2">
+                <PlanRow>PDF, DOCX, and text input</PlanRow>
+                <PlanRow>Unlimited credits</PlanRow>
+                <PlanRow>Full three-layer ensemble</PlanRow>
+                <PlanRow>Attribution, confidence, statistics, and report export</PlanRow>
+              </ul>
+              <button
+                type="button"
+                onClick={() => navigate("/signup")}
+                className="veriai-pressable mt-7 h-11 w-full rounded-[9px] bg-[#1263F1] text-[14px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5]"
+              >
+                Start with Free, upgrade in app
+              </button>
+            </article>
           </div>
         </section>
 

@@ -5,6 +5,7 @@ import {
   loginRequest,
   meRequest,
   registerRequest,
+  upgradeAccountRequest,
 } from "../services/api";
 
 interface AppUser {
@@ -31,6 +32,7 @@ interface AppContextType {
   clearAuthError: () => void;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, plan?: string) => Promise<void>;
+  upgradeToPro: () => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   token: string | null;
@@ -46,6 +48,7 @@ const AppContext = createContext<AppContextType>({
   clearAuthError: () => {},
   login: async () => {},
   register: async () => {},
+  upgradeToPro: async () => {},
   logout: () => {},
   refreshUser: async () => {},
   token: null,
@@ -221,6 +224,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const upgradeToPro = async () => {
+    if (!token) {
+      throw new Error("Please sign in before upgrading.");
+    }
+
+    setAuthLoading(true);
+    setAuthError(null);
+
+    try {
+      const upgraded = await upgradeAccountRequest(token);
+      setAuthUser(upgraded);
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(upgraded));
+    } catch (error) {
+      const message = getErrorMessage(error, "Unable to upgrade account.");
+      setAuthError(message);
+      throw new Error(message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const logout = () => {
     clearSession();
     setAuthError(null);
@@ -239,6 +263,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clearAuthError,
         login,
         register,
+        upgradeToPro,
         logout,
         refreshUser,
         token,

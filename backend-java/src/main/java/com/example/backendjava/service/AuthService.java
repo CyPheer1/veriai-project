@@ -78,6 +78,15 @@ public class AuthService {
         return toAuthUserResponse(user);
     }
 
+    @Transactional
+    public AuthUserResponse upgradeToPro(String email) {
+        User user = userRepository.findByEmailIgnoreCase(normalizeEmail(email))
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+        user.setPlan(UserPlan.PRO);
+        user.setUpdatedAt(Instant.now());
+        return toAuthUserResponse(user);
+    }
+
     private AuthResponse buildAuthResponse(User user) {
         Instant expiresAt = Instant.now().plusSeconds(jwtService.getExpirationSeconds());
         return new AuthResponse(
