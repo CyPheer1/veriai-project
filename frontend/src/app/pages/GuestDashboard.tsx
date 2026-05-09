@@ -440,7 +440,7 @@ export function GuestDashboard() {
           </div>
         </section>
 
-        <section className="veriai-reveal mx-auto grid max-w-[1320px] gap-8 px-5 pb-14 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch lg:px-8">
+        <section className="veriai-reveal mx-auto grid max-w-[1320px] gap-8 px-5 py-14 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch lg:px-8">
           <img
             src="/assets/generated/study-setting.png"
             alt="Quiet university study setting for academic writing review"
