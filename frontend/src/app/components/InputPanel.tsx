@@ -26,12 +26,6 @@ interface InputPanelProps {
   resetKey?: number;
 }
 
-const sampleText = `The rapid advancement of artificial intelligence has sparked both optimism and concern across academic and professional fields. While AI systems have demonstrated remarkable capabilities in language generation, their reliability and ethical implications remain subjects of ongoing debate. This paper explores the impact of generative models on education, focusing on their potential benefits, inherent limitations, and the responsibilities of users.
-
-One of the primary advantages of AI tools is their ability to assist users in organizing complex ideas and producing content more efficiently. Students can use these systems to brainstorm, summarize readings, or refine their arguments. However, overreliance on AI may weaken critical thinking skills and reduce original thought.
-
-Moreover, many AI models are trained on massive datasets that include copyrighted material, raising serious questions about intellectual property and consent. Institutions must therefore establish clear policies and foster AI literacy to ensure responsible use. Ultimately, the goal is not to replace human creativity, but to augment it ethically and effectively.`;
-
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 function formatFileSize(bytes: number): string {
@@ -41,26 +35,6 @@ function formatFileSize(bytes: number): string {
 
 function countWords(value: string): number {
   return value.trim() ? value.trim().split(/\s+/).length : 0;
-}
-
-function HighlightedSample() {
-  return (
-    <div className="veriai-document-font pointer-events-none absolute inset-x-0 top-0 px-[14%] py-[68px] text-[20px] font-medium leading-[1.82] tracking-[-0.012em] text-[#07112f]">
-      <p>
-        The rapid advancement of artificial intelligence has sparked both optimism and concern across academic and professional fields.{" "}
-        <mark className="rounded-[2px] bg-[#dfead9] px-1 text-[#174d2f]">While AI systems have demonstrated remarkable capabilities in language generation, their reliability and ethical implications remain subjects of ongoing debate.</mark>{" "}
-        This paper explores the impact of generative models on education, focusing on their potential benefits, inherent limitations, and the responsibilities of users.
-      </p>
-      <p className="mt-9">
-        <mark className="rounded-[2px] bg-[#fff0c8] px-1 text-[#4b3413]">One of the primary advantages of AI tools is their ability to assist users in organizing complex ideas and producing content more efficiently.</mark>{" "}
-        Students can use these systems to brainstorm, summarize readings, or refine their arguments. However, overreliance on AI may weaken critical thinking skills and reduce original thought.
-      </p>
-      <p className="mt-9">
-        <mark className="rounded-[2px] bg-[#f9dada] px-1 text-[#172033]">Moreover, many AI models are trained on massive datasets that include copyrighted material, raising serious questions about intellectual property and consent.</mark>{" "}
-        Institutions must therefore establish clear policies and foster AI literacy to ensure responsible use. Ultimately, the goal is not to replace human creativity, but to augment it ethically and effectively.
-      </p>
-    </div>
-  );
 }
 
 function ToolbarButton({ children, label }: { children: React.ReactNode; label: string }) {
@@ -84,10 +58,9 @@ export function InputPanel({
   resetKey = 0,
 }: InputPanelProps) {
   const [mode, setMode] = useState<"text" | "file">("text");
-  const [text, setText] = useState(sampleText);
+  const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
-  const [hasEdited, setHasEdited] = useState(false);
   const [statusExpanded, setStatusExpanded] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
   const wordCount = useMemo(() => countWords(text), [text]);
@@ -95,7 +68,6 @@ export function InputPanel({
   const isPro = userPlan?.toUpperCase() === "PRO";
   const canSubmitText = mode === "text" && text.trim().length > 0;
   const canSubmitFile = mode === "file" && Boolean(file) && isPro;
-  const showHighlights = mode === "text" && !hasEdited && text === sampleText;
 
   useEffect(() => {
     if (resetKey === 0) return;
@@ -104,7 +76,6 @@ export function InputPanel({
     setText("");
     setFile(null);
     setLocalError(null);
-    setHasEdited(true);
     setStatusExpanded(true);
   }, [resetKey]);
 
@@ -220,17 +191,15 @@ export function InputPanel({
           <div className="relative min-h-0 flex-1 bg-white">
             <div className="h-full overflow-y-auto bg-white">
               <div className="relative min-h-[1180px] w-full bg-white">
-                {showHighlights && <HighlightedSample />}
                 <label className="sr-only" htmlFor="analysis-text">Text to analyze</label>
                 <textarea
                   id="analysis-text"
                   value={text}
                   onChange={(event) => {
                     setText(event.target.value);
-                    setHasEdited(true);
                     onDraftChange?.();
                   }}
-                  className={`veriai-document-font min-h-[1180px] w-full resize-none bg-transparent px-[14%] py-[68px] text-[20px] font-medium leading-[1.82] tracking-[-0.012em] text-[#07112f] outline-none placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2563EB] ${showHighlights ? "text-transparent caret-[#0d1526]" : ""}`}
+                  className="veriai-document-font min-h-[1180px] w-full resize-none bg-transparent px-[14%] py-[68px] text-[20px] font-medium leading-[1.82] tracking-[-0.012em] text-[#07112f] outline-none placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2563EB]"
                   placeholder="Paste academic text here..."
                   spellCheck={true}
                   disabled={isAnalyzing}
@@ -270,7 +239,6 @@ export function InputPanel({
                       setText("");
                       setFile(null);
                       setLocalError(null);
-                      setHasEdited(true);
                       onDraftChange?.();
                     }}
                     disabled={isAnalyzing}
