@@ -77,7 +77,7 @@ export function Header({
     return (
       <header className="sticky top-0 z-20 border-b border-[#d8e0ec] bg-[#fbfcff]/88 backdrop-blur-xl">
         <div className="grid h-[72px] w-full grid-cols-[1fr_auto] items-center gap-4 px-6">
-          <div className="hidden min-w-0 justify-start gap-3 text-[14px] font-semibold text-[#274169] md:flex">
+          <div className="hidden min-w-0 items-center justify-start gap-3 text-[14px] font-semibold text-[#274169] md:flex">
             {onContextTitleChange ? (
               <input
                 value={contextTitle}
@@ -88,7 +88,7 @@ export function Header({
                   }
                 }}
                 aria-label="Scan title"
-                className="w-[104px] rounded-[7px] border border-transparent bg-transparent px-1.5 py-1 text-[#0d1526] outline-none transition-colors hover:border-[#d8e0ec] hover:bg-white/70 focus:border-[#1263F1] focus:bg-white focus:ring-2 focus:ring-[#1263F1]/10"
+                className="h-5 w-[104px] shrink-0 rounded-[5px] border border-transparent bg-transparent p-0 font-semibold leading-5 text-[#0d1526] outline-none transition-colors hover:bg-[#eef3f9]/70 focus:border-[#1263F1] focus:bg-white focus:px-1 focus:ring-2 focus:ring-[#1263F1]/10"
               />
             ) : (
               <span className="max-w-[240px] truncate text-[#0d1526]">
