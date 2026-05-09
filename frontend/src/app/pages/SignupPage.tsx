@@ -159,8 +159,8 @@ export function SignupPage() {
               Start with a free account
             </h2>
             <p className="mt-3 max-w-[48ch] text-[14px] leading-6 text-[#40516d]">
-              Use any email address. We will set up a reviewer workspace in
-              seconds.
+              Create your workspace and start reviewing submitted writing with
+              clear, evidence-focused results.
             </p>
 
             <label className="mt-8 block text-[14px] font-semibold text-[#0F172A]">
