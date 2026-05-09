@@ -105,10 +105,20 @@ function HighlightPreview() {
   );
 }
 
-function PlanRow({ children, muted = false }: { children: ReactNode; muted?: boolean }) {
+function PlanRow({
+  children,
+  muted = false,
+}: {
+  children: ReactNode;
+  muted?: boolean;
+}) {
   return (
-    <li className={`flex items-start gap-2 text-[13px] leading-6 ${muted ? "text-[#7185a3]" : "text-[#274169]"}`}>
-      <CheckCircledIcon className={`mt-1 h-4 w-4 shrink-0 ${muted ? "text-[#9aacbf]" : "text-[#1f5cc4]"}`} />
+    <li
+      className={`flex items-start gap-2 text-[13px] leading-6 ${muted ? "text-[#7185a3]" : "text-[#274169]"}`}
+    >
+      <CheckCircledIcon
+        className={`mt-1 h-4 w-4 shrink-0 ${muted ? "text-[#9aacbf]" : "text-[#1f5cc4]"}`}
+      />
       <span>{children}</span>
     </li>
   );
@@ -449,6 +459,39 @@ export function GuestDashboard() {
           </div>
         </section>
 
+        <section className="veriai-reveal mx-auto grid max-w-[1320px] gap-8 px-5 py-14 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch lg:px-8">
+          <img
+            src="/assets/generated/study-setting.png"
+            alt="Quiet university study setting for academic writing review"
+            className="veriai-ink-shadow h-full min-h-[420px] rounded-[18px] border border-[#cbd7ea] object-cover"
+            draggable={false}
+          />
+          <div className="veriai-card-surface veriai-reveal rounded-[18px] p-6 sm:p-7">
+            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-[#64748b]">
+              Institutional trust
+            </p>
+            <h2 className="veriai-display-font mt-4 text-[38px] font-semibold leading-[1.06] tracking-[-0.04em] text-[#0d1526]">
+              Serious enough for a classroom showcase.
+            </h2>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {trustFeatures.map(({ title, text, icon: Icon }) => (
+                <article
+                  key={title}
+                  className="rounded-[12px] border border-[#d7dfed] bg-[#f8fafc]/75 p-5"
+                >
+                  <Icon className="h-8 w-8 text-[#1f5cc4]" />
+                  <h3 className="mt-4 text-[16px] font-semibold text-[#0d1526]">
+                    {title}
+                  </h3>
+                  <p className="mt-2 text-[13px] leading-6 text-[#40516d]">
+                    {text}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section
           id="plans"
           className="veriai-reveal mx-auto max-w-[1120px] px-5 py-14 sm:px-6 lg:px-8"
@@ -489,7 +532,9 @@ export function GuestDashboard() {
                 <PlanRow>Plain text input</PlanRow>
                 <PlanRow>1,000 words per scan</PlanRow>
                 <PlanRow>Layer 1 score and label</PlanRow>
-                <PlanRow muted>PDF, DOCX, attribution, and full reports stay locked</PlanRow>
+                <PlanRow muted>
+                  PDF, DOCX, attribution, and full reports stay locked
+                </PlanRow>
               </ul>
               <button
                 type="button"
@@ -526,7 +571,9 @@ export function GuestDashboard() {
                 <PlanRow>PDF, DOCX, and text input</PlanRow>
                 <PlanRow>Unlimited credits</PlanRow>
                 <PlanRow>Full three-layer ensemble</PlanRow>
-                <PlanRow>Attribution, confidence, statistics, and report export</PlanRow>
+                <PlanRow>
+                  Attribution, confidence, statistics, and report export
+                </PlanRow>
               </ul>
               <button
                 type="button"
@@ -536,39 +583,6 @@ export function GuestDashboard() {
                 Start with Free, upgrade in app
               </button>
             </article>
-          </div>
-        </section>
-
-        <section className="veriai-reveal mx-auto grid max-w-[1320px] gap-8 px-5 py-14 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch lg:px-8">
-          <img
-            src="/assets/generated/study-setting.png"
-            alt="Quiet university study setting for academic writing review"
-            className="veriai-ink-shadow h-full min-h-[420px] rounded-[18px] border border-[#cbd7ea] object-cover"
-            draggable={false}
-          />
-          <div className="veriai-card-surface veriai-reveal rounded-[18px] p-6 sm:p-7">
-            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-[#64748b]">
-              Institutional trust
-            </p>
-            <h2 className="veriai-display-font mt-4 text-[38px] font-semibold leading-[1.06] tracking-[-0.04em] text-[#0d1526]">
-              Serious enough for a classroom showcase.
-            </h2>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {trustFeatures.map(({ title, text, icon: Icon }) => (
-                <article
-                  key={title}
-                  className="rounded-[12px] border border-[#d7dfed] bg-[#f8fafc]/75 p-5"
-                >
-                  <Icon className="h-8 w-8 text-[#1f5cc4]" />
-                  <h3 className="mt-4 text-[16px] font-semibold text-[#0d1526]">
-                    {title}
-                  </h3>
-                  <p className="mt-2 text-[13px] leading-6 text-[#40516d]">
-                    {text}
-                  </p>
-                </article>
-              ))}
-            </div>
           </div>
         </section>
 

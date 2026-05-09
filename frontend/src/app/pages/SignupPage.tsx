@@ -39,7 +39,8 @@ function Feature({
 }
 
 export function SignupPage() {
-  const { register, authError, clearAuthError, isLoggedIn, authLoading } = useApp();
+  const { register, authError, clearAuthError, isLoggedIn, authLoading } =
+    useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -163,11 +164,6 @@ export function SignupPage() {
               clear, evidence-focused results.
             </p>
 
-            <div className="mt-8 rounded-[12px] border border-[#d7dfed] bg-[#f8fbff] px-4 py-3 text-[13px] font-semibold text-[#274169]">
-              Free includes 3,000 daily credits and text scans up to 1,000
-              words.
-            </div>
-
             <label className="mt-7 block text-[14px] font-semibold text-[#0F172A]">
               Email
               <div className="mt-3 flex h-[56px] items-center gap-4 rounded-[10px] border border-[#cbd7ea] bg-white px-4 transition-colors focus-within:border-[#1f5cc4] focus-within:ring-4 focus-within:ring-[#1f5cc4]/10">
@@ -228,7 +224,9 @@ export function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword((value) => !value)}
-                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  aria-label={
+                    showConfirmPassword ? "Hide password" : "Show password"
+                  }
                   className="veriai-icon-button flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] text-[#40516d] hover:bg-[#f1f5f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5cc4]"
                 >
                   {showConfirmPassword ? (
