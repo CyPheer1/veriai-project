@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -38,13 +38,19 @@ function Feature({
 }
 
 export function LoginPage() {
-  const { login, authError, clearAuthError } = useApp();
+  const { login, authError, clearAuthError, isLoggedIn, authLoading } = useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && isLoggedIn) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [authLoading, isLoggedIn, navigate]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
