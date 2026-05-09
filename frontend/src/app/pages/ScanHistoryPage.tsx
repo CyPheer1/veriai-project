@@ -43,7 +43,7 @@ function toResults(detail: SubmissionDetailResponse): ResultsData | null {
 }
 
 export function ScanHistoryPage() {
-  const { token, isLoggedIn } = useApp();
+  const { token, isLoggedIn, user } = useApp();
   const navigate = useNavigate();
   const [items, setItems] = useState<SubmissionListItemResponse[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -88,10 +88,17 @@ export function ScanHistoryPage() {
   }, [token, selectedId]);
 
   const results = useMemo(() => (selectedDetail ? toResults(selectedDetail) : null), [selectedDetail]);
+  const usedToday = user?.dailySubmissionCount ?? 0;
 
   return (
     <div className="veriai-academic-bg min-h-screen text-[#121a2b]">
-      <Header variant="dashboard" />
+      <Header
+        variant="dashboard"
+        contextTitle="Scan history"
+        contextDetail={`${items.length} ${items.length === 1 ? "submission" : "submissions"}`}
+        contextStatus={error ? "Failed" : isLoading ? "Loading" : "Ready"}
+        usageLabel={`${usedToday} ${usedToday === 1 ? "scan" : "scans"} today`}
+      />
       <main className="mx-auto max-w-[1320px] px-5 pb-14 pt-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">
           <div>

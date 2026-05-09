@@ -10,6 +10,10 @@ import { useApp } from "../context/AppContext";
 
 interface HeaderProps {
   variant?: "landing" | "login" | "dashboard";
+  contextTitle?: string;
+  contextDetail?: string;
+  contextStatus?: string;
+  usageLabel?: string;
 }
 
 export function Logo({
@@ -27,10 +31,19 @@ export function Logo({
   );
 }
 
-export function Header({ variant = "landing" }: HeaderProps) {
+export function Header({
+  variant = "landing",
+  contextTitle = "Dashboard",
+  contextDetail,
+  contextStatus,
+  usageLabel,
+}: HeaderProps) {
   const navigate = useNavigate();
   const { isLoggedIn, user, logout } = useApp();
   const [scrollY, setScrollY] = useState(0);
+  const [openPanel, setOpenPanel] = useState<"help" | "notifications" | null>(
+    null,
+  );
 
   useEffect(() => {
     if (variant === "dashboard") return;
@@ -45,42 +58,101 @@ export function Header({ variant = "landing" }: HeaderProps) {
   }, [variant]);
 
   if (variant === "dashboard") {
+    const accountUsage =
+      usageLabel ??
+      `${user?.dailySubmissionCount ?? 0} ${
+        (user?.dailySubmissionCount ?? 0) === 1 ? "scan" : "scans"
+      } today`;
+    const planLabel = user?.plan ? user.plan.toUpperCase() : "FREE";
+    const statusTone = contextStatus?.toLowerCase().includes("fail")
+      ? "text-[#b32635]"
+      : contextStatus?.toLowerCase().includes("analyz")
+        ? "text-[#1f5cc4]"
+        : contextStatus?.toLowerCase().includes("draft")
+          ? "text-[#8a5200]"
+          : "text-[#17633f]";
+
     return (
       <header className="sticky top-0 z-20 border-b border-[#d8e0ec] bg-[#fbfcff]/88 backdrop-blur-xl">
         <div className="grid h-[72px] w-full grid-cols-[1fr_auto] items-center gap-4 px-6">
           <div className="hidden min-w-0 justify-start gap-3 text-[14px] font-semibold text-[#274169] md:flex">
-            <span className="text-[#0d1526]">Essay review</span>
-            <span className="text-[#94a3b8]">•</span>
-            <span>May 14, 2025</span>
-            <span className="text-[#94a3b8]">•</span>
-            <span className="flex items-center gap-1.5 text-[#17633f]">
-              <CheckCircledIcon className="h-4 w-4" /> Saved
+            <span className="max-w-[240px] truncate text-[#0d1526]">
+              {contextTitle}
             </span>
+            {contextDetail && (
+              <>
+                <span className="text-[#94a3b8]">•</span>
+                <span>{contextDetail}</span>
+              </>
+            )}
+            {contextStatus && (
+              <>
+                <span className="text-[#94a3b8]">•</span>
+                <span className={`flex items-center gap-1.5 ${statusTone}`}>
+                  {contextStatus === "Saved" && (
+                    <CheckCircledIcon className="h-4 w-4" />
+                  )}
+                  {contextStatus}
+                </span>
+              </>
+            )}
           </div>
           <div className="flex min-w-0 items-center justify-end gap-3 text-[#111827]">
             <div
-              className="hidden rounded-[10px] bg-[conic-gradient(#2563eb_0deg_176deg,#d8e3f2_176deg_360deg)] p-0.5 text-[14px] font-semibold text-[#274169] shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:block"
-              aria-label="2,450 of 5,000 credits remaining"
+              className="hidden rounded-[10px] bg-[conic-gradient(#2563eb_0deg_238deg,#d8e3f2_238deg_360deg)] p-0.5 text-[14px] font-semibold text-[#274169] shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:block"
+              aria-label={`${accountUsage}, ${planLabel} plan`}
             >
               <span className="block rounded-[8px] bg-white/95 px-[18px] py-[7px] shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
-                <span className="font-bold text-[#2563EB]">2,450 / 5,000</span>
-                <span className="ml-1 text-[#52627a]">credits</span>
+                <span className="font-bold text-[#2563EB]">{accountUsage}</span>
+                <span className="ml-1 text-[#52627a]">{planLabel}</span>
               </span>
             </div>
-            <button
-              type="button"
-              aria-label="Help"
-              className="veriai-icon-button hidden h-9 w-9 items-center justify-center rounded-[9px] text-[#274169] hover:bg-[#eef3f9] lg:flex"
-            >
-              <QuestionMarkCircledIcon className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              aria-label="Notifications"
-              className="veriai-icon-button hidden h-9 w-9 items-center justify-center rounded-[9px] text-[#274169] hover:bg-[#eef3f9] lg:flex"
-            >
-              <BellIcon className="h-5 w-5" />
-            </button>
+            <div className="relative hidden lg:block">
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenPanel((panel) => (panel === "help" ? null : "help"))
+                }
+                aria-label="Help"
+                aria-expanded={openPanel === "help"}
+                className="veriai-icon-button flex h-9 w-9 items-center justify-center rounded-[9px] text-[#274169] hover:bg-[#eef3f9]"
+              >
+                <QuestionMarkCircledIcon className="h-5 w-5" />
+              </button>
+              {openPanel === "help" && (
+                <div className="absolute right-0 top-11 z-30 w-[280px] rounded-[14px] border border-[#d8e0ec] bg-white p-4 text-left shadow-[0_22px_54px_rgba(31,45,71,0.16)]">
+                  <p className="text-[13px] font-semibold text-[#0d1526]">
+                    Dashboard help
+                  </p>
+                  <p className="mt-2 text-[12px] font-medium leading-5 text-[#52627a]">
+                    Paste text or upload a supported document, run analysis,
+                    then review the score, model signals, and highlighted
+                    evidence together.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="relative hidden lg:block">
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenPanel((panel) =>
+                    panel === "notifications" ? null : "notifications",
+                  )
+                }
+                aria-label="Notifications"
+                aria-expanded={openPanel === "notifications"}
+                className="veriai-icon-button flex h-9 w-9 items-center justify-center rounded-[9px] text-[#274169] hover:bg-[#eef3f9]"
+              >
+                <BellIcon className="h-5 w-5" />
+              </button>
+              {openPanel === "notifications" && (
+                <div
+                  className="absolute right-0 top-11 z-30 h-[180px] w-[280px] rounded-[14px] border border-[#d8e0ec] bg-white shadow-[0_22px_54px_rgba(31,45,71,0.16)]"
+                  aria-label="Notifications panel"
+                />
+              )}
+            </div>
             <div className="flex min-w-0 items-center gap-2 border-l border-[#d8e0ec] pl-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#edf4ff] text-[12px] font-bold text-[#193b8f]">
                 {user?.initials ?? "AK"}

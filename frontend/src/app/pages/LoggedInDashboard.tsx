@@ -21,6 +21,22 @@ interface ScanHistoryItem {
   results: ResultsData;
 }
 
+function formatHeaderDate(value?: string | null): string {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return "Today";
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function scanUsageLabel(count: number | undefined): string {
+  const value = count ?? 0;
+  return `${value} ${value === 1 ? "scan" : "scans"} today`;
+}
+
 function ScanDock({
   history,
   activeId,
@@ -131,6 +147,16 @@ export function LoggedInDashboard() {
   const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
   const [activeScanId, setActiveScanId] = useState<string | null>(null);
   const [inputResetKey, setInputResetKey] = useState(0);
+  const headerTitle = isAnalyzing
+    ? "Analysis in progress"
+    : results?.label || "Untitled scan";
+  const headerStatus = analysisError
+    ? "Failed"
+    : isAnalyzing
+      ? "Analyzing"
+      : results
+        ? "Saved"
+        : "Draft";
 
   const handleNewScan = () => {
     setResults(null);
@@ -218,7 +244,13 @@ export function LoggedInDashboard() {
         />
 
         <div className="min-w-0 overflow-hidden">
-          <Header variant="dashboard" />
+          <Header
+            variant="dashboard"
+            contextTitle={headerTitle}
+            contextDetail={formatHeaderDate(results?.submittedAt)}
+            contextStatus={headerStatus}
+            usageLabel={scanUsageLabel(user?.dailySubmissionCount)}
+          />
 
           <main className="h-[calc(100vh-72px)] overflow-hidden px-6 pt-[18px]">
             <div className="flex h-full min-h-0">
