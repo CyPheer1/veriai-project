@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import {
   AuthUserResponse,
+  createCheckoutSessionRequest,
   getErrorMessage,
   loginRequest,
   meRequest,
   registerRequest,
-  upgradeAccountRequest,
 } from "../services/api";
 
 interface AppUser {
@@ -233,9 +233,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAuthError(null);
 
     try {
-      const upgraded = await upgradeAccountRequest(token);
-      setAuthUser(upgraded);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(upgraded));
+      const checkout = await createCheckoutSessionRequest(token);
+      window.location.assign(checkout.url);
     } catch (error) {
       const message = getErrorMessage(error, "Unable to upgrade account.");
       setAuthError(message);

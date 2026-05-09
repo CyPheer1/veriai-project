@@ -1,5 +1,6 @@
 package com.example.backendjava.service;
 
+import com.example.backendjava.config.AppProperties;
 import com.example.backendjava.dto.auth.AuthResponse;
 import com.example.backendjava.dto.auth.AuthUserResponse;
 import com.example.backendjava.dto.auth.LoginRequest;
@@ -29,6 +30,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final QuotaService quotaService;
+    private final AppProperties appProperties;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -42,7 +44,7 @@ public class AuthService {
         User user = User.builder()
                 .email(email)
                 .password(passwordEncoder.encode(request.password()))
-                .plan(parsePlan(request.plan()))
+                .plan(UserPlan.FREE)
                 .dailySubmissionCount(0)
                 .lastSubmissionDate(null)
                 .createdAt(now)
@@ -80,6 +82,10 @@ public class AuthService {
 
     @Transactional
     public AuthUserResponse upgradeToPro(String email) {
+        if (!appProperties.getBilling().isDirectUpgradeEnabled()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Use billing checkout to upgrade account");
+        }
+
         User user = userRepository.findByEmailIgnoreCase(normalizeEmail(email))
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
         user.setPlan(UserPlan.PRO);
@@ -112,18 +118,6 @@ public class AuthService {
                 user.getLastSubmissionDate(),
                 user.getCreatedAt()
         );
-    }
-
-    private UserPlan parsePlan(String rawPlan) {
-        if (rawPlan == null || rawPlan.isBlank()) {
-            return UserPlan.FREE;
-        }
-
-        try {
-            return UserPlan.valueOf(rawPlan.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException ex) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Plan must be FREE or PRO");
-        }
     }
 
     private String normalizeEmail(String email) {

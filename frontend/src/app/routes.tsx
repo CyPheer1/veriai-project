@@ -5,6 +5,7 @@ import { SignupPage } from "./pages/SignupPage";
 import { GuestDashboard } from "./pages/GuestDashboard";
 import { LoggedInDashboard } from "./pages/LoggedInDashboard";
 import { ScanHistoryPage } from "./pages/ScanHistoryPage";
+import { BillingCancelPage, BillingSuccessPage } from "./pages/BillingStatusPage";
 
 function Root() {
   return (
@@ -32,6 +33,8 @@ export const router = createBrowserRouter([
       { path: "signup", Component: SignupPage },
       { path: "dashboard", Component: LoggedInDashboard },
       { path: "history", Component: ScanHistoryPage },
+      { path: "billing/success", Component: BillingSuccessPage },
+      { path: "billing/cancel", Component: BillingCancelPage },
     ],
   },
 ]);

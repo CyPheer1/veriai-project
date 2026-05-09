@@ -20,6 +20,10 @@ export interface AuthResponse {
   user: AuthUserResponse;
 }
 
+export interface CheckoutSessionResponse {
+  url: string;
+}
+
 export interface SubmissionAcceptedResponse {
   submissionId: string;
   status: string;
@@ -212,8 +216,8 @@ export async function meRequest(token: string): Promise<AuthUserResponse> {
   return requestJson<AuthUserResponse>("/api/v1/auth/me", { method: "GET" }, token);
 }
 
-export async function upgradeAccountRequest(token: string): Promise<AuthUserResponse> {
-  return requestJson<AuthUserResponse>("/api/v1/auth/me/upgrade", { method: "POST" }, token);
+export async function createCheckoutSessionRequest(token: string): Promise<CheckoutSessionResponse> {
+  return requestJson<CheckoutSessionResponse>("/api/v1/billing/checkout-session", { method: "POST" }, token);
 }
 
 export async function submitTextRequest(
