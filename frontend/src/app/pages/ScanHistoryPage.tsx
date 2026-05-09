@@ -205,8 +205,8 @@ export function ScanHistoryPage() {
           </p>
         )}
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-[360px_1fr]">
-          <div className="veriai-card-surface rounded-[16px] p-5">
+        <section className="mt-8 grid items-stretch gap-6 lg:grid-cols-[360px_1fr]">
+          <div className="veriai-card-surface flex flex-col rounded-[16px] p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-[15px] font-semibold text-[#0d1526]">
                 Recent scans
@@ -303,13 +303,13 @@ export function ScanHistoryPage() {
             )}
           </div>
 
-          <div className="min-h-[520px]">
+          <div className="flex h-full flex-col">
             {detailLoading && !selectedDetail ? (
               <div className="veriai-card-surface rounded-[16px] p-6 text-[13px] text-[#52627a]">
                 Loading scan details…
               </div>
             ) : selectedDetail ? (
-              <div className="space-y-5">
+              <div className="flex h-full flex-col gap-5">
                 <div className="veriai-card-surface rounded-[16px] p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -353,12 +353,14 @@ export function ScanHistoryPage() {
                 </div>
 
                 {results ? (
-                  <ResultsPanel
-                    data={results}
-                    isAnalyzing={selectedDetail.status === "PROCESSING"}
-                    onUpgrade={handleUpgrade}
-                    isUpgrading={isUpgrading}
-                  />
+                  <div className="min-h-0 flex-1">
+                    <ResultsPanel
+                      data={results}
+                      isAnalyzing={selectedDetail.status === "PROCESSING"}
+                      onUpgrade={handleUpgrade}
+                      isUpgrading={isUpgrading}
+                    />
+                  </div>
                 ) : (
                   <div className="veriai-card-surface rounded-[16px] p-6 text-[13px] text-[#52627a]">
                     {selectedDetail.status === "ERROR"
