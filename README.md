@@ -194,7 +194,9 @@ veriai-project/
 | `POSTGRES_DB/USER/PASSWORD` | veriai / veriai_user / veriai_dev_password | Accès DB |
 | `JWT_SECRET` | veriai-dev-jwt-secret-change-in-production | Signature JWT |
 | `JWT_EXPIRATION_SECONDS` | 86400 | 24 heures |
-| `FREE_PLAN_DAILY_LIMIT` | 3 | Quota FREE |
+| `FREE_PLAN_DAILY_CREDITS` | 3000 | Credits FREE par jour |
+| `FREE_PLAN_TEXT_WORD_LIMIT` | 1000 | Limite de mots par scan texte FREE |
+| `PREMIUM_MONTHLY_PRICE_USD` | 10 | Prix mensuel Premium affiché |
 | `HUGGINGFACE_MODEL_NAME` | mehddii/roberta-aigt-finetuning-v4 | Modèle principal |
 | `GPT2_MODEL_NAME` | gpt2-medium | Layer 3 |
 | `FULL_MODE_LAYER1/2/3_WEIGHT` | 0.6 / 0.2 / 0.2 | Pondération |

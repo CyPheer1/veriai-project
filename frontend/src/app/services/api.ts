@@ -3,6 +3,12 @@ export interface AuthUserResponse {
   email: string;
   plan: string;
   dailySubmissionCount: number;
+  dailyCreditLimit: number | null;
+  dailyCreditsUsed: number;
+  dailyCreditsRemaining: number | null;
+  creditResetDate: string;
+  textWordLimit: number | null;
+  premiumMonthlyPriceUsd: number;
   lastSubmissionDate: string | null;
   createdAt: string;
 }
@@ -54,6 +60,8 @@ export interface FrontendResultsResponse {
   segments: FrontendSegment[];
   chunks: FrontendChunkScore[];
   stats: FrontendStats;
+  fullReportAvailable: boolean;
+  accessLevel: "FREE" | "PREMIUM";
 }
 
 export interface SubmissionDetailResponse {

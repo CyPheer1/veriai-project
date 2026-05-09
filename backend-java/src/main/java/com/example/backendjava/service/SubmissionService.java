@@ -58,12 +58,13 @@ public class SubmissionService {
     @Transactional
     public SubmissionAcceptedResponse createTextSubmission(String email, TextAnalyzeRequest request) {
         User user = getUserForUpdate(email);
-        quotaService.consumeQuota(user);
 
         String text = normalizeText(request.text());
         if (text.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Text content is required");
         }
+
+        quotaService.consumeCredits(user, countWords(text));
 
         Submission submission = buildSubmission(user, SubmissionSourceType.TEXT, null, text);
         Submission saved = submissionRepository.save(submission);
@@ -90,7 +91,7 @@ public class SubmissionService {
         User user = getUserForUpdate(email);
         ExtractedContent extractedContent = fileExtractionService.extractText(file, user.getPlan());
 
-        quotaService.consumeQuota(user);
+        quotaService.consumeCredits(user, countWords(extractedContent.text()));
 
         Submission submission = buildSubmission(
                 user,

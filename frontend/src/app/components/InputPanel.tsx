@@ -24,6 +24,9 @@ interface InputPanelProps {
   isAnalyzing: boolean;
   errorMessage?: string | null;
   userPlan?: string | null;
+  dailyCreditsRemaining?: number | null;
+  textWordLimit?: number | null;
+  premiumMonthlyPriceUsd?: number;
   resetKey?: number;
 }
 
@@ -68,6 +71,9 @@ export function InputPanel({
   isAnalyzing,
   errorMessage = null,
   userPlan = null,
+  dailyCreditsRemaining = null,
+  textWordLimit = null,
+  premiumMonthlyPriceUsd = 10,
   resetKey = 0,
 }: InputPanelProps) {
   const [mode, setMode] = useState<"text" | "file">("text");
@@ -79,7 +85,13 @@ export function InputPanel({
   const wordCount = useMemo(() => countWords(text), [text]);
   const characterCount = text.length;
   const isPro = userPlan?.toUpperCase() === "PRO";
-  const canSubmitText = mode === "text" && text.trim().length > 0;
+  const exceedsFreeWordLimit = !isPro && textWordLimit != null && wordCount > textWordLimit;
+  const exceedsFreeCredits = !isPro && dailyCreditsRemaining != null && wordCount > dailyCreditsRemaining;
+  const canSubmitText =
+    mode === "text" &&
+    text.trim().length > 0 &&
+    !exceedsFreeWordLimit &&
+    !exceedsFreeCredits;
   const canSubmitFile = mode === "file" && Boolean(file) && isPro;
   const canExportDraft = mode === "text" && text.trim().length > 0;
 
@@ -117,11 +129,21 @@ export function InputPanel({
 
     if (mode === "file") {
       if (!isPro) {
-        setLocalError("File uploads are available on the PRO plan.");
+        setLocalError(`PDF and DOCX uploads are available on Premium ($${premiumMonthlyPriceUsd}/month).`);
         return;
       }
 
       if (file) void onAnalyze({ mode: "file", file });
+      return;
+    }
+
+    if (exceedsFreeWordLimit) {
+      setLocalError(`Free text scans are limited to ${textWordLimit?.toLocaleString()} words.`);
+      return;
+    }
+
+    if (exceedsFreeCredits) {
+      setLocalError(`This scan needs ${wordCount.toLocaleString()} credits, but you have ${dailyCreditsRemaining?.toLocaleString()} left today.`);
       return;
     }
 
@@ -224,6 +246,7 @@ export function InputPanel({
                   value={text}
                   onChange={(event) => {
                     setText(event.target.value);
+                    setLocalError(null);
                     onDraftChange?.();
                   }}
                   className="veriai-document-font min-h-[1180px] w-full resize-none bg-transparent px-[14%] py-[68px] text-[20px] font-medium leading-[1.82] tracking-[-0.012em] text-[#07112f] outline-none placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2563EB]"
@@ -244,7 +267,10 @@ export function InputPanel({
                 <div className={`flex min-w-0 items-center gap-2 whitespace-nowrap pr-3 text-[12px] font-semibold ${statusExpanded ? "opacity-100" : "opacity-0"}`}>
                   <span className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[#274169]" title="Words" aria-label={`${wordCount.toLocaleString()} words`}>
                     <ListBulletIcon className="h-3.5 w-3.5 text-[#64748b]" />
-                    <span>{wordCount.toLocaleString()}</span>
+                    <span>
+                      {wordCount.toLocaleString()}
+                      {!isPro && textWordLimit ? ` / ${textWordLimit.toLocaleString()}` : ""}
+                    </span>
                   </span>
                   <span className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[#274169]" title="Characters" aria-label={`${characterCount.toLocaleString()} characters`}>
                     <span className="text-[12px] font-semibold text-[#64748b]">#</span>
@@ -306,10 +332,10 @@ export function InputPanel({
             <UploadIcon className="h-11 w-11 text-[#1263F1]" />
             <span className="mt-5 max-w-full">
               <span className="block truncate text-[20px] font-semibold tracking-[-0.02em] text-[#0d1526]">
-                {file ? file.name : isPro ? "Drop a PDF or DOCX here" : "File upload requires PRO"}
+                {file ? file.name : isPro ? "Drop a PDF or DOCX here" : "File upload requires Premium"}
               </span>
               <span className="mt-3 block text-[14px] leading-6 text-[#52627a]">
-                {file ? formatFileSize(file.size) : isPro ? "Click anywhere in this area to choose a document. Up to 10MB." : "Upgrade to upload documents. Text analysis is still available."}
+                {file ? formatFileSize(file.size) : isPro ? "Click anywhere in this area to choose a document. Up to 10MB." : `Premium ($${premiumMonthlyPriceUsd}/month) unlocks PDF and DOCX analysis. Text analysis is still available.`}
               </span>
             </span>
           </button>

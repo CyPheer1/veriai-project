@@ -31,7 +31,9 @@ public class AppProperties {
     @Getter
     @Setter
     public static class Quota {
-        private int freeDailyLimit = 3;
+        private int freeDailyCredits = 3000;
+        private int freeTextWordLimit = 1000;
+        private int premiumMonthlyPriceUsd = 10;
     }
 
     @Getter

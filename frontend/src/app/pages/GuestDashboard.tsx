@@ -31,12 +31,12 @@ const trustFeatures = [
   },
   {
     title: "Transparent results",
-    text: "See detailed highlights and model-level insights.",
+    text: "See clear scoring, labels, and report depth based on your plan.",
     icon: ResultsBarsIcon,
   },
   {
-    title: "Institutional ready",
-    text: "FERPA-aligned and secure for campus-wide use.",
+    title: "Plan-ready workflow",
+    text: "Start with daily text credits or use Premium for unlimited document review.",
     icon: LockLineIcon,
   },
 ];
@@ -181,15 +181,15 @@ export function GuestDashboard() {
             <div className="veriai-card-surface veriai-reveal mt-7 grid max-w-[500px] grid-cols-3 overflow-hidden rounded-[12px] text-center">
               <div className="px-3 py-4">
                 <strong className="veriai-mono block text-[21px] text-[#0d1526]">
-                  3
+                  3k
                 </strong>
                 <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#64748b]">
-                  Free scans
+                  Daily credits
                 </span>
               </div>
               <div className="border-l border-[#d7dfed] px-3 py-4">
                 <strong className="veriai-mono block text-[21px] text-[#0d1526]">
-                  4
+                  3
                 </strong>
                 <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#64748b]">
                   Model layers
@@ -401,7 +401,7 @@ export function GuestDashboard() {
             {/* ── CTA strip ── */}
             <div className="mt-5 flex items-center justify-between rounded-[14px] border border-[#d7dfed] bg-white/80 px-6 py-4">
               <p className="text-[14px] text-[#52627a]">
-                3 free scans · no credit card required
+                Free includes 3,000 daily credits. Premium is $10/month.
               </p>
               <button
                 type="button"

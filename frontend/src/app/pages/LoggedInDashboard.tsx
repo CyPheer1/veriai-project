@@ -32,9 +32,14 @@ function formatHeaderDate(value?: string | null): string {
   });
 }
 
-function scanUsageLabel(count: number | undefined): string {
-  const value = count ?? 0;
-  return `${value} ${value === 1 ? "scan" : "scans"} today`;
+function scanUsageLabel(user: ReturnType<typeof useApp>["user"]): string {
+  if (!user || user.plan.toUpperCase() === "PRO") {
+    return "Unlimited credits";
+  }
+
+  const remaining = user.dailyCreditsRemaining ?? 0;
+  const limit = user.dailyCreditLimit ?? 3000;
+  return `${remaining.toLocaleString()} / ${limit.toLocaleString()} credits`;
 }
 
 function normalizeScanTitle(value: string): string {
@@ -205,6 +210,8 @@ export function LoggedInDashboard() {
           ? await submitTextRequest(token, payload.text)
           : await submitFileRequest(token, payload.file);
 
+      void refreshUser().catch(() => {});
+
       const detail = await pollSubmissionResult(token, accepted.submissionId);
 
       if (detail.status === "ERROR") {
@@ -271,7 +278,7 @@ export function LoggedInDashboard() {
             onContextTitleChange={handleTitleChange}
             contextDetail={formatHeaderDate(hasDraftChanges ? null : results?.submittedAt)}
             contextStatus={headerStatus}
-            usageLabel={scanUsageLabel(user?.dailySubmissionCount)}
+            usageLabel={scanUsageLabel(user)}
           />
 
           <main className="h-[calc(100vh-72px)] overflow-hidden px-6 pt-[18px]">
@@ -285,6 +292,9 @@ export function LoggedInDashboard() {
                     isAnalyzing={isAnalyzing}
                     errorMessage={analysisError}
                     userPlan={user?.plan}
+                    dailyCreditsRemaining={user?.dailyCreditsRemaining}
+                    textWordLimit={user?.textWordLimit}
+                    premiumMonthlyPriceUsd={user?.premiumMonthlyPriceUsd}
                     resetKey={inputResetKey}
                   />
                 </div>

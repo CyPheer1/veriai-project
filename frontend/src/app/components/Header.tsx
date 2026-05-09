@@ -62,9 +62,9 @@ export function Header({
   if (variant === "dashboard") {
     const accountUsage =
       usageLabel ??
-      `${user?.dailySubmissionCount ?? 0} ${
-        (user?.dailySubmissionCount ?? 0) === 1 ? "scan" : "scans"
-      } today`;
+      (user?.plan?.toUpperCase() === "PRO"
+        ? "Unlimited credits"
+        : `${(user?.dailyCreditsRemaining ?? 0).toLocaleString()} / ${(user?.dailyCreditLimit ?? 3000).toLocaleString()} credits`);
     const planLabel = user?.plan ? user.plan.toUpperCase() : "FREE";
     const statusTone = contextStatus?.toLowerCase().includes("fail")
       ? "text-[#b32635]"
@@ -141,9 +141,9 @@ export function Header({
                     Dashboard help
                   </p>
                   <p className="mt-2 text-[12px] font-medium leading-5 text-[#52627a]">
-                    Paste text or upload a supported document, run analysis,
-                    then review the score, model signals, and highlighted
-                    evidence together.
+                    Free accounts get 3,000 daily credits, one credit per word,
+                    and reset every day. Premium unlocks unlimited credits,
+                    PDF/DOCX upload, and the full ensemble report.
                   </p>
                 </div>
               )}

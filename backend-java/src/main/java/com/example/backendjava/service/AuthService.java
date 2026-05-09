@@ -28,6 +28,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final QuotaService quotaService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -93,6 +94,12 @@ public class AuthService {
                 user.getEmail(),
                 user.getPlan().name(),
                 user.getDailySubmissionCount(),
+                quotaService.getDailyCreditLimit(user),
+                quotaService.currentDailyCreditsUsed(user),
+                quotaService.getFreeCreditsRemaining(user),
+                quotaService.getNextResetDate(),
+                quotaService.getTextWordLimit(user),
+                quotaService.getPremiumMonthlyPriceUsd(),
                 user.getLastSubmissionDate(),
                 user.getCreatedAt()
         );

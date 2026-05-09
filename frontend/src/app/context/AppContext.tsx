@@ -14,6 +14,12 @@ interface AppUser {
   initials: string;
   plan: string;
   dailySubmissionCount: number;
+  dailyCreditLimit: number | null;
+  dailyCreditsUsed: number;
+  dailyCreditsRemaining: number | null;
+  creditResetDate: string;
+  textWordLimit: number | null;
+  premiumMonthlyPriceUsd: number;
 }
 
 interface AppContextType {
@@ -112,6 +118,12 @@ function mapUser(user: AuthUserResponse): AppUser {
     initials: toInitials(name, user.email),
     plan: user.plan,
     dailySubmissionCount: user.dailySubmissionCount,
+    dailyCreditLimit: user.dailyCreditLimit ?? null,
+    dailyCreditsUsed: user.dailyCreditsUsed ?? user.dailySubmissionCount ?? 0,
+    dailyCreditsRemaining: user.dailyCreditsRemaining ?? null,
+    creditResetDate: user.creditResetDate ?? new Date().toISOString().slice(0, 10),
+    textWordLimit: user.textWordLimit ?? null,
+    premiumMonthlyPriceUsd: user.premiumMonthlyPriceUsd ?? 10,
   };
 }
 

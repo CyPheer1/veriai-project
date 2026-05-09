@@ -88,7 +88,10 @@ export function ScanHistoryPage() {
   }, [token, selectedId]);
 
   const results = useMemo(() => (selectedDetail ? toResults(selectedDetail) : null), [selectedDetail]);
-  const usedToday = user?.dailySubmissionCount ?? 0;
+  const usageLabel =
+    user?.plan?.toUpperCase() === "PRO"
+      ? "Unlimited credits"
+      : `${(user?.dailyCreditsRemaining ?? 0).toLocaleString()} / ${(user?.dailyCreditLimit ?? 3000).toLocaleString()} credits`;
 
   return (
     <div className="veriai-academic-bg min-h-screen text-[#121a2b]">
@@ -97,7 +100,7 @@ export function ScanHistoryPage() {
         contextTitle="Scan history"
         contextDetail={`${items.length} ${items.length === 1 ? "submission" : "submissions"}`}
         contextStatus={error ? "Failed" : isLoading ? "Loading" : "Ready"}
-        usageLabel={`${usedToday} ${usedToday === 1 ? "scan" : "scans"} today`}
+        usageLabel={usageLabel}
       />
       <main className="mx-auto max-w-[1320px] px-5 pb-14 pt-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">

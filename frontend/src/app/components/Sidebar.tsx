@@ -8,8 +8,10 @@ import { useApp } from "../context/AppContext";
 export function Sidebar() {
   const { user } = useApp();
   const isPro = user?.plan?.toUpperCase() === "PRO";
-  const usedToday = user?.dailySubmissionCount ?? 0;
-  const remaining = isPro ? "Unlimited" : Math.max(0, 3 - usedToday).toString();
+  const remaining = isPro
+    ? "Unlimited"
+    : (user?.dailyCreditsRemaining ?? 0).toLocaleString();
+  const limit = (user?.dailyCreditLimit ?? 3000).toLocaleString();
 
   return (
     <aside className="grid gap-4 xl:sticky xl:top-[88px]">
@@ -30,7 +32,9 @@ export function Sidebar() {
           <div>
             <p className="text-[13px] font-semibold text-[#0d1526]">Current allowance</p>
             <p className="mt-1 text-[12px] leading-5 text-[#52627a]">
-              {remaining} {isPro ? "submissions available" : "FREE scans remaining"} today.
+              {isPro
+                ? "Unlimited credits available."
+                : `${remaining} of ${limit} credits remaining today.`}
             </p>
           </div>
         </div>

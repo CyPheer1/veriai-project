@@ -14,6 +14,7 @@ import com.example.backendjava.entity.ResultLabel;
 import com.example.backendjava.entity.Submission;
 import com.example.backendjava.entity.SubmissionChunk;
 import com.example.backendjava.entity.SubmissionResult;
+import com.example.backendjava.entity.UserPlan;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
@@ -125,6 +126,27 @@ public class SubmissionResponseMapper {
                 : aiScore >= 45 ? "Mixed Content"
                 : "Likely Human-Written";
 
+        boolean fullReportAvailable = submission.getUser() != null
+                && submission.getUser().getPlan() == UserPlan.PRO;
+
+        if (!fullReportAvailable) {
+            return new FrontendResultsResponse(
+                    aiScore,
+                    humanScore,
+                    confidence,
+                    label,
+                    "Layer 1 detector",
+                    submission.getOriginalText(),
+                    submission.getWordCount(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    new FrontendStatsResponse(0, 0, 0),
+                    false,
+                    "FREE"
+            );
+        }
+
         List<Map.Entry<String, Double>> sortedAttributions = modelAttribution.entrySet().stream()
                 .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
                 .toList();
@@ -163,7 +185,9 @@ public class SubmissionResponseMapper {
                 modelAttributionItems,
                 segments,
                 chunkScores,
-                stats
+                stats,
+                true,
+                "PREMIUM"
         );
     }
 

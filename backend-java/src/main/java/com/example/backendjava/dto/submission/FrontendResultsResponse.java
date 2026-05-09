@@ -13,6 +13,8 @@ public record FrontendResultsResponse(
         List<FrontendModelAttributionResponse> modelAttributions,
         List<FrontendSegmentResponse> segments,
         List<FrontendChunkScoreResponse> chunks,
-        FrontendStatsResponse stats
+        FrontendStatsResponse stats,
+        Boolean fullReportAvailable,
+        String accessLevel
 ) {
 }

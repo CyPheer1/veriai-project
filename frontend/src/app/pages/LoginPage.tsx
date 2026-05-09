@@ -217,7 +217,7 @@ export function LoginPage() {
               disabled={isLoading}
               className="veriai-pressable mt-3 h-[50px] w-full rounded-[10px] border border-[#cbd7ea] bg-white text-[15px] font-semibold text-[#172033] hover:bg-[#f8fbff] disabled:opacity-60"
             >
-              Create free account
+              Create account
             </button>
 
             <p className="mt-8 text-center text-[13px] leading-6 text-[#40516d]">

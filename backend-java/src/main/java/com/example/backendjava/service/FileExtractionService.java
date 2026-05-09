@@ -24,7 +24,7 @@ public class FileExtractionService {
 
     public ExtractedContent extractText(MultipartFile file, UserPlan userPlan) {
         if (userPlan != UserPlan.PRO) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "File upload is only available for PRO plan users");
+            throw new ApiException(HttpStatus.FORBIDDEN, "File upload is only available for Premium users");
         }
 
         if (file == null || file.isEmpty()) {

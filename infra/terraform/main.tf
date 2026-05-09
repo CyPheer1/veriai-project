@@ -204,8 +204,16 @@ resource "google_cloud_run_v2_service" "backend" {
         value = local.cors_allowed_origins
       }
       env {
-        name  = "FREE_PLAN_DAILY_LIMIT"
-        value = "3"
+        name  = "FREE_PLAN_DAILY_CREDITS"
+        value = "3000"
+      }
+      env {
+        name  = "FREE_PLAN_TEXT_WORD_LIMIT"
+        value = "1000"
+      }
+      env {
+        name  = "PREMIUM_MONTHLY_PRICE_USD"
+        value = "10"
       }
       env {
         name  = "AI_SERVICE_BASE_URL"

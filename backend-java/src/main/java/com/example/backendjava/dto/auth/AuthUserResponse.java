@@ -9,6 +9,12 @@ public record AuthUserResponse(
         String email,
         String plan,
         Integer dailySubmissionCount,
+        Integer dailyCreditLimit,
+        Integer dailyCreditsUsed,
+        Integer dailyCreditsRemaining,
+        LocalDate creditResetDate,
+        Integer textWordLimit,
+        Integer premiumMonthlyPriceUsd,
         LocalDate lastSubmissionDate,
         Instant createdAt
 ) {
