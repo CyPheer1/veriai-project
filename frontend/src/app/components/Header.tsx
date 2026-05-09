@@ -11,6 +11,7 @@ import { useApp } from "../context/AppContext";
 interface HeaderProps {
   variant?: "landing" | "login" | "dashboard";
   contextTitle?: string;
+  onContextTitleChange?: (title: string) => void;
   contextDetail?: string;
   contextStatus?: string;
   usageLabel?: string;
@@ -34,6 +35,7 @@ export function Logo({
 export function Header({
   variant = "landing",
   contextTitle = "Dashboard",
+  onContextTitleChange,
   contextDetail,
   contextStatus,
   usageLabel,
@@ -76,9 +78,23 @@ export function Header({
       <header className="sticky top-0 z-20 border-b border-[#d8e0ec] bg-[#fbfcff]/88 backdrop-blur-xl">
         <div className="grid h-[72px] w-full grid-cols-[1fr_auto] items-center gap-4 px-6">
           <div className="hidden min-w-0 justify-start gap-3 text-[14px] font-semibold text-[#274169] md:flex">
-            <span className="max-w-[240px] truncate text-[#0d1526]">
-              {contextTitle}
-            </span>
+            {onContextTitleChange ? (
+              <input
+                value={contextTitle}
+                onChange={(event) => onContextTitleChange(event.target.value)}
+                onBlur={(event) => {
+                  if (!event.target.value.trim()) {
+                    onContextTitleChange("Untitled scan");
+                  }
+                }}
+                aria-label="Scan title"
+                className="max-w-[240px] truncate rounded-[7px] border border-transparent bg-transparent px-1.5 py-1 text-[#0d1526] outline-none transition-colors hover:border-[#d8e0ec] hover:bg-white/70 focus:border-[#1263F1] focus:bg-white focus:ring-2 focus:ring-[#1263F1]/10"
+              />
+            ) : (
+              <span className="max-w-[240px] truncate text-[#0d1526]">
+                {contextTitle}
+              </span>
+            )}
             {contextDetail && (
               <>
                 <span className="text-[#94a3b8]">•</span>

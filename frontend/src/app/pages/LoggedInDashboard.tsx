@@ -37,6 +37,11 @@ function scanUsageLabel(count: number | undefined): string {
   return `${value} ${value === 1 ? "scan" : "scans"} today`;
 }
 
+function normalizeScanTitle(value: string): string {
+  const trimmed = value.trim();
+  return trimmed || "Untitled scan";
+}
+
 function ScanDock({
   history,
   activeId,
@@ -147,14 +152,14 @@ export function LoggedInDashboard() {
   const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
   const [activeScanId, setActiveScanId] = useState<string | null>(null);
   const [inputResetKey, setInputResetKey] = useState(0);
-  const headerTitle = isAnalyzing
-    ? "Analysis in progress"
-    : results?.label || "Untitled scan";
+  const [documentTitle, setDocumentTitle] = useState("Untitled scan");
+  const [hasDraftChanges, setHasDraftChanges] = useState(false);
+  const headerTitle = documentTitle;
   const headerStatus = analysisError
     ? "Failed"
     : isAnalyzing
       ? "Analyzing"
-      : results
+      : results && !hasDraftChanges
         ? "Saved"
         : "Draft";
 
@@ -162,6 +167,8 @@ export function LoggedInDashboard() {
     setResults(null);
     setAnalysisError(null);
     setActiveScanId(null);
+    setDocumentTitle("Untitled scan");
+    setHasDraftChanges(false);
     setInputResetKey((value) => value + 1);
   };
 
@@ -169,6 +176,18 @@ export function LoggedInDashboard() {
     setResults(item.results);
     setAnalysisError(null);
     setActiveScanId(item.id);
+    setDocumentTitle(item.title);
+    setHasDraftChanges(false);
+  };
+
+  const handleTitleChange = (title: string) => {
+    setDocumentTitle(title);
+    setHasDraftChanges(true);
+  };
+
+  const handleDraftChange = () => {
+    setAnalysisError(null);
+    setHasDraftChanges(true);
   };
 
   const handleAnalyze = async (payload: AnalyzePayload) => {
@@ -206,7 +225,7 @@ export function LoggedInDashboard() {
       };
       const historyItem: ScanHistoryItem = {
         id: accepted.submissionId,
-        title: nextResults.label || "Analysis",
+        title: normalizeScanTitle(documentTitle),
         score: Math.round(nextResults.aiScore),
         model: nextResults.model,
         timestamp:
@@ -216,6 +235,8 @@ export function LoggedInDashboard() {
 
       setResults(nextResults);
       setActiveScanId(historyItem.id);
+      setDocumentTitle(historyItem.title);
+      setHasDraftChanges(false);
       setScanHistory((items) =>
         [
           historyItem,
@@ -247,7 +268,8 @@ export function LoggedInDashboard() {
           <Header
             variant="dashboard"
             contextTitle={headerTitle}
-            contextDetail={formatHeaderDate(results?.submittedAt)}
+            onContextTitleChange={handleTitleChange}
+            contextDetail={formatHeaderDate(hasDraftChanges ? null : results?.submittedAt)}
             contextStatus={headerStatus}
             usageLabel={scanUsageLabel(user?.dailySubmissionCount)}
           />
@@ -258,6 +280,7 @@ export function LoggedInDashboard() {
                 <div className="min-h-0 min-w-0">
                   <InputPanel
                     onAnalyze={handleAnalyze}
+                    onDraftChange={handleDraftChange}
                     isAnalyzing={isAnalyzing}
                     errorMessage={analysisError}
                     userPlan={user?.plan}

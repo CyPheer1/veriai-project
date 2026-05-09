@@ -19,6 +19,7 @@ export type AnalyzePayload =
 
 interface InputPanelProps {
   onAnalyze: (payload: AnalyzePayload) => void | Promise<void>;
+  onDraftChange?: () => void;
   isAnalyzing: boolean;
   errorMessage?: string | null;
   userPlan?: string | null;
@@ -76,6 +77,7 @@ function ToolbarButton({ children, label }: { children: React.ReactNode; label: 
 
 export function InputPanel({
   onAnalyze,
+  onDraftChange,
   isAnalyzing,
   errorMessage = null,
   userPlan = null,
@@ -122,6 +124,7 @@ export function InputPanel({
 
     setFile(selectedFile);
     setMode("file");
+    onDraftChange?.();
   };
 
   const submit = () => {
@@ -225,6 +228,7 @@ export function InputPanel({
                   onChange={(event) => {
                     setText(event.target.value);
                     setHasEdited(true);
+                    onDraftChange?.();
                   }}
                   className={`veriai-document-font min-h-[1180px] w-full resize-none bg-transparent px-[14%] py-[68px] text-[20px] font-medium leading-[1.82] tracking-[-0.012em] text-[#07112f] outline-none placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2563EB] ${showHighlights ? "text-transparent caret-[#0d1526]" : ""}`}
                   placeholder="Paste academic text here..."
@@ -267,6 +271,7 @@ export function InputPanel({
                       setFile(null);
                       setLocalError(null);
                       setHasEdited(true);
+                      onDraftChange?.();
                     }}
                     disabled={isAnalyzing}
                     className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:opacity-60"
