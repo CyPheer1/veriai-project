@@ -180,7 +180,9 @@ export function ResultsPanel({
   const models = display.modelAttributions ?? [];
   const chunks = display.chunks ?? [];
   const fullReportAvailable = display.fullReportAvailable !== false;
-  const shownModels = fullReportAvailable ? models : previewData.modelAttributions ?? [];
+  const shownModels = fullReportAvailable
+    ? models
+    : (previewData.modelAttributions ?? []);
   const shownChunks = fullReportAvailable ? chunks : previewData.chunks;
   const primaryModel = models[0]?.name ?? display.model;
   const submittedDate = display.submittedAt
@@ -311,24 +313,6 @@ export function ResultsPanel({
       </div>
     </div>
   );
-  const lockedOverlay = (title: string) =>
-    !fullReportAvailable ? (
-      <div className="absolute inset-0 flex items-center justify-center bg-white/34">
-        <div className="rounded-[10px] border border-[#cbd7ea] bg-white px-4 py-3 text-center shadow-[0_16px_34px_rgba(31,45,71,0.14)]">
-          <p className="text-[13px] font-semibold text-[#07112f]">{title}</p>
-          {onUpgrade && (
-            <button
-              type="button"
-              onClick={onUpgrade}
-              disabled={isUpgrading}
-              className="mt-2 h-8 rounded-[8px] bg-[#1263F1] px-3 text-[12px] font-bold text-white hover:bg-[#0d54d5] disabled:opacity-60"
-            >
-              {isUpgrading ? "Upgrading..." : "Upgrade"}
-            </button>
-          )}
-        </div>
-      </div>
-    ) : null;
 
   if (activeTab === "report" && !fullReportAvailable) {
     return (
@@ -576,11 +560,13 @@ export function ResultsPanel({
   }
 
   return (
-    <div className={`grid h-full min-h-0 overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] ${
-      fullReportAvailable
-        ? "grid-rows-[238px_226px_178px_minmax(198px,1fr)]"
-        : "grid-rows-[238px_226px_178px_minmax(198px,1fr)]"
-    }`}>
+    <div
+      className={`relative grid h-full min-h-0 overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] ${
+        fullReportAvailable
+          ? "grid-rows-[238px_226px_178px_minmax(198px,1fr)]"
+          : "grid-rows-[238px_226px_178px_minmax(198px,1fr)]"
+      }`}
+    >
       <section className="min-h-0 overflow-hidden border-b border-[#d7dfed]">
         {tabHeader}
 
@@ -617,7 +603,9 @@ export function ResultsPanel({
             ranked by confidence
           </span>
         </div>
-        <div className={`grid grid-cols-2 content-stretch gap-2.5 ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}>
+        <div
+          className={`grid grid-cols-2 content-stretch gap-2.5 ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
+        >
           {shownModels.slice(0, 4).map((model) => {
             const modelScore = clampScore(model.score);
             const scoreColor =
@@ -648,7 +636,6 @@ export function ResultsPanel({
             );
           })}
         </div>
-        {lockedOverlay("Attribution is Premium")}
       </section>
 
       <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
@@ -661,7 +648,9 @@ export function ResultsPanel({
             24 sentences
           </span>
         </div>
-        <div className={`grid content-stretch gap-[9px] ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}>
+        <div
+          className={`grid content-stretch gap-[9px] ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
+        >
           {[
             ["human", "Likely human-written", "12 sentences"],
             ["mixed", "Uncertain", "5 sentences"],
@@ -685,7 +674,6 @@ export function ResultsPanel({
             );
           })}
         </div>
-        {lockedOverlay("Sentence evidence is Premium")}
       </section>
 
       <section className="relative grid min-h-0 grid-rows-[auto_1fr] px-[22px] pb-[14px] pt-4">
@@ -698,7 +686,9 @@ export function ResultsPanel({
             signal mix
           </span>
         </div>
-        <div className={`grid min-h-0 grid-cols-3 content-stretch gap-2.5 ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}>
+        <div
+          className={`grid min-h-0 grid-cols-3 content-stretch gap-2.5 ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
+        >
           {shownChunks.slice(0, 3).map((chunk, index) => {
             const value = clampScore(chunk.score);
             return (
@@ -721,8 +711,32 @@ export function ResultsPanel({
             );
           })}
         </div>
-        {lockedOverlay("Full ensemble is Premium")}
       </section>
+      {!fullReportAvailable && (
+        <div
+          className="absolute inset-x-0 bottom-0 flex items-center justify-center"
+          style={{ top: "238px" }}
+        >
+          <div className="rounded-[14px] border border-[#cbd7ea] bg-white px-7 py-6 text-center shadow-[0_22px_54px_rgba(31,45,71,0.16)]">
+            <p className="text-[16px] font-semibold text-[#07112f]">
+              Unlock the full report
+            </p>
+            <p className="mt-2 max-w-[28ch] text-[13px] font-medium leading-6 text-[#52627a]">
+              Attribution, sentence evidence, and analysis layers are Premium.
+            </p>
+            {onUpgrade && (
+              <button
+                type="button"
+                onClick={onUpgrade}
+                disabled={isUpgrading}
+                className="veriai-pressable mt-4 h-10 rounded-[9px] bg-[#1263F1] px-6 text-[13px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60"
+              >
+                {isUpgrading ? "Upgrading..." : "Upgrade account"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
