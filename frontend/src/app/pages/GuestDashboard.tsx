@@ -507,7 +507,7 @@ export function GuestDashboard() {
             </div>
 
             <div className="mt-8 grid gap-4 lg:grid-cols-2">
-              <article className="flex flex-col rounded-[16px] border border-[#d7dfed] bg-white/86 p-8 shadow-[0_18px_46px_rgba(31,45,71,0.08)]">
+              <article className="flex flex-col rounded-[16px] border border-[#d7dfed] bg-white/86 p-8 shadow-[0_18px_46px_rgba(31,45,71,0.08)] min-h-[460px]">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-[22px] font-semibold tracking-[-0.025em] text-[#0d1526]">
@@ -539,7 +539,7 @@ export function GuestDashboard() {
                 </ul>
               </article>
 
-              <article className="flex flex-col rounded-[16px] border border-[#9bb8f7] bg-[#f8fbff] p-8 shadow-[0_22px_56px_rgba(31,92,196,0.14)]">
+              <article className="flex flex-col rounded-[16px] border border-[#9bb8f7] bg-[#f8fbff] p-8 shadow-[0_22px_56px_rgba(31,92,196,0.14)] min-h-[460px]">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-[22px] font-semibold tracking-[-0.025em] text-[#0d1526]">
@@ -571,14 +571,6 @@ export function GuestDashboard() {
                 </ul>
               </article>
             </div>
-
-            <button
-              type="button"
-              onClick={() => navigate("/signup")}
-              className="veriai-pressable mt-4 h-14 w-full rounded-[12px] bg-[#1263F1] text-[16px] font-bold text-white shadow-[0_14px_32px_-16px_rgba(18,99,241,0.9)] hover:bg-[#0d54d5]"
-            >
-              Create your account — start free
-            </button>
           </div>
         </section>
 
