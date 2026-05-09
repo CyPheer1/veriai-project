@@ -88,7 +88,7 @@ export function Header({
                   }
                 }}
                 aria-label="Scan title"
-                className="max-w-[240px] truncate rounded-[7px] border border-transparent bg-transparent px-1.5 py-1 text-[#0d1526] outline-none transition-colors hover:border-[#d8e0ec] hover:bg-white/70 focus:border-[#1263F1] focus:bg-white focus:ring-2 focus:ring-[#1263F1]/10"
+                className="w-[104px] rounded-[7px] border border-transparent bg-transparent px-1.5 py-1 text-[#0d1526] outline-none transition-colors hover:border-[#d8e0ec] hover:bg-white/70 focus:border-[#1263F1] focus:bg-white focus:ring-2 focus:ring-[#1263F1]/10"
               />
             ) : (
               <span className="max-w-[240px] truncate text-[#0d1526]">
