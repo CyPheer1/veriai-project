@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import type { FormEvent, ReactNode } from "react";
-import { useNavigate } from "react-router";
 import {
   CheckCircledIcon,
   EnvelopeClosedIcon,
@@ -44,7 +43,9 @@ export function SignupPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -52,9 +53,15 @@ export function SignupPage() {
     event.preventDefault();
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
 
-    if (!trimmedEmail || !trimmedPassword) {
-      setFormError("Institutional email and password are required.");
+    if (!trimmedEmail || !trimmedPassword || !trimmedConfirmPassword) {
+      setFormError("Email, password, and confirmation are required.");
+      return;
+    }
+
+    if (trimmedPassword !== trimmedConfirmPassword) {
+      setFormError("Passwords do not match.");
       return;
     }
 
@@ -108,7 +115,7 @@ export function SignupPage() {
                 <Feature
                   icon={<ShieldCheckIcon className="h-5 w-5" />}
                   title="Secure by default"
-                  text="Authentication stays tied to your institutional email with encrypted session storage."
+                  text="Authentication keeps access protected with encrypted session storage."
                 />
                 <Feature
                   icon={<TimerIcon className="h-5 w-5" />}
@@ -146,18 +153,18 @@ export function SignupPage() {
               Start with a free account
             </h2>
             <p className="mt-3 max-w-[48ch] text-[14px] leading-6 text-[#40516d]">
-              Use your institutional email. We will set up a reviewer workspace
-              in seconds.
+              Use any email address. We will set up a reviewer workspace in
+              seconds.
             </p>
 
             <label className="mt-8 block text-[14px] font-semibold text-[#0F172A]">
-              Institutional email
+              Email
               <div className="mt-3 flex h-[56px] items-center gap-4 rounded-[10px] border border-[#cbd7ea] bg-white px-4 transition-colors focus-within:border-[#1f5cc4] focus-within:ring-4 focus-within:ring-[#1f5cc4]/10">
                 <EnvelopeClosedIcon className="h-5 w-5 text-[#40516d]" />
                 <input
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@university.edu"
+                  placeholder="you@example.com"
                   type="email"
                   autoComplete="email"
                   required
@@ -186,6 +193,34 @@ export function SignupPage() {
                   className="veriai-icon-button flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] text-[#40516d] hover:bg-[#f1f5f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5cc4]"
                 >
                   {showPassword ? (
+                    <EyeClosedIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeOpenIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </label>
+
+            <label className="mt-6 block text-[14px] font-semibold text-[#0F172A]">
+              Confirm password
+              <div className="mt-3 flex h-[56px] items-center gap-4 rounded-[10px] border border-[#cbd7ea] bg-white px-4 transition-colors focus-within:border-[#1f5cc4] focus-within:ring-4 focus-within:ring-[#1f5cc4]/10">
+                <LockClosedIcon className="h-5 w-5 text-[#40516d]" />
+                <input
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm your password"
+                  autoComplete="new-password"
+                  required
+                  className="w-full bg-transparent text-[15px] text-[#0F172A] outline-none placeholder:text-[#94a3b8]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((value) => !value)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  className="veriai-icon-button flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] text-[#40516d] hover:bg-[#f1f5f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5cc4]"
+                >
+                  {showConfirmPassword ? (
                     <EyeClosedIcon className="h-5 w-5" />
                   ) : (
                     <EyeOpenIcon className="h-5 w-5" />

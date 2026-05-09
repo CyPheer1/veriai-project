@@ -52,7 +52,7 @@ export function LoginPage() {
     const trimmedPassword = password.trim();
 
     if (!trimmedEmail || !trimmedPassword) {
-      setFormError("Institutional email and password are required.");
+      setFormError("Email and password are required.");
       return;
     }
 
@@ -126,7 +126,7 @@ export function LoginPage() {
                 </p>
                 <p className="mt-3 text-[14px] leading-6 text-[#40516d]">
                   Data is encrypted, access is controlled, and review activity
-                  stays tied to your academic account.
+                  stays tied to your VeriAI account.
                 </p>
               </div>
             </div>
@@ -148,13 +148,13 @@ export function LoginPage() {
             </p>
 
             <label className="mt-8 block text-[14px] font-semibold text-[#0F172A]">
-              Institutional email
+              Email
               <div className="mt-3 flex h-[56px] items-center gap-4 rounded-[10px] border border-[#cbd7ea] bg-white px-4 transition-colors focus-within:border-[#1f5cc4] focus-within:ring-4 focus-within:ring-[#1f5cc4]/10">
                 <EnvelopeClosedIcon className="h-5 w-5 text-[#40516d]" />
                 <input
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@university.edu"
+                  placeholder="you@example.com"
                   type="email"
                   autoComplete="email"
                   required
