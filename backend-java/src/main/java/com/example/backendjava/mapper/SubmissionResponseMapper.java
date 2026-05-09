@@ -129,6 +129,10 @@ public class SubmissionResponseMapper {
         boolean fullReportAvailable = submission.getUser() != null
                 && submission.getUser().getPlan() == UserPlan.PRO;
 
+        int layer1 = result.getLayer1Score() != null ? toPercent(result.getLayer1Score()) : 0;
+        int layer2 = result.getLayer2Score() != null ? toPercent(result.getLayer2Score()) : 0;
+        int layer3 = result.getLayer3Score() != null ? toPercent(result.getLayer3Score()) : 0;
+
         if (!fullReportAvailable) {
             return new FrontendResultsResponse(
                     aiScore,
@@ -143,7 +147,10 @@ public class SubmissionResponseMapper {
                     List.of(),
                     new FrontendStatsResponse(0, 0, 0),
                     false,
-                    "FREE"
+                    "FREE",
+                    layer1,
+                    0,
+                    0
             );
         }
 
@@ -187,7 +194,10 @@ public class SubmissionResponseMapper {
                 chunkScores,
                 stats,
                 true,
-                "PREMIUM"
+                "PREMIUM",
+                layer1,
+                layer2,
+                layer3
         );
     }
 

@@ -26,6 +26,9 @@ export interface ResultsData {
   stats: { analyzed: number; flagged: number; clean: number };
   fullReportAvailable?: boolean;
   accessLevel?: "FREE" | "PREMIUM";
+  layer1Score?: number;
+  layer2Score?: number;
+  layer3Score?: number;
 }
 
 const previewData: ResultsData = {
@@ -42,13 +45,37 @@ const previewData: ResultsData = {
     { name: "Gemini 1.5", score: 91 },
     { name: "Llama 3", score: 86 },
   ],
-  chunks: [
-    { text: "RoBERTa Classifier", score: 60 },
-    { text: "Stylistic Analysis", score: 20 },
-    { text: "Statistical Analysis", score: 20 },
-  ],
+  chunks: [],
   stats: { analyzed: 36, flagged: 18, clean: 18 },
-  segments: [],
+  layer1Score: 60,
+  layer2Score: 25,
+  layer3Score: 15,
+  segments: [
+    {
+      text: "The methodology section follows standard academic structure.",
+      isAI: false,
+    },
+    {
+      text: "Background context is grounded in cited literature.",
+      isAI: false,
+    },
+    {
+      text: "Theoretical framing references established frameworks accurately.",
+      isAI: false,
+    },
+    {
+      text: "The analysis presents insights with notable AI-like fluency.",
+      isAI: true,
+    },
+    {
+      text: "Conclusions offer novel framing that mirrors AI generation patterns.",
+      isAI: true,
+    },
+    {
+      text: "The discussion synthesises points in a structured, predictable manner.",
+      isAI: true,
+    },
+  ],
   fullReportAvailable: true,
   accessLevel: "PREMIUM",
 };
@@ -130,6 +157,9 @@ export function ResultsPanel({
     interpretation: true,
   });
   const [reportStep, setReportStep] = useState(0);
+  const [expandedHighlight, setExpandedHighlight] = useState<
+    "human" | "ai" | null
+  >(null);
 
   if (!data && !isAnalyzing) {
     return (
@@ -161,10 +191,10 @@ export function ResultsPanel({
     );
   }
 
-  if (!data && isAnalyzing) {
+  if (isAnalyzing) {
     return (
       <div className="flex h-full flex-col items-center justify-center rounded-[14px] border border-[#d7dfed] bg-white/70 px-8 text-center">
-        <div className="h-12 w-12 rounded-full border-[3px] border-[#d8e3f2] border-t-[#1263F1]" />
+        <div className="h-12 w-12 animate-spin rounded-full border-[3px] border-[#d8e3f2] border-t-[#1263F1]" />
         <h3 className="mt-5 text-[17px] font-semibold text-[#0d1526]">
           Analyzing text
         </h3>
@@ -184,6 +214,35 @@ export function ResultsPanel({
     ? models
     : (previewData.modelAttributions ?? []);
   const shownChunks = fullReportAvailable ? chunks : previewData.chunks;
+  const analysisLayers = [
+    {
+      label: "RoBERTa Classifier",
+      score: fullReportAvailable
+        ? (display.layer1Score ?? 0)
+        : (previewData.layer1Score ?? 60),
+      tone: "ai" as const,
+    },
+    {
+      label: "Stylistic Analysis",
+      score: fullReportAvailable
+        ? (display.layer2Score ?? 0)
+        : (previewData.layer2Score ?? 25),
+      tone: "mixed" as const,
+    },
+    {
+      label: "Statistical Analysis",
+      score: fullReportAvailable
+        ? (display.layer3Score ?? 0)
+        : (previewData.layer3Score ?? 15),
+      tone: "human" as const,
+    },
+  ];
+  const rawSegments = display.segments ?? [];
+  const shownSegments = fullReportAvailable
+    ? rawSegments
+    : (previewData.segments ?? []);
+  const humanSegments = shownSegments.filter((s) => !s.isAI);
+  const aiSegments = shownSegments.filter((s) => s.isAI);
   const primaryModel = models[0]?.name ?? display.model;
   const submittedDate = display.submittedAt
     ? new Date(display.submittedAt).toLocaleDateString(undefined, {
@@ -645,31 +704,73 @@ export function ResultsPanel({
             <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
           </h2>
           <span className="text-[12px] font-medium text-[#64748b]">
-            24 sentences
+            {humanSegments.length + aiSegments.length}{" "}
+            {humanSegments.length + aiSegments.length === 1
+              ? "sentence"
+              : "sentences"}
           </span>
         </div>
         <div
           className={`grid content-stretch gap-[9px] ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
         >
           {[
-            ["human", "Likely human-written", "12 sentences"],
-            ["mixed", "Uncertain", "5 sentences"],
-            ["ai", "Likely AI-generated", "7 sentences"],
-          ].map(([toneValue, label, count]) => {
-            const meta = toneMeta(toneValue as "human" | "mixed" | "ai");
+            {
+              tone: "human" as const,
+              label: "Likely human-written",
+              segs: humanSegments,
+            },
+            {
+              tone: "ai" as const,
+              label: "Likely AI-generated",
+              segs: aiSegments,
+            },
+          ].map(({ tone, label, segs }) => {
+            const meta = toneMeta(tone);
+            const isOpen = expandedHighlight === tone;
             return (
               <div
-                key={label}
-                className="veriai-highlight-row grid grid-cols-[18px_1fr_auto_18px] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5"
+                key={tone}
+                className="overflow-hidden rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70"
               >
-                <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
-                <span className="text-[14px] font-medium text-[#07112f]">
-                  {label}
-                </span>
-                <span className="text-[12px] font-medium text-[#274169]">
-                  {count}
-                </span>
-                <span className="text-[#07112f]">⌄</span>
+                <button
+                  type="button"
+                  onClick={() => setExpandedHighlight(isOpen ? null : tone)}
+                  className="veriai-highlight-row grid w-full grid-cols-[18px_1fr_auto_18px] items-center gap-3 px-3.5 py-2.5 text-left"
+                >
+                  <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
+                  <span className="text-[14px] font-medium text-[#07112f]">
+                    {label}
+                  </span>
+                  <span className="text-[12px] font-medium text-[#274169]">
+                    {segs.length} {segs.length === 1 ? "sentence" : "sentences"}
+                  </span>
+                  <span
+                    className={`inline-block text-[#07112f] transition-transform duration-150 ${isOpen ? "rotate-180" : ""}`}
+                  >
+                    ⌄
+                  </span>
+                </button>
+                {isOpen && segs.length > 0 && (
+                  <div className="space-y-1.5 border-t border-[#d7dfed] px-3.5 pb-3 pt-2">
+                    {segs.map((seg, i) => (
+                      <p
+                        key={i}
+                        className={`text-[13px] leading-6 ${
+                          tone === "ai" ? "text-[#7a1c24]" : "text-[#1a4a30]"
+                        }`}
+                      >
+                        {seg.text}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                {isOpen && segs.length === 0 && (
+                  <div className="border-t border-[#d7dfed] px-3.5 pb-3 pt-2">
+                    <p className="text-[13px] text-[#64748b]">
+                      No sentences in this category.
+                    </p>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -689,24 +790,22 @@ export function ResultsPanel({
         <div
           className={`grid min-h-0 grid-cols-3 content-stretch gap-2.5 ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
         >
-          {shownChunks.slice(0, 3).map((chunk, index) => {
-            const value = clampScore(chunk.score);
+          {analysisLayers.map((layer) => {
+            const value = clampScore(layer.score);
             return (
               <article
-                key={`${chunk.text}-${index}`}
+                key={layer.label}
                 className="flex min-h-0 flex-col justify-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
               >
                 <div className="min-w-0">
                   <h3 className="truncate text-[12px] font-semibold text-[#07112f]">
-                    {chunk.text}
+                    {layer.label}
                   </h3>
                   <strong className="veriai-mono mt-2 block text-[22px] font-semibold leading-none text-[#1263F1]">
                     {value}%
                   </strong>
                 </div>
-                <MiniBars
-                  tone={index === 0 ? "human" : index === 1 ? "mixed" : "ai"}
-                />
+                <MiniBars tone={layer.tone} />
               </article>
             );
           })}

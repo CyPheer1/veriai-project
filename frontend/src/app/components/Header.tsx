@@ -68,6 +68,12 @@ export function Header({
         : `${(user?.dailyCreditsRemaining ?? 0).toLocaleString()} / ${(user?.dailyCreditLimit ?? 3000).toLocaleString()} credits`);
     const planLabel = user?.plan ? user.plan.toUpperCase() : "FREE";
     const isPro = user?.plan?.toUpperCase() === "PRO";
+    const creditRemaining = user?.dailyCreditsRemaining ?? 0;
+    const creditLimit = user?.dailyCreditLimit ?? 3000;
+    const creditAngle = isPro
+      ? 360
+      : Math.round((creditRemaining / Math.max(creditLimit, 1)) * 360);
+    const creditRingStyle = `conic-gradient(#2563eb 0deg ${creditAngle}deg, #d8e3f2 ${creditAngle}deg 360deg)`;
     const handleUpgrade = async () => {
       setIsUpgrading(true);
       try {
@@ -125,7 +131,8 @@ export function Header({
           </div>
           <div className="flex min-w-0 items-center justify-end gap-3 text-[#111827]">
             <div
-              className="hidden rounded-[10px] bg-[conic-gradient(#2563eb_0deg_238deg,#d8e3f2_238deg_360deg)] p-0.5 text-[14px] font-semibold text-[#274169] shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:block"
+              className="hidden rounded-[10px] p-0.5 text-[14px] font-semibold text-[#274169] shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:block"
+              style={{ background: creditRingStyle }}
               aria-label={`${accountUsage}, ${planLabel} plan`}
             >
               <span className="block rounded-[8px] bg-white/95 px-[18px] py-[7px] shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">

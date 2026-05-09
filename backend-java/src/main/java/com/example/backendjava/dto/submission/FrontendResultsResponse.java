@@ -15,6 +15,9 @@ public record FrontendResultsResponse(
         List<FrontendChunkScoreResponse> chunks,
         FrontendStatsResponse stats,
         Boolean fullReportAvailable,
-        String accessLevel
+        String accessLevel,
+        Integer layer1Score,
+        Integer layer2Score,
+        Integer layer3Score
 ) {
 }

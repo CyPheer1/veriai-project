@@ -102,22 +102,35 @@ function ScanDock({
 
       <div className="mt-2 flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-y-auto">
         {history.length
-          ? history.slice(0, 6).map((item, index) => {
+          ? history.slice(0, 6).map((item) => {
               const isActive = activeId === item.id;
+              const tone =
+                item.score >= 65 ? "ai" : item.score <= 35 ? "human" : "mixed";
+              const inactiveStyle =
+                tone === "ai"
+                  ? "border-[#fecaca] bg-[#fff0f0] text-[#b32635]"
+                  : tone === "human"
+                    ? "border-[#bbf7d0] bg-[#f0fdf4] text-[#17633f]"
+                    : "border-[#fde68a] bg-[#fffbeb] text-[#8a5200]";
               return (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => onRestore(item)}
-                  className={`flex h-9 w-9 items-center justify-center rounded-[10px] border text-[11px] font-black transition-colors ${
+                  className={`flex h-9 w-9 flex-col items-center justify-center rounded-[10px] border transition-colors ${
                     isActive
                       ? "border-[#c8daf2] bg-[#edf4ff] text-[#1263F1]"
-                      : "border-transparent text-[#52627a] hover:border-[#dbe4f1] hover:bg-white"
+                      : `${inactiveStyle} hover:opacity-80`
                   }`}
-                  aria-label={`Restore scan ${item.title}`}
-                  title={`${item.title}, ${item.score}%`}
+                  aria-label={`Restore scan: ${item.title}, ${item.score}% AI`}
+                  title={`${item.title}\n${item.score}% AI signal`}
                 >
-                  {index + 1}
+                  <span className="text-[10px] font-black leading-none">
+                    {item.score}
+                  </span>
+                  <span className="text-[8px] font-semibold leading-none opacity-70">
+                    %
+                  </span>
                 </button>
               );
             })
@@ -143,7 +156,8 @@ function ScanDock({
 }
 
 export function LoggedInDashboard() {
-  const { isLoggedIn, authLoading, token, refreshUser, user, upgradeToPro } = useApp();
+  const { isLoggedIn, authLoading, token, refreshUser, user, upgradeToPro } =
+    useApp();
   const navigate = useNavigate();
   const [results, setResults] = useState<ResultsData | null>(null);
 
@@ -202,6 +216,7 @@ export function LoggedInDashboard() {
       return;
     }
 
+    setResults(null);
     setIsAnalyzing(true);
     setAnalysisError(null);
 
@@ -289,7 +304,9 @@ export function LoggedInDashboard() {
             variant="dashboard"
             contextTitle={headerTitle}
             onContextTitleChange={handleTitleChange}
-            contextDetail={formatHeaderDate(hasDraftChanges ? null : results?.submittedAt)}
+            contextDetail={formatHeaderDate(
+              hasDraftChanges ? null : results?.submittedAt,
+            )}
             contextStatus={headerStatus}
             usageLabel={scanUsageLabel(user)}
           />
@@ -311,6 +328,10 @@ export function LoggedInDashboard() {
                     onUpgrade={handleUpgrade}
                     isUpgrading={isUpgrading}
                     resetKey={inputResetKey}
+                    resultSegments={results?.segments ?? []}
+                    showHighlight={
+                      !!results && !hasDraftChanges && !isAnalyzing
+                    }
                   />
                 </div>
 
