@@ -38,6 +38,7 @@ interface InputPanelProps {
   resetKey?: number;
   /** When provided, applies sentence-level colour highlights directly in the editor */
   highlightSegments?: { text: string; isAI: boolean }[];
+  onExitHighlight?: () => void;
 }
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -108,6 +109,7 @@ export function InputPanel({
   isUpgrading = false,
   resetKey = 0,
   highlightSegments,
+  onExitHighlight,
 }: InputPanelProps) {
   const [mode, setMode] = useState<"text" | "file">("text");
   const [file, setFile] = useState<File | null>(null);
@@ -254,6 +256,7 @@ export function InputPanel({
     editor.setEditable(true);
     isHighlightModeRef.current = false;
     setIsHighlightMode(false);
+    onExitHighlight?.();
     setPlainText("");
     onDraftChange?.();
   };

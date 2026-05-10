@@ -173,6 +173,7 @@ export function LoggedInDashboard() {
   const [inputResetKey, setInputResetKey] = useState(0);
   const [documentTitle, setDocumentTitle] = useState("Untitled scan");
   const [hasDraftChanges, setHasDraftChanges] = useState(false);
+  const [showHighlights, setShowHighlights] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const headerTitle = documentTitle;
   const headerStatus = analysisError
@@ -189,6 +190,7 @@ export function LoggedInDashboard() {
     setActiveScanId(null);
     setDocumentTitle("Untitled scan");
     setHasDraftChanges(false);
+    setShowHighlights(false);
     setInputResetKey((value) => value + 1);
   };
 
@@ -198,6 +200,7 @@ export function LoggedInDashboard() {
     setActiveScanId(item.id);
     setDocumentTitle(item.title);
     setHasDraftChanges(false);
+    setShowHighlights(false);
   };
 
   const handleTitleChange = (title: string) => {
@@ -217,6 +220,7 @@ export function LoggedInDashboard() {
     }
 
     setResults(null);
+    setShowHighlights(false);
     setIsAnalyzing(true);
     setAnalysisError(null);
 
@@ -257,6 +261,7 @@ export function LoggedInDashboard() {
       };
 
       setResults(nextResults);
+      setShowHighlights(true);
       setActiveScanId(historyItem.id);
       setDocumentTitle(historyItem.title);
       setHasDraftChanges(false);
@@ -329,10 +334,11 @@ export function LoggedInDashboard() {
                     isUpgrading={isUpgrading}
                     resetKey={inputResetKey}
                     highlightSegments={
-                      !!results && !hasDraftChanges && !isAnalyzing
+                      showHighlights && !!results && !isAnalyzing
                         ? (results?.segments ?? [])
                         : undefined
                     }
+                    onExitHighlight={() => setShowHighlights(false)}
                   />
                 </div>
 
