@@ -241,6 +241,7 @@ export function ResultsPanel({
   const humanSegments = shownSegments.filter((s) => !s.isAI);
   const aiSegments = shownSegments.filter((s) => s.isAI);
   const primaryModel = models[0]?.name ?? display.model;
+  const isHumanResult = (display.aiScore ?? 0) < 50;
   const submittedDate = display.submittedAt
     ? new Date(display.submittedAt).toLocaleDateString(undefined, {
         month: "short",
@@ -649,56 +650,66 @@ export function ResultsPanel({
         </div>
       </section>
 
-      <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
-        <div className="flex items-center justify-between pb-3">
-          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
-            Model attribution{" "}
-            <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
-          </h2>
-          <span className="text-[12px] font-medium text-[#64748b]">
-            ranked by confidence
-          </span>
-        </div>
-        <div
-          className={`grid grid-cols-2 content-stretch gap-2.5 ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
-        >
-          {shownModels.slice(0, 4).map((model) => {
-            const modelScore = clampScore(model.score);
-            const scoreColor =
-              modelScore >= 90 ? "text-[#b32635]" : "text-[#07112f]";
-            return (
-              <article
-                key={model.name}
-                className="grid min-h-[76px] content-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium text-[#07112f]">
-                    <ModelLogo name={model.name} className="h-6 w-6 shrink-0" />
-                    <span className="truncate">{model.name}</span>
+      {!isHumanResult && (
+        <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+          <div className="flex items-center justify-between pb-3">
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+              Model attribution{" "}
+              <span title="Estimates which AI model most likely generated this text based on statistical pattern matching. Results are probabilistic, not definitive.">
+                <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
+              </span>
+            </h2>
+            <span className="text-[12px] font-medium text-[#64748b]">
+              ranked by confidence
+            </span>
+          </div>
+          <div
+            className={`grid grid-cols-2 content-stretch gap-2.5 ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
+          >
+            {shownModels.slice(0, 4).map((model) => {
+              const modelScore = clampScore(model.score);
+              const scoreColor =
+                modelScore >= 90 ? "text-[#b32635]" : "text-[#07112f]";
+              return (
+                <article
+                  key={model.name}
+                  className="grid min-h-[76px] content-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium text-[#07112f]">
+                      <ModelLogo
+                        name={model.name}
+                        className="h-6 w-6 shrink-0"
+                      />
+                      <span className="truncate">{model.name}</span>
+                    </span>
+                    <span
+                      className={`veriai-mono text-[13px] font-semibold ${scoreColor}`}
+                    >
+                      {modelScore}%
+                    </span>
+                  </div>
+                  <span className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5ebf4]">
+                    <span
+                      className="veriai-bar-fill block h-full rounded-full bg-[#1263F1]"
+                      style={{ width: `${modelScore}%` }}
+                    />
                   </span>
-                  <span
-                    className={`veriai-mono text-[13px] font-semibold ${scoreColor}`}
-                  >
-                    {modelScore}%
-                  </span>
-                </div>
-                <span className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5ebf4]">
-                  <span
-                    className="veriai-bar-fill block h-full rounded-full bg-[#1263F1]"
-                    style={{ width: `${modelScore}%` }}
-                  />
-                </span>
-              </article>
-            );
-          })}
-        </div>
-      </section>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+        )}
 
-      <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
-        <div className="flex items-center justify-between pb-3">
-          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
-            Sentence-level highlights{" "}
-            <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
+        <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+          <div className="flex items-center justify-between pb-3">
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+              Sentence-level highlights{" "}
+              <span title="Each chunk of text is scored individually. Green = likely human-written. Red = likely AI-generated.">
+                <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
+              </span>
+            </span>
           </h2>
           <span className="text-[12px] font-medium text-[#64748b]">
             {humanSegments.length + aiSegments.length}{" "}
@@ -745,7 +756,9 @@ export function ResultsPanel({
         <div className="flex items-center justify-between pb-3">
           <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
             Analysis layers{" "}
-            <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
+            <span title="RoBERTa: fine-tuned transformer classifier (primary signal). Stylistic: linguistic feature analysis. Statistical: perplexity and entropy scoring.">
+              <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
+            </span>
           </h2>
           <span className="text-[12px] font-medium text-[#64748b]">
             signal mix
@@ -769,7 +782,21 @@ export function ResultsPanel({
                     {value}%
                   </strong>
                 </div>
-                <MiniBars tone={layer.tone} />
+                <div className="mt-2">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e5ebf4]">
+                    <div
+                      className="veriai-bar-fill h-full rounded-full bg-[#1263F1]"
+                      style={{ width: `${value}%` }}
+                    />
+                  </div>
+                  <span className="mt-1.5 block text-[10px] font-medium text-[#7185a3]">
+                    {value >= 75
+                      ? "Strong AI signal"
+                      : value >= 45
+                        ? "Moderate signal"
+                        : "Low AI signal"}
+                  </span>
+                </div>
               </article>
             );
           })}

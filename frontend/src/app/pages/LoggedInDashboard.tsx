@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ClockIcon, FileTextIcon, PlusIcon } from "@radix-ui/react-icons";
 import { useNavigate } from "react-router";
 import { Header } from "../components/Header";
@@ -7,6 +7,8 @@ import { ResultsData, ResultsPanel } from "../components/ResultsPanel";
 import { useApp } from "../context/AppContext";
 import {
   getErrorMessage,
+  getSubmissionRequest,
+  listSubmissionsRequest,
   pollSubmissionResult,
   submitFileRequest,
   submitTextRequest,
@@ -18,7 +20,7 @@ interface ScanHistoryItem {
   score: number;
   model: string;
   timestamp: string;
-  results: ResultsData;
+  results: ResultsData | null;
 }
 
 function formatRelativeTime(value: string): string {
@@ -199,6 +201,7 @@ export function LoggedInDashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
+  const historyLoadedRef = useRef(false);
   const [activeScanId, setActiveScanId] = useState<string | null>(null);
   const [inputResetKey, setInputResetKey] = useState(0);
   const [documentTitle, setDocumentTitle] = useState("Untitled scan");
@@ -214,6 +217,34 @@ export function LoggedInDashboard() {
         ? "Saved"
         : "Draft";
 
+  // Load recent scans from backend on first mount
+  useEffect(() => {
+    if (!token || historyLoadedRef.current) return;
+    historyLoadedRef.current = true;
+    listSubmissionsRequest(token, 0, 8)
+      .then((page) => {
+        const items: ScanHistoryItem[] = page.items
+          .filter((item) => item.status === "COMPLETED")
+          .map((item) => ({
+            id: item.submissionId,
+            title: item.sourceFilename
+              ? item.sourceFilename.replace(/\.[^.]+$/, "")
+              : `Scan · ${item.wordCount} words`,
+            score: Math.round((item.globalConfidence ?? 0) * 100),
+            model: item.globalLabel ?? "",
+            timestamp: item.completedAt ?? item.submittedAt,
+            results: null,
+          }));
+        setScanHistory((prev) => {
+          // merge: keep in-session items, append backend items not already present
+          const existingIds = new Set(prev.map((h) => h.id));
+          const fresh = items.filter((i) => !existingIds.has(i.id));
+          return [...prev, ...fresh].slice(0, 8);
+        });
+      })
+      .catch(() => {});
+  }, [token]);
+
   const handleNewScan = () => {
     setResults(null);
     setAnalysisError(null);
@@ -224,13 +255,40 @@ export function LoggedInDashboard() {
     setInputResetKey((value) => value + 1);
   };
 
-  const restoreScan = (item: ScanHistoryItem) => {
-    setResults(item.results);
+  const restoreScan = async (item: ScanHistoryItem) => {
     setAnalysisError(null);
     setActiveScanId(item.id);
     setDocumentTitle(item.title);
     setHasDraftChanges(false);
     setShowHighlights(false);
+
+    if (item.results) {
+      setResults(item.results);
+      return;
+    }
+
+    if (!token) return;
+    setIsAnalyzing(true);
+    try {
+      const detail = await getSubmissionRequest(token, item.id);
+      if (detail.frontendPayload) {
+        const nextResults: ResultsData = {
+          ...detail.frontendPayload,
+          submittedAt: detail.completedAt ?? detail.submittedAt,
+        };
+        setResults(nextResults);
+        setShowHighlights(true);
+        setScanHistory((prev) =>
+          prev.map((h) =>
+            h.id === item.id ? { ...h, results: nextResults } : h,
+          ),
+        );
+      }
+    } catch {
+      setAnalysisError("Could not load this scan.");
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleTitleChange = (title: string) => {
