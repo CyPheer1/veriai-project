@@ -115,6 +115,7 @@ export function InputPanel({
   const [statusExpanded, setStatusExpanded] = useState(true);
   const [plainText, setPlainText] = useState("");
   const [isHighlightMode, setIsHighlightMode] = useState(false);
+  const isHighlightModeRef = useRef(false);
   const [, forceUpdate] = useState(0);
   const [showParagraphMenu, setShowParagraphMenu] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -138,7 +139,7 @@ export function InputPanel({
       },
     },
     onUpdate: ({ editor: e }) => {
-      if (!isHighlightMode) {
+      if (!isHighlightModeRef.current) {
         setPlainText(e.getText());
         onDraftChange?.();
       }
@@ -177,6 +178,7 @@ export function InputPanel({
       if (isHighlightMode) {
         editor.commands.clearContent();
         editor.setEditable(true);
+        isHighlightModeRef.current = false;
         setIsHighlightMode(false);
         setPlainText("");
       }
@@ -203,6 +205,7 @@ export function InputPanel({
       }
     });
 
+    isHighlightModeRef.current = true;
     editor.commands.setContent({
       type: "doc",
       content: [{ type: "paragraph", content: inlineNodes }],
@@ -216,6 +219,7 @@ export function InputPanel({
     if (resetKey === 0 || !editor) return;
     editor.commands.clearContent();
     editor.setEditable(true);
+    isHighlightModeRef.current = false;
     setIsHighlightMode(false);
     setMode("text");
     setFile(null);
@@ -248,6 +252,7 @@ export function InputPanel({
     if (!editor) return;
     editor.commands.clearContent();
     editor.setEditable(true);
+    isHighlightModeRef.current = false;
     setIsHighlightMode(false);
     setPlainText("");
     onDraftChange?.();
