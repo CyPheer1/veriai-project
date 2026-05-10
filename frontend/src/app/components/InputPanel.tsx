@@ -415,191 +415,185 @@ export function InputPanel({
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
           {/* Normal toolbar — always visible */}
           <div className="flex min-h-[52px] shrink-0 items-center border-b border-[#d7dfed] bg-white px-5">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {/* Paragraph / Heading dropdown */}
-                <div ref={paragraphMenuRef} className="relative">
-                  <button
-                    type="button"
-                    disabled={toolbarDisabled}
-                    onClick={() => setShowParagraphMenu((v) => !v)}
-                    className="veriai-pressable flex h-9 items-center gap-2 rounded-[7px] px-2.5 text-[14px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {currentBlockLabel}{" "}
-                    <span className="text-[#64748b]">⌄</span>
-                  </button>
-                  {showParagraphMenu && (
-                    <div className="absolute left-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-[10px] border border-[#d7dfed] bg-white shadow-[0_8px_24px_rgba(31,45,71,0.12)]">
-                      {(
-                        [
-                          {
-                            label: "Paragraph",
-                            action: () =>
-                              editor?.chain().focus().setParagraph().run(),
-                          },
-                          {
-                            label: "Heading 1",
-                            action: () =>
-                              editor
-                                ?.chain()
-                                .focus()
-                                .toggleHeading({ level: 1 })
-                                .run(),
-                          },
-                          {
-                            label: "Heading 2",
-                            action: () =>
-                              editor
-                                ?.chain()
-                                .focus()
-                                .toggleHeading({ level: 2 })
-                                .run(),
-                          },
-                          {
-                            label: "Heading 3",
-                            action: () =>
-                              editor
-                                ?.chain()
-                                .focus()
-                                .toggleHeading({ level: 3 })
-                                .run(),
-                          },
-                        ] as { label: string; action: () => void }[]
-                      ).map((opt) => (
-                        <button
-                          key={opt.label}
-                          type="button"
-                          onClick={() => {
-                            opt.action();
-                            setShowParagraphMenu(false);
-                          }}
-                          className={`w-full px-3 py-2 text-left text-[13px] font-semibold hover:bg-[#f0f4fb] ${
-                            currentBlockLabel === opt.label
-                              ? "text-[#1263F1]"
-                              : "text-[#274169]"
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
-
-                <ToolbarButton
-                  label="Bold"
-                  onClick={() => editor?.chain().focus().toggleBold().run()}
-                  isActive={editor?.isActive("bold") ?? false}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* Paragraph / Heading dropdown */}
+              <div ref={paragraphMenuRef} className="relative">
+                <button
+                  type="button"
                   disabled={toolbarDisabled}
+                  onClick={() => setShowParagraphMenu((v) => !v)}
+                  className="veriai-pressable flex h-9 items-center gap-2 rounded-[7px] px-2.5 text-[14px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  <FontBoldIcon className="h-4 w-4" />
-                </ToolbarButton>
-
-                <ToolbarButton
-                  label="Italic"
-                  onClick={() => editor?.chain().focus().toggleItalic().run()}
-                  isActive={editor?.isActive("italic") ?? false}
-                  disabled={toolbarDisabled}
-                >
-                  <FontItalicIcon className="h-4 w-4" />
-                </ToolbarButton>
-
-                <ToolbarButton
-                  label="Underline"
-                  onClick={() =>
-                    editor?.chain().focus().toggleUnderline().run()
-                  }
-                  isActive={editor?.isActive("underline") ?? false}
-                  disabled={toolbarDisabled}
-                >
-                  <span className="text-[15px] font-bold underline">U</span>
-                </ToolbarButton>
-
-                <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
-
-                <ToolbarButton
-                  label="Bullet list"
-                  onClick={() =>
-                    editor?.chain().focus().toggleBulletList().run()
-                  }
-                  isActive={editor?.isActive("bulletList") ?? false}
-                  disabled={toolbarDisabled}
-                >
-                  <ListBulletIcon className="h-4 w-4" />
-                </ToolbarButton>
-
-                <ToolbarButton
-                  label="Ordered list"
-                  onClick={() =>
-                    editor?.chain().focus().toggleOrderedList().run()
-                  }
-                  isActive={editor?.isActive("orderedList") ?? false}
-                  disabled={toolbarDisabled}
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                  >
-                    <path d="M2 2h1v3H2V3H1V2h1zm0 5h1.5a.5.5 0 0 1 0 1H2v.5h1.5a.5.5 0 0 1 0 1H2v1h2v1H1v-2a1 1 0 0 1 1-1V8a1 1 0 0 1-1-1V6h2v1H2zm0 5h1v.5H2v1h1V14H1v-1h1v-.5H1v-1h2v1H2zM5 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5zm0 5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8A.5.5 0 0 1 5 8.5zm0 5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5z" />
-                  </svg>
-                </ToolbarButton>
-
-                <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
-
-                <ToolbarButton
-                  label="Align left"
-                  onClick={() =>
-                    editor?.chain().focus().setTextAlign("left").run()
-                  }
-                  isActive={editor?.isActive({ textAlign: "left" }) ?? false}
-                  disabled={toolbarDisabled}
-                >
-                  <TextAlignLeftIcon className="h-4 w-4" />
-                </ToolbarButton>
-
-                <ToolbarButton
-                  label="Align center"
-                  onClick={() =>
-                    editor?.chain().focus().setTextAlign("center").run()
-                  }
-                  isActive={editor?.isActive({ textAlign: "center" }) ?? false}
-                  disabled={toolbarDisabled}
-                >
-                  <TextAlignCenterIcon className="h-4 w-4" />
-                </ToolbarButton>
-
-                <ToolbarButton
-                  label="Align right"
-                  onClick={() =>
-                    editor?.chain().focus().setTextAlign("right").run()
-                  }
-                  isActive={editor?.isActive({ textAlign: "right" }) ?? false}
-                  disabled={toolbarDisabled}
-                >
-                  <TextAlignRightIcon className="h-4 w-4" />
-                </ToolbarButton>
-
-                <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
-
-                <ToolbarButton
-                  label="Undo"
-                  onClick={() => editor?.chain().focus().undo().run()}
-                  disabled={toolbarDisabled || !editor?.can().undo()}
-                >
-                  <ResetIcon className="h-4 w-4" />
-                </ToolbarButton>
-
-                <ToolbarButton
-                  label="Redo"
-                  onClick={() => editor?.chain().focus().redo().run()}
-                  disabled={toolbarDisabled || !editor?.can().redo()}
-                >
-                  <ResetIcon className="h-4 w-4 scale-x-[-1]" />
-                </ToolbarButton>
+                  {currentBlockLabel} <span className="text-[#64748b]">⌄</span>
+                </button>
+                {showParagraphMenu && (
+                  <div className="absolute left-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-[10px] border border-[#d7dfed] bg-white shadow-[0_8px_24px_rgba(31,45,71,0.12)]">
+                    {(
+                      [
+                        {
+                          label: "Paragraph",
+                          action: () =>
+                            editor?.chain().focus().setParagraph().run(),
+                        },
+                        {
+                          label: "Heading 1",
+                          action: () =>
+                            editor
+                              ?.chain()
+                              .focus()
+                              .toggleHeading({ level: 1 })
+                              .run(),
+                        },
+                        {
+                          label: "Heading 2",
+                          action: () =>
+                            editor
+                              ?.chain()
+                              .focus()
+                              .toggleHeading({ level: 2 })
+                              .run(),
+                        },
+                        {
+                          label: "Heading 3",
+                          action: () =>
+                            editor
+                              ?.chain()
+                              .focus()
+                              .toggleHeading({ level: 3 })
+                              .run(),
+                        },
+                      ] as { label: string; action: () => void }[]
+                    ).map((opt) => (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => {
+                          opt.action();
+                          setShowParagraphMenu(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-[13px] font-semibold hover:bg-[#f0f4fb] ${
+                          currentBlockLabel === opt.label
+                            ? "text-[#1263F1]"
+                            : "text-[#274169]"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+              <ToolbarButton
+                label="Bold"
+                onClick={() => editor?.chain().focus().toggleBold().run()}
+                isActive={editor?.isActive("bold") ?? false}
+                disabled={toolbarDisabled}
+              >
+                <FontBoldIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Italic"
+                onClick={() => editor?.chain().focus().toggleItalic().run()}
+                isActive={editor?.isActive("italic") ?? false}
+                disabled={toolbarDisabled}
+              >
+                <FontItalicIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Underline"
+                onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                isActive={editor?.isActive("underline") ?? false}
+                disabled={toolbarDisabled}
+              >
+                <span className="text-[15px] font-bold underline">U</span>
+              </ToolbarButton>
+
+              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+              <ToolbarButton
+                label="Bullet list"
+                onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                isActive={editor?.isActive("bulletList") ?? false}
+                disabled={toolbarDisabled}
+              >
+                <ListBulletIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Ordered list"
+                onClick={() =>
+                  editor?.chain().focus().toggleOrderedList().run()
+                }
+                isActive={editor?.isActive("orderedList") ?? false}
+                disabled={toolbarDisabled}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                >
+                  <path d="M2 2h1v3H2V3H1V2h1zm0 5h1.5a.5.5 0 0 1 0 1H2v.5h1.5a.5.5 0 0 1 0 1H2v1h2v1H1v-2a1 1 0 0 1 1-1V8a1 1 0 0 1-1-1V6h2v1H2zm0 5h1v.5H2v1h1V14H1v-1h1v-.5H1v-1h2v1H2zM5 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5zm0 5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8A.5.5 0 0 1 5 8.5zm0 5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5z" />
+                </svg>
+              </ToolbarButton>
+
+              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+              <ToolbarButton
+                label="Align left"
+                onClick={() =>
+                  editor?.chain().focus().setTextAlign("left").run()
+                }
+                isActive={editor?.isActive({ textAlign: "left" }) ?? false}
+                disabled={toolbarDisabled}
+              >
+                <TextAlignLeftIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Align center"
+                onClick={() =>
+                  editor?.chain().focus().setTextAlign("center").run()
+                }
+                isActive={editor?.isActive({ textAlign: "center" }) ?? false}
+                disabled={toolbarDisabled}
+              >
+                <TextAlignCenterIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Align right"
+                onClick={() =>
+                  editor?.chain().focus().setTextAlign("right").run()
+                }
+                isActive={editor?.isActive({ textAlign: "right" }) ?? false}
+                disabled={toolbarDisabled}
+              >
+                <TextAlignRightIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+              <ToolbarButton
+                label="Undo"
+                onClick={() => editor?.chain().focus().undo().run()}
+                disabled={toolbarDisabled || !editor?.can().undo()}
+              >
+                <ResetIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Redo"
+                onClick={() => editor?.chain().focus().redo().run()}
+                disabled={toolbarDisabled || !editor?.can().redo()}
+              >
+                <ResetIcon className="h-4 w-4 scale-x-[-1]" />
+              </ToolbarButton>
             </div>
           </div>
 
