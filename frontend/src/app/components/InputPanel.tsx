@@ -118,6 +118,7 @@ export function InputPanel({
   const [plainText, setPlainText] = useState("");
   const [isHighlightMode, setIsHighlightMode] = useState(false);
   const isHighlightModeRef = useRef(false);
+  const isProgrammaticUpdateRef = useRef(false);
   const [, forceUpdate] = useState(0);
   const [showParagraphMenu, setShowParagraphMenu] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -142,7 +143,11 @@ export function InputPanel({
     },
     onUpdate: ({ editor: e }) => {
       if (isHighlightModeRef.current) {
-        // User typed while highlights were showing — auto-dismiss
+        if (isProgrammaticUpdateRef.current) {
+          // setContent() called programmatically to apply highlights — ignore
+          return;
+        }
+        // User actually typed while highlights were showing — auto-dismiss
         isHighlightModeRef.current = false;
         setIsHighlightMode(false);
         onExitHighlight?.();
@@ -231,11 +236,13 @@ export function InputPanel({
     });
 
     isHighlightModeRef.current = true;
+    isProgrammaticUpdateRef.current = true;
     editor.commands.setContent({
       type: "doc",
       content: [{ type: "paragraph", content: inlineNodes }],
     });
 
+    isProgrammaticUpdateRef.current = false;
     setIsHighlightMode(true);
   }, [highlightSegments, editor]);
 
