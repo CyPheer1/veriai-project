@@ -700,15 +700,14 @@ export function ResultsPanel({
             })}
           </div>
         </section>
-        )}
+      )}
 
-        <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
-          <div className="flex items-center justify-between pb-3">
-            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
-              Sentence-level highlights{" "}
-              <span title="Each chunk of text is scored individually. Green = likely human-written. Red = likely AI-generated.">
-                <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
-              </span>
+      <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+        <div className="flex items-center justify-between pb-3">
+          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+            Sentence-level highlights{" "}
+            <span title="Each chunk of text is scored individually. Green = likely human-written. Red = likely AI-generated.">
+              <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
             </span>
           </h2>
           <span className="text-[12px] font-medium text-[#64748b]">
