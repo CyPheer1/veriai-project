@@ -413,21 +413,8 @@ export function InputPanel({
 
       {mode === "text" ? (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
-          {/* Highlight mode: legend bar */}
-          {isHighlightMode ? (
-            <div className="flex shrink-0 items-center gap-5 border-b border-[#d7dfed] bg-white px-5 py-2 text-[12px] font-semibold">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                <span className="text-[#17633f]">Human-written</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                <span className="text-[#b32635]">AI-generated</span>
-              </span>
-            </div>
-          ) : (
-            /* Normal toolbar */
-            <div className="flex min-h-[52px] shrink-0 items-center border-b border-[#d7dfed] bg-white px-5">
+          {/* Normal toolbar — always visible */}
+          <div className="flex min-h-[52px] shrink-0 items-center border-b border-[#d7dfed] bg-white px-5">
               <div className="flex flex-wrap items-center gap-1.5">
                 {/* Paragraph / Heading dropdown */}
                 <div ref={paragraphMenuRef} className="relative">
@@ -614,7 +601,7 @@ export function InputPanel({
                 </ToolbarButton>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Editor area — always present; Tiptap content shows highlights when in highlight mode */}
           <div className="veriai-rich-editor relative min-h-0 flex-1 bg-white">
