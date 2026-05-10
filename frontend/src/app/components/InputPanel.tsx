@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   DownloadIcon,
   FontBoldIcon,
@@ -111,7 +111,13 @@ export function InputPanel({
   const [file, setFile] = useState<File | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [statusExpanded, setStatusExpanded] = useState(true);
+  const [plainText, setPlainText] = useState("");
+  const [, forceUpdate] = useState(0);
+  const [showParagraphMenu, setShowParagraphMenu] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const paragraphMenuRef = useRef<HTMLDivElement>(null);
+
+  const triggerUpdate = useCallback(() => forceUpdate((n) => n + 1), []);
 
   const editor = useEditor({
     extensions: [
@@ -127,11 +133,28 @@ export function InputPanel({
         spellcheck: "true",
       },
     },
-    onUpdate: () => {
+    onUpdate: ({ editor: e }) => {
+      setPlainText(e.getText());
       setLocalError(null);
       onDraftChange?.();
     },
+    onSelectionUpdate: triggerUpdate,
+    onTransaction: triggerUpdate,
   });
+
+  // Close paragraph menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        paragraphMenuRef.current &&
+        !paragraphMenuRef.current.contains(e.target as Node)
+      ) {
+        setShowParagraphMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   // Sync editable state with isAnalyzing
   useEffect(() => {
@@ -151,7 +174,6 @@ export function InputPanel({
 
   const hasHighlight =
     showHighlight && !!resultSegments && resultSegments.length > 0;
-  const plainText = editor?.getText() ?? "";
   const wordCount = useMemo(() => countWords(plainText), [plainText]);
   const characterCount = plainText.length;
 
@@ -232,6 +254,14 @@ export function InputPanel({
 
   const toolbarDisabled = isAnalyzing || !editor || hasHighlight;
 
+  const currentBlockLabel = editor?.isActive("heading", { level: 1 })
+    ? "Heading 1"
+    : editor?.isActive("heading", { level: 2 })
+      ? "Heading 2"
+      : editor?.isActive("heading", { level: 3 })
+        ? "Heading 3"
+        : "Paragraph";
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[14px] border border-[#d7dfed] bg-[#eef3f8]">
       {/* Top bar: tabs + analyze button */}
@@ -300,14 +330,73 @@ export function InputPanel({
             className={`flex min-h-[52px] shrink-0 items-center border-b border-[#d7dfed] bg-white px-5 ${hasHighlight ? "hidden" : ""}`}
           >
             <div className="flex flex-wrap items-center gap-1.5">
-              {/* Paragraph label */}
-              <button
-                type="button"
-                disabled={toolbarDisabled}
-                className="veriai-pressable flex h-9 items-center gap-2 rounded-[7px] px-2.5 text-[14px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Paragraph <span className="text-[#64748b]">⌄</span>
-              </button>
+              {/* Paragraph / Heading dropdown */}
+              <div ref={paragraphMenuRef} className="relative">
+                <button
+                  type="button"
+                  disabled={toolbarDisabled}
+                  onClick={() => setShowParagraphMenu((v) => !v)}
+                  className="veriai-pressable flex h-9 items-center gap-2 rounded-[7px] px-2.5 text-[14px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {currentBlockLabel} <span className="text-[#64748b]">⌄</span>
+                </button>
+                {showParagraphMenu && (
+                  <div className="absolute left-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-[10px] border border-[#d7dfed] bg-white shadow-[0_8px_24px_rgba(31,45,71,0.12)]">
+                    {(
+                      [
+                        {
+                          label: "Paragraph",
+                          action: () =>
+                            editor?.chain().focus().setParagraph().run(),
+                        },
+                        {
+                          label: "Heading 1",
+                          action: () =>
+                            editor
+                              ?.chain()
+                              .focus()
+                              .toggleHeading({ level: 1 })
+                              .run(),
+                        },
+                        {
+                          label: "Heading 2",
+                          action: () =>
+                            editor
+                              ?.chain()
+                              .focus()
+                              .toggleHeading({ level: 2 })
+                              .run(),
+                        },
+                        {
+                          label: "Heading 3",
+                          action: () =>
+                            editor
+                              ?.chain()
+                              .focus()
+                              .toggleHeading({ level: 3 })
+                              .run(),
+                        },
+                      ] as { label: string; action: () => void }[]
+                    ).map((opt) => (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => {
+                          opt.action();
+                          setShowParagraphMenu(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-[13px] font-semibold hover:bg-[#f0f4fb] ${
+                          currentBlockLabel === opt.label
+                            ? "text-[#1263F1]"
+                            : "text-[#274169]"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
 
