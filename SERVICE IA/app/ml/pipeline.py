@@ -102,11 +102,14 @@ class AnalysisPipeline:
             if normalized_mode == "FULL":
                 layer2, stylistic_features = self.stylistic.score(chunk_text)
                 layer3, statistical_features = self.statistical.score(chunk_text)
-                confidence = (
+                ensemble = (
                     full_weight_l1 * layer1
                     + full_weight_l2 * layer2
                     + full_weight_l3 * layer3
                 )
+                # L1 (RoBERTa) is the primary signal — L2/L3 can only confirm
+                # (raise the score) but never drag down a confident L1 result.
+                confidence = max(layer1, ensemble)
             else:
                 layer2 = None
                 layer3 = None
