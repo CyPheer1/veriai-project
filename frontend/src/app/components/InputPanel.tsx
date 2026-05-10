@@ -424,9 +424,6 @@ export function InputPanel({
                 <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
                 <span className="text-[#b32635]">AI-generated</span>
               </span>
-              <span className="ml-auto text-[11px] font-normal text-[#7185a3]">
-                Start typing to edit
-              </span>
             </div>
           ) : (
             /* Normal toolbar */

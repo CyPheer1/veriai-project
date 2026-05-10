@@ -21,6 +21,21 @@ interface ScanHistoryItem {
   results: ResultsData;
 }
 
+function formatRelativeTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const diffMs = Date.now() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
 function formatHeaderDate(value?: string | null): string {
   const date = value ? new Date(value) : new Date();
   if (Number.isNaN(date.getTime())) return "Today";
@@ -61,95 +76,110 @@ function ScanDock({
   onHistory: () => void;
 }) {
   return (
-    <aside className="flex min-h-0 w-20 shrink-0 flex-col items-center border-r border-[#d8e2ee] bg-[#f6f9fd] px-3 py-3 shadow-[8px_0_34px_-32px_rgba(31,45,71,0.45)]">
-      <div
-        className="flex h-14 w-14 items-center justify-center"
-        title="veri4i"
-      >
-        <img
-          src="/assets/veri4i-sidebar-mark.png"
-          alt="veri4i"
-          className="h-14 w-14 object-contain"
-          draggable={false}
-        />
-      </div>
-
-      <div className="mt-6 flex w-full flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={onNewScan}
-          className="veriai-pressable flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#1263F1] text-white shadow-[0_14px_26px_-20px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-          aria-label="Start a new scan"
-          title="New scan"
+    <aside className="flex min-h-0 w-[220px] shrink-0 flex-col border-r border-[#d8e2ee] bg-[#f6f9fd] px-3 py-3 shadow-[8px_0_34px_-32px_rgba(31,45,71,0.45)]">
+      {/* Logo + actions row */}
+      <div className="flex items-center justify-between px-1">
+        <div
+          className="flex h-10 w-10 items-center justify-center"
+          title="veri4i"
         >
-          <PlusIcon className="h-[18px] w-[18px]" />
-        </button>
+          <img
+            src="/assets/veri4i-sidebar-mark.png"
+            alt="veri4i"
+            className="h-10 w-10 object-contain"
+            draggable={false}
+          />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onHistory}
+            className="flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#c8daf2] bg-[#edf4ff] text-[#1263F1] transition-colors hover:bg-[#e5efff]"
+            aria-label="Scan history"
+            title="All scans"
+          >
+            <ClockIcon className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onNewScan}
+            className="veriai-pressable flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#1263F1] text-white shadow-[0_10px_20px_-14px_rgba(18,99,241,0.9)] hover:bg-[#0d54d5]"
+            aria-label="Start a new scan"
+            title="New scan"
+          >
+            <PlusIcon className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
-      <div className="my-3 h-px w-9 bg-[#dbe4f1]" />
+      <div className="my-3 h-px w-full bg-[#dbe4f1]" />
 
-      <div className="flex w-full flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={onHistory}
-          className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#c8daf2] bg-[#edf4ff] text-[#1263F1] shadow-[0_10px_22px_-22px_rgba(18,99,241,0.75)] transition-colors hover:bg-[#e5efff]"
-          aria-label="Scan history"
-          title="Scan history"
-        >
-          <ClockIcon className="h-[18px] w-[18px]" />
-        </button>
-      </div>
-
-      <div className="mt-2 flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-y-auto">
-        {history.length
-          ? history.slice(0, 6).map((item) => {
+      {/* Recent scans list */}
+      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+        {history.length ? (
+          <>
+            <p className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-[#9aacbf]">
+              Recent scans
+            </p>
+            {history.slice(0, 8).map((item) => {
               const isActive = activeId === item.id;
               const tone =
                 item.score >= 65 ? "ai" : item.score <= 35 ? "human" : "mixed";
-              const inactiveStyle =
+              const pillStyle =
                 tone === "ai"
-                  ? "border-[#fecaca] bg-[#fff0f0] text-[#b32635]"
+                  ? "bg-[#fff0f0] text-[#b32635]"
                   : tone === "human"
-                    ? "border-[#bbf7d0] bg-[#f0fdf4] text-[#17633f]"
-                    : "border-[#fde68a] bg-[#fffbeb] text-[#8a5200]";
+                    ? "bg-[#f0fdf4] text-[#17633f]"
+                    : "bg-[#fffbeb] text-[#8a5200]";
+              const pillLabel =
+                tone === "ai" ? "AI" : tone === "human" ? "Human" : "Mixed";
               return (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => onRestore(item)}
-                  className={`flex h-9 w-9 flex-col items-center justify-center rounded-[10px] border transition-colors ${
-                    isActive
-                      ? "border-[#c8daf2] bg-[#edf4ff] text-[#1263F1]"
-                      : `${inactiveStyle} hover:opacity-80`
+                  className={`flex w-full flex-col gap-0.5 rounded-[10px] px-2.5 py-2 text-left transition-colors ${
+                    isActive ? "bg-[#edf4ff]" : "hover:bg-[#eef3f9]"
                   }`}
                   aria-label={`Restore scan: ${item.title}, ${item.score}% AI`}
-                  title={`${item.title}\n${item.score}% AI signal`}
                 >
-                  <span className="text-[10px] font-black leading-none">
-                    {item.score}
-                  </span>
-                  <span className="text-[8px] font-semibold leading-none opacity-70">
-                    %
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`truncate text-[12px] font-semibold leading-tight ${
+                        isActive ? "text-[#1263F1]" : "text-[#0d1526]"
+                      }`}
+                    >
+                      {item.title}
+                    </span>
+                    <span
+                      className={`shrink-0 rounded-[5px] px-1.5 py-0.5 text-[10px] font-bold ${pillStyle}`}
+                    >
+                      {item.score}% {pillLabel}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-[#7185a3]">
+                    {formatRelativeTime(item.timestamp)}
                   </span>
                 </button>
               );
-            })
-          : null}
+            })}
+          </>
+        ) : (
+          <p className="px-1 pt-1 text-[11px] text-[#9aacbf]">
+            No scans yet. Paste text and click Analyze.
+          </p>
+        )}
       </div>
 
+      {/* View all */}
       <button
         type="button"
-        onClick={() => history[0] && onRestore(history[0])}
+        onClick={onHistory}
         disabled={!history.length}
-        className="mt-3 flex h-9 w-9 items-center justify-center rounded-[10px] border border-transparent text-[#7185a3] transition-colors hover:border-[#dbe4f1] hover:bg-white disabled:cursor-default disabled:text-[#9aacbf] disabled:hover:border-transparent disabled:hover:bg-transparent"
-        aria-label={
-          history.length ? "Restore latest scan" : "Recent scans, no scans yet"
-        }
-        title={
-          history.length ? "Restore latest scan" : "Recent scans, no scans yet"
-        }
+        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-[8px] py-1.5 text-[11px] font-semibold text-[#7185a3] transition-colors hover:bg-[#eef3f9] hover:text-[#1263F1] disabled:cursor-default disabled:opacity-40"
       >
-        <FileTextIcon className="h-[18px] w-[18px]" />
+        <FileTextIcon className="h-3.5 w-3.5" />
+        View all scans
       </button>
     </aside>
   );
@@ -295,7 +325,7 @@ export function LoggedInDashboard() {
 
   return (
     <div className="veriai-academic-bg h-screen overflow-hidden text-[#121a2b]">
-      <div className="grid h-screen min-h-0 grid-cols-[80px_1fr] overflow-hidden">
+      <div className="grid h-screen min-h-0 grid-cols-[220px_1fr] overflow-hidden">
         <ScanDock
           history={scanHistory}
           activeId={activeScanId}
