@@ -141,7 +141,23 @@ export function InputPanel({
       },
     },
     onUpdate: ({ editor: e }) => {
-      if (!isHighlightModeRef.current) {
+      if (isHighlightModeRef.current) {
+        // User typed while highlights were showing — auto-dismiss
+        isHighlightModeRef.current = false;
+        setIsHighlightMode(false);
+        onExitHighlight?.();
+        setPlainText(e.getText());
+        onDraftChange?.();
+        // Strip remaining highlight marks without disturbing cursor
+        setTimeout(() => {
+          const { from, to } = e.state.selection;
+          e.chain()
+            .selectAll()
+            .unsetMark("highlight")
+            .setTextSelection({ from, to })
+            .run();
+        }, 0);
+      } else {
         setPlainText(e.getText());
         onDraftChange?.();
       }
@@ -165,24 +181,31 @@ export function InputPanel({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Sync editable with isAnalyzing AND highlight mode
+  // Sync editable with isAnalyzing only — highlight mode no longer locks editing
   useEffect(() => {
     if (!editor) return;
-    editor.setEditable(!isAnalyzing && !isHighlightMode);
-  }, [isAnalyzing, isHighlightMode, editor]);
+    editor.setEditable(!isAnalyzing);
+  }, [isAnalyzing, editor]);
 
   // Apply highlight segments into the editor
   useEffect(() => {
     if (!editor) return;
 
     if (!highlightSegments || highlightSegments.length === 0) {
-      // If we were in highlight mode and segments cleared → exit
+      // If we were in highlight mode and segments cleared (e.g. new analysis) → exit
       if (isHighlightMode) {
-        editor.commands.clearContent();
-        editor.setEditable(true);
         isHighlightModeRef.current = false;
         setIsHighlightMode(false);
-        setPlainText("");
+        // Strip marks but keep text visible during new analysis
+        setTimeout(() => {
+          const { from, to } = editor.state.selection;
+          editor
+            .chain()
+            .selectAll()
+            .unsetMark("highlight")
+            .setTextSelection({ from, to })
+            .run();
+        }, 0);
       }
       return;
     }
@@ -249,17 +272,6 @@ export function InputPanel({
   const canSubmitFile = mode === "file" && Boolean(file) && isPro;
   const canExportDraft =
     mode === "text" && !isHighlightMode && plainText.trim().length > 0;
-
-  const handleExitHighlight = () => {
-    if (!editor) return;
-    editor.commands.clearContent();
-    editor.setEditable(true);
-    isHighlightModeRef.current = false;
-    setIsHighlightMode(false);
-    onExitHighlight?.();
-    setPlainText("");
-    onDraftChange?.();
-  };
 
   const selectFile = (selectedFile: File | null) => {
     setLocalError(null);
@@ -396,24 +408,18 @@ export function InputPanel({
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
           {/* Highlight mode: legend bar */}
           {isHighlightMode ? (
-            <div className="flex shrink-0 items-center justify-between border-b border-[#d7dfed] bg-white px-5 py-2">
-              <div className="flex items-center gap-5 text-[12px] font-semibold">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                  <span className="text-[#17633f]">Human-written</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                  <span className="text-[#b32635]">AI-generated</span>
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleExitHighlight}
-                className="veriai-pressable flex items-center gap-1.5 rounded-[7px] px-2.5 py-1.5 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9]"
-              >
-                ↩ Edit text
-              </button>
+            <div className="flex shrink-0 items-center gap-5 border-b border-[#d7dfed] bg-white px-5 py-2 text-[12px] font-semibold">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                <span className="text-[#17633f]">Human-written</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                <span className="text-[#b32635]">AI-generated</span>
+              </span>
+              <span className="ml-auto text-[11px] font-normal text-[#7185a3]">
+                Start typing to edit
+              </span>
             </div>
           ) : (
             /* Normal toolbar */
