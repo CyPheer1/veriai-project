@@ -157,9 +157,6 @@ export function ResultsPanel({
     interpretation: true,
   });
   const [reportStep, setReportStep] = useState(0);
-  const [expandedHighlight, setExpandedHighlight] = useState<
-    "human" | "ai" | null
-  >(null);
 
   if (!data && !isAnalyzing) {
     return (
@@ -717,60 +714,27 @@ export function ResultsPanel({
             {
               tone: "human" as const,
               label: "Likely human-written",
-              segs: humanSegments,
+              count: humanSegments.length,
             },
             {
               tone: "ai" as const,
               label: "Likely AI-generated",
-              segs: aiSegments,
+              count: aiSegments.length,
             },
-          ].map(({ tone, label, segs }) => {
+          ].map(({ tone, label, count }) => {
             const meta = toneMeta(tone);
-            const isOpen = expandedHighlight === tone;
             return (
               <div
                 key={tone}
-                className="overflow-hidden rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70"
+                className="grid grid-cols-[18px_1fr_auto] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5"
               >
-                <button
-                  type="button"
-                  onClick={() => setExpandedHighlight(isOpen ? null : tone)}
-                  className="veriai-highlight-row grid w-full grid-cols-[18px_1fr_auto_18px] items-center gap-3 px-3.5 py-2.5 text-left"
-                >
-                  <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
-                  <span className="text-[14px] font-medium text-[#07112f]">
-                    {label}
-                  </span>
-                  <span className="text-[12px] font-medium text-[#274169]">
-                    {segs.length} {segs.length === 1 ? "sentence" : "sentences"}
-                  </span>
-                  <span
-                    className={`inline-block text-[#07112f] transition-transform duration-150 ${isOpen ? "rotate-180" : ""}`}
-                  >
-                    ⌄
-                  </span>
-                </button>
-                {isOpen && segs.length > 0 && (
-                  <div className="space-y-1.5 border-t border-[#d7dfed] px-3.5 pb-3 pt-2">
-                    {segs.map((seg, i) => (
-                      <p
-                        key={i}
-                        className={`text-[13px] leading-6 ${
-                          tone === "ai" ? "text-[#7a1c24]" : "text-[#1a4a30]"
-                        }`}
-                      >
-                        {seg.text}
-                      </p>
-                    ))}
-                  </div>
-                )}
-                {isOpen && segs.length === 0 && (
-                  <div className="border-t border-[#d7dfed] px-3.5 pb-3 pt-2">
-                    <p className="text-[13px] text-[#64748b]">
-                      No sentences in this category.
-                    </p>
-                  </div>
-                )}
+                <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
+                <span className="text-[14px] font-medium text-[#07112f]">
+                  {label}
+                </span>
+                <span className="text-[12px] font-medium text-[#274169]">
+                  {count} {count === 1 ? "sentence" : "sentences"}
+                </span>
               </div>
             );
           })}

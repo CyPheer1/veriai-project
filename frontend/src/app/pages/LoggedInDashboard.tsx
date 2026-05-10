@@ -328,9 +328,10 @@ export function LoggedInDashboard() {
                     onUpgrade={handleUpgrade}
                     isUpgrading={isUpgrading}
                     resetKey={inputResetKey}
-                    resultSegments={results?.segments ?? []}
-                    showHighlight={
+                    highlightSegments={
                       !!results && !hasDraftChanges && !isAnalyzing
+                        ? (results?.segments ?? [])
+                        : undefined
                     }
                   />
                 </div>

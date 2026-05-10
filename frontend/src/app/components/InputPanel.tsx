@@ -16,6 +16,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
+import Highlight from "@tiptap/extension-highlight";
 import { DocumentSearchButtonIcon } from "./DesignIcons";
 
 export type AnalyzePayload =
@@ -35,11 +36,13 @@ interface InputPanelProps {
   onUpgrade?: () => void;
   isUpgrading?: boolean;
   resetKey?: number;
-  resultSegments?: { text: string; isAI: boolean }[];
-  showHighlight?: boolean;
+  /** When provided, applies sentence-level colour highlights directly in the editor */
+  highlightSegments?: { text: string; isAI: boolean }[];
 }
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const AI_HIGHLIGHT_COLOR = "#fee2e2";
+const HUMAN_HIGHLIGHT_COLOR = "#dcfce7";
 
 function formatFileSize(bytes: number): string {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -104,14 +107,14 @@ export function InputPanel({
   onUpgrade,
   isUpgrading = false,
   resetKey = 0,
-  resultSegments,
-  showHighlight = false,
+  highlightSegments,
 }: InputPanelProps) {
   const [mode, setMode] = useState<"text" | "file">("text");
   const [file, setFile] = useState<File | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [statusExpanded, setStatusExpanded] = useState(true);
   const [plainText, setPlainText] = useState("");
+  const [isHighlightMode, setIsHighlightMode] = useState(false);
   const [, forceUpdate] = useState(0);
   const [showParagraphMenu, setShowParagraphMenu] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -125,6 +128,7 @@ export function InputPanel({
       Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Placeholder.configure({ placeholder: "Paste academic text here..." }),
+      Highlight.configure({ multicolor: true }),
     ],
     editorProps: {
       attributes: {
@@ -134,9 +138,11 @@ export function InputPanel({
       },
     },
     onUpdate: ({ editor: e }) => {
-      setPlainText(e.getText());
+      if (!isHighlightMode) {
+        setPlainText(e.getText());
+        onDraftChange?.();
+      }
       setLocalError(null);
-      onDraftChange?.();
     },
     onSelectionUpdate: triggerUpdate,
     onTransaction: triggerUpdate,
@@ -156,24 +162,68 @@ export function InputPanel({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Sync editable state with isAnalyzing
+  // Sync editable with isAnalyzing AND highlight mode
   useEffect(() => {
     if (!editor) return;
-    editor.setEditable(!isAnalyzing);
-  }, [isAnalyzing, editor]);
+    editor.setEditable(!isAnalyzing && !isHighlightMode);
+  }, [isAnalyzing, isHighlightMode, editor]);
+
+  // Apply highlight segments into the editor
+  useEffect(() => {
+    if (!editor) return;
+
+    if (!highlightSegments || highlightSegments.length === 0) {
+      // If we were in highlight mode and segments cleared → exit
+      if (isHighlightMode) {
+        editor.commands.clearContent();
+        editor.setEditable(true);
+        setIsHighlightMode(false);
+        setPlainText("");
+      }
+      return;
+    }
+
+    // Build Tiptap JSON doc with highlight marks
+    const inlineNodes: object[] = [];
+    highlightSegments.forEach((seg, i) => {
+      inlineNodes.push({
+        type: "text",
+        marks: [
+          {
+            type: "highlight",
+            attrs: {
+              color: seg.isAI ? AI_HIGHLIGHT_COLOR : HUMAN_HIGHLIGHT_COLOR,
+            },
+          },
+        ],
+        text: seg.text,
+      });
+      if (i < highlightSegments.length - 1) {
+        inlineNodes.push({ type: "text", text: " " });
+      }
+    });
+
+    editor.commands.setContent({
+      type: "doc",
+      content: [{ type: "paragraph", content: inlineNodes }],
+    });
+
+    setIsHighlightMode(true);
+  }, [highlightSegments, editor]);
 
   // Reset editor when resetKey changes
   useEffect(() => {
     if (resetKey === 0 || !editor) return;
     editor.commands.clearContent();
+    editor.setEditable(true);
+    setIsHighlightMode(false);
     setMode("text");
     setFile(null);
     setLocalError(null);
+    setPlainText("");
     setStatusExpanded(true);
   }, [resetKey, editor]);
 
-  const hasHighlight =
-    showHighlight && !!resultSegments && resultSegments.length > 0;
   const wordCount = useMemo(() => countWords(plainText), [plainText]);
   const characterCount = plainText.length;
 
@@ -186,11 +236,22 @@ export function InputPanel({
     wordCount > dailyCreditsRemaining;
   const canSubmitText =
     mode === "text" &&
+    !isHighlightMode &&
     plainText.trim().length > 0 &&
     !exceedsFreeWordLimit &&
     !exceedsFreeCredits;
   const canSubmitFile = mode === "file" && Boolean(file) && isPro;
-  const canExportDraft = mode === "text" && plainText.trim().length > 0;
+  const canExportDraft =
+    mode === "text" && !isHighlightMode && plainText.trim().length > 0;
+
+  const handleExitHighlight = () => {
+    if (!editor) return;
+    editor.commands.clearContent();
+    editor.setEditable(true);
+    setIsHighlightMode(false);
+    setPlainText("");
+    onDraftChange?.();
+  };
 
   const selectFile = (selectedFile: File | null) => {
     setLocalError(null);
@@ -252,7 +313,7 @@ export function InputPanel({
     URL.revokeObjectURL(url);
   };
 
-  const toolbarDisabled = isAnalyzing || !editor || hasHighlight;
+  const toolbarDisabled = isAnalyzing || !editor || isHighlightMode;
 
   const currentBlockLabel = editor?.isActive("heading", { level: 1 })
     ? "Heading 1"
@@ -325,331 +386,308 @@ export function InputPanel({
 
       {mode === "text" ? (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
-          {/* Toolbar — hidden when showing highlight results */}
-          <div
-            className={`flex min-h-[52px] shrink-0 items-center border-b border-[#d7dfed] bg-white px-5 ${hasHighlight ? "hidden" : ""}`}
-          >
-            <div className="flex flex-wrap items-center gap-1.5">
-              {/* Paragraph / Heading dropdown */}
-              <div ref={paragraphMenuRef} className="relative">
-                <button
-                  type="button"
-                  disabled={toolbarDisabled}
-                  onClick={() => setShowParagraphMenu((v) => !v)}
-                  className="veriai-pressable flex h-9 items-center gap-2 rounded-[7px] px-2.5 text-[14px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {currentBlockLabel} <span className="text-[#64748b]">⌄</span>
-                </button>
-                {showParagraphMenu && (
-                  <div className="absolute left-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-[10px] border border-[#d7dfed] bg-white shadow-[0_8px_24px_rgba(31,45,71,0.12)]">
-                    {(
-                      [
-                        {
-                          label: "Paragraph",
-                          action: () =>
-                            editor?.chain().focus().setParagraph().run(),
-                        },
-                        {
-                          label: "Heading 1",
-                          action: () =>
-                            editor
-                              ?.chain()
-                              .focus()
-                              .toggleHeading({ level: 1 })
-                              .run(),
-                        },
-                        {
-                          label: "Heading 2",
-                          action: () =>
-                            editor
-                              ?.chain()
-                              .focus()
-                              .toggleHeading({ level: 2 })
-                              .run(),
-                        },
-                        {
-                          label: "Heading 3",
-                          action: () =>
-                            editor
-                              ?.chain()
-                              .focus()
-                              .toggleHeading({ level: 3 })
-                              .run(),
-                        },
-                      ] as { label: string; action: () => void }[]
-                    ).map((opt) => (
-                      <button
-                        key={opt.label}
-                        type="button"
-                        onClick={() => {
-                          opt.action();
-                          setShowParagraphMenu(false);
-                        }}
-                        className={`w-full px-3 py-2 text-left text-[13px] font-semibold hover:bg-[#f0f4fb] ${
-                          currentBlockLabel === opt.label
-                            ? "text-[#1263F1]"
-                            : "text-[#274169]"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+          {/* Highlight mode: legend bar */}
+          {isHighlightMode ? (
+            <div className="flex shrink-0 items-center justify-between border-b border-[#d7dfed] bg-white px-5 py-2">
+              <div className="flex items-center gap-5 text-[12px] font-semibold">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                  <span className="text-[#17633f]">Human-written</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                  <span className="text-[#b32635]">AI-generated</span>
+                </span>
               </div>
-
-              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
-
-              <ToolbarButton
-                label="Bold"
-                onClick={() => editor?.chain().focus().toggleBold().run()}
-                isActive={editor?.isActive("bold") ?? false}
-                disabled={toolbarDisabled}
+              <button
+                type="button"
+                onClick={handleExitHighlight}
+                className="veriai-pressable flex items-center gap-1.5 rounded-[7px] px-2.5 py-1.5 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9]"
               >
-                <FontBoldIcon className="h-4 w-4" />
-              </ToolbarButton>
-
-              <ToolbarButton
-                label="Italic"
-                onClick={() => editor?.chain().focus().toggleItalic().run()}
-                isActive={editor?.isActive("italic") ?? false}
-                disabled={toolbarDisabled}
-              >
-                <FontItalicIcon className="h-4 w-4" />
-              </ToolbarButton>
-
-              <ToolbarButton
-                label="Underline"
-                onClick={() => editor?.chain().focus().toggleUnderline().run()}
-                isActive={editor?.isActive("underline") ?? false}
-                disabled={toolbarDisabled}
-              >
-                <span className="text-[15px] font-bold underline">U</span>
-              </ToolbarButton>
-
-              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
-
-              <ToolbarButton
-                label="Bullet list"
-                onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                isActive={editor?.isActive("bulletList") ?? false}
-                disabled={toolbarDisabled}
-              >
-                <ListBulletIcon className="h-4 w-4" />
-              </ToolbarButton>
-
-              <ToolbarButton
-                label="Ordered list"
-                onClick={() =>
-                  editor?.chain().focus().toggleOrderedList().run()
-                }
-                isActive={editor?.isActive("orderedList") ?? false}
-                disabled={toolbarDisabled}
-              >
-                {/* Numbered list icon using SVG since Radix doesn't have one */}
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="currentColor"
-                >
-                  <path d="M2 2h1v3H2V3H1V2h1zm0 5h1.5a.5.5 0 0 1 0 1H2v.5h1.5a.5.5 0 0 1 0 1H2v1h2v1H1v-2a1 1 0 0 1 1-1V8a1 1 0 0 1-1-1V6h2v1H2zm0 5h1v.5H2v1h1V14H1v-1h1v-.5H1v-1h2v1H2zM5 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5zm0 5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8A.5.5 0 0 1 5 8.5zm0 5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5z" />
-                </svg>
-              </ToolbarButton>
-
-              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
-
-              <ToolbarButton
-                label="Align left"
-                onClick={() =>
-                  editor?.chain().focus().setTextAlign("left").run()
-                }
-                isActive={editor?.isActive({ textAlign: "left" }) ?? false}
-                disabled={toolbarDisabled}
-              >
-                <TextAlignLeftIcon className="h-4 w-4" />
-              </ToolbarButton>
-
-              <ToolbarButton
-                label="Align center"
-                onClick={() =>
-                  editor?.chain().focus().setTextAlign("center").run()
-                }
-                isActive={editor?.isActive({ textAlign: "center" }) ?? false}
-                disabled={toolbarDisabled}
-              >
-                <TextAlignCenterIcon className="h-4 w-4" />
-              </ToolbarButton>
-
-              <ToolbarButton
-                label="Align right"
-                onClick={() =>
-                  editor?.chain().focus().setTextAlign("right").run()
-                }
-                isActive={editor?.isActive({ textAlign: "right" }) ?? false}
-                disabled={toolbarDisabled}
-              >
-                <TextAlignRightIcon className="h-4 w-4" />
-              </ToolbarButton>
-
-              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
-
-              <ToolbarButton
-                label="Undo"
-                onClick={() => editor?.chain().focus().undo().run()}
-                disabled={toolbarDisabled || !editor?.can().undo()}
-              >
-                <ResetIcon className="h-4 w-4" />
-              </ToolbarButton>
-
-              <ToolbarButton
-                label="Redo"
-                onClick={() => editor?.chain().focus().redo().run()}
-                disabled={toolbarDisabled || !editor?.can().redo()}
-              >
-                <ResetIcon className="h-4 w-4 scale-x-[-1]" />
-              </ToolbarButton>
+                ↩ Edit text
+              </button>
             </div>
-          </div>
+          ) : (
+            /* Normal toolbar */
+            <div className="flex min-h-[52px] shrink-0 items-center border-b border-[#d7dfed] bg-white px-5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {/* Paragraph / Heading dropdown */}
+                <div ref={paragraphMenuRef} className="relative">
+                  <button
+                    type="button"
+                    disabled={toolbarDisabled}
+                    onClick={() => setShowParagraphMenu((v) => !v)}
+                    className="veriai-pressable flex h-9 items-center gap-2 rounded-[7px] px-2.5 text-[14px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {currentBlockLabel}{" "}
+                    <span className="text-[#64748b]">⌄</span>
+                  </button>
+                  {showParagraphMenu && (
+                    <div className="absolute left-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-[10px] border border-[#d7dfed] bg-white shadow-[0_8px_24px_rgba(31,45,71,0.12)]">
+                      {(
+                        [
+                          {
+                            label: "Paragraph",
+                            action: () =>
+                              editor?.chain().focus().setParagraph().run(),
+                          },
+                          {
+                            label: "Heading 1",
+                            action: () =>
+                              editor
+                                ?.chain()
+                                .focus()
+                                .toggleHeading({ level: 1 })
+                                .run(),
+                          },
+                          {
+                            label: "Heading 2",
+                            action: () =>
+                              editor
+                                ?.chain()
+                                .focus()
+                                .toggleHeading({ level: 2 })
+                                .run(),
+                          },
+                          {
+                            label: "Heading 3",
+                            action: () =>
+                              editor
+                                ?.chain()
+                                .focus()
+                                .toggleHeading({ level: 3 })
+                                .run(),
+                          },
+                        ] as { label: string; action: () => void }[]
+                      ).map((opt) => (
+                        <button
+                          key={opt.label}
+                          type="button"
+                          onClick={() => {
+                            opt.action();
+                            setShowParagraphMenu(false);
+                          }}
+                          className={`w-full px-3 py-2 text-left text-[13px] font-semibold hover:bg-[#f0f4fb] ${
+                            currentBlockLabel === opt.label
+                              ? "text-[#1263F1]"
+                              : "text-[#274169]"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-          {/* Highlighted result view */}
-          {hasHighlight && (
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {/* Legend bar */}
-              <div className="flex shrink-0 items-center justify-between border-b border-[#d7dfed] bg-white px-5 py-2">
-                <div className="flex items-center gap-4 text-[12px] font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                    <span className="text-[#17633f]">Human-written</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
-                    <span className="text-[#b32635]">AI-generated</span>
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onDraftChange?.()}
-                  className="veriai-pressable flex items-center gap-1.5 rounded-[7px] px-2.5 py-1.5 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9]"
+                <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+                <ToolbarButton
+                  label="Bold"
+                  onClick={() => editor?.chain().focus().toggleBold().run()}
+                  isActive={editor?.isActive("bold") ?? false}
+                  disabled={toolbarDisabled}
                 >
-                  ↩ Edit text
-                </button>
-              </div>
-              {/* Highlighted text */}
-              <div className="h-full overflow-y-auto bg-white">
-                <div className="veriai-document-font px-[14%] py-[68px] text-[20px] font-medium leading-[1.82] tracking-[-0.012em]">
-                  {resultSegments!.map((seg, i) => (
-                    <span key={i}>
-                      <span
-                        className={`rounded-[3px] px-0.5 py-[1px] ${
-                          seg.isAI
-                            ? "bg-red-100 text-[#7a1c24]"
-                            : "bg-emerald-100 text-[#0f4a28]"
-                        }`}
-                        title={
-                          seg.isAI
-                            ? "Likely AI-generated"
-                            : "Likely human-written"
-                        }
-                      >
-                        {seg.text}
-                      </span>{" "}
-                    </span>
-                  ))}
-                </div>
+                  <FontBoldIcon className="h-4 w-4" />
+                </ToolbarButton>
+
+                <ToolbarButton
+                  label="Italic"
+                  onClick={() => editor?.chain().focus().toggleItalic().run()}
+                  isActive={editor?.isActive("italic") ?? false}
+                  disabled={toolbarDisabled}
+                >
+                  <FontItalicIcon className="h-4 w-4" />
+                </ToolbarButton>
+
+                <ToolbarButton
+                  label="Underline"
+                  onClick={() =>
+                    editor?.chain().focus().toggleUnderline().run()
+                  }
+                  isActive={editor?.isActive("underline") ?? false}
+                  disabled={toolbarDisabled}
+                >
+                  <span className="text-[15px] font-bold underline">U</span>
+                </ToolbarButton>
+
+                <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+                <ToolbarButton
+                  label="Bullet list"
+                  onClick={() =>
+                    editor?.chain().focus().toggleBulletList().run()
+                  }
+                  isActive={editor?.isActive("bulletList") ?? false}
+                  disabled={toolbarDisabled}
+                >
+                  <ListBulletIcon className="h-4 w-4" />
+                </ToolbarButton>
+
+                <ToolbarButton
+                  label="Ordered list"
+                  onClick={() =>
+                    editor?.chain().focus().toggleOrderedList().run()
+                  }
+                  isActive={editor?.isActive("orderedList") ?? false}
+                  disabled={toolbarDisabled}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                  >
+                    <path d="M2 2h1v3H2V3H1V2h1zm0 5h1.5a.5.5 0 0 1 0 1H2v.5h1.5a.5.5 0 0 1 0 1H2v1h2v1H1v-2a1 1 0 0 1 1-1V8a1 1 0 0 1-1-1V6h2v1H2zm0 5h1v.5H2v1h1V14H1v-1h1v-.5H1v-1h2v1H2zM5 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5zm0 5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8A.5.5 0 0 1 5 8.5zm0 5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5z" />
+                  </svg>
+                </ToolbarButton>
+
+                <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+                <ToolbarButton
+                  label="Align left"
+                  onClick={() =>
+                    editor?.chain().focus().setTextAlign("left").run()
+                  }
+                  isActive={editor?.isActive({ textAlign: "left" }) ?? false}
+                  disabled={toolbarDisabled}
+                >
+                  <TextAlignLeftIcon className="h-4 w-4" />
+                </ToolbarButton>
+
+                <ToolbarButton
+                  label="Align center"
+                  onClick={() =>
+                    editor?.chain().focus().setTextAlign("center").run()
+                  }
+                  isActive={editor?.isActive({ textAlign: "center" }) ?? false}
+                  disabled={toolbarDisabled}
+                >
+                  <TextAlignCenterIcon className="h-4 w-4" />
+                </ToolbarButton>
+
+                <ToolbarButton
+                  label="Align right"
+                  onClick={() =>
+                    editor?.chain().focus().setTextAlign("right").run()
+                  }
+                  isActive={editor?.isActive({ textAlign: "right" }) ?? false}
+                  disabled={toolbarDisabled}
+                >
+                  <TextAlignRightIcon className="h-4 w-4" />
+                </ToolbarButton>
+
+                <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+                <ToolbarButton
+                  label="Undo"
+                  onClick={() => editor?.chain().focus().undo().run()}
+                  disabled={toolbarDisabled || !editor?.can().undo()}
+                >
+                  <ResetIcon className="h-4 w-4" />
+                </ToolbarButton>
+
+                <ToolbarButton
+                  label="Redo"
+                  onClick={() => editor?.chain().focus().redo().run()}
+                  disabled={toolbarDisabled || !editor?.can().redo()}
+                >
+                  <ResetIcon className="h-4 w-4 scale-x-[-1]" />
+                </ToolbarButton>
               </div>
             </div>
           )}
 
-          {/* Editor area — hidden when showing highlight results */}
-          <div
-            className={`veriai-rich-editor relative min-h-0 flex-1 bg-white ${hasHighlight ? "hidden" : ""}`}
-          >
+          {/* Editor area — always present; Tiptap content shows highlights when in highlight mode */}
+          <div className="veriai-rich-editor relative min-h-0 flex-1 bg-white">
             <div className="h-full overflow-y-auto bg-white">
               <EditorContent editor={editor} />
             </div>
 
-            {/* Floating status bar */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-end px-4">
-              <div
-                className={`pointer-events-auto flex h-10 items-center justify-end overflow-hidden rounded-full border border-[#cbd7e8]/85 bg-white/78 text-[12px] font-semibold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md transition-[max-width,opacity] duration-200 ${
-                  statusExpanded ? "max-w-[620px] pl-4" : "max-w-10"
-                }`}
-                aria-label="Document status"
-              >
+            {/* Floating status bar (hidden in highlight mode) */}
+            {!isHighlightMode && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-end px-4">
                 <div
-                  className={`flex min-w-0 items-center gap-2 whitespace-nowrap pr-3 text-[12px] font-semibold ${statusExpanded ? "opacity-100" : "opacity-0"}`}
+                  className={`pointer-events-auto flex h-10 items-center justify-end overflow-hidden rounded-full border border-[#cbd7e8]/85 bg-white/78 text-[12px] font-semibold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md transition-[max-width,opacity] duration-200 ${
+                    statusExpanded ? "max-w-[620px] pl-4" : "max-w-10"
+                  }`}
+                  aria-label="Document status"
                 >
-                  <span
-                    className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[#274169]"
-                    title="Words"
-                    aria-label={`${wordCount.toLocaleString()} words`}
+                  <div
+                    className={`flex min-w-0 items-center gap-2 whitespace-nowrap pr-3 text-[12px] font-semibold ${statusExpanded ? "opacity-100" : "opacity-0"}`}
                   >
-                    <ListBulletIcon className="h-3.5 w-3.5 text-[#64748b]" />
-                    <span>
-                      {wordCount.toLocaleString()}
-                      {!isPro && textWordLimit
-                        ? ` / ${textWordLimit.toLocaleString()}`
-                        : ""}
+                    <span
+                      className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[#274169]"
+                      title="Words"
+                      aria-label={`${wordCount.toLocaleString()} words`}
+                    >
+                      <ListBulletIcon className="h-3.5 w-3.5 text-[#64748b]" />
+                      <span>
+                        {wordCount.toLocaleString()}
+                        {!isPro && textWordLimit
+                          ? ` / ${textWordLimit.toLocaleString()}`
+                          : ""}
+                      </span>
                     </span>
-                  </span>
-                  <span
-                    className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[#274169]"
-                    title="Characters"
-                    aria-label={`${characterCount.toLocaleString()} characters`}
-                  >
-                    <span className="text-[12px] font-semibold text-[#64748b]">
-                      #
+                    <span
+                      className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[#274169]"
+                      title="Characters"
+                      aria-label={`${characterCount.toLocaleString()} characters`}
+                    >
+                      <span className="text-[12px] font-semibold text-[#64748b]">
+                        #
+                      </span>
+                      <span>{characterCount.toLocaleString()}</span>
                     </span>
-                    <span>{characterCount.toLocaleString()}</span>
-                  </span>
-                  <span
-                    className="mx-1 h-5 w-px bg-[#cbd7e8]"
-                    aria-hidden="true"
-                  />
+                    <span
+                      className="mx-1 h-5 w-px bg-[#cbd7e8]"
+                      aria-hidden="true"
+                    />
+                    <button
+                      type="button"
+                      onClick={exportDraft}
+                      disabled={!canExportDraft || isAnalyzing}
+                      className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent"
+                      aria-label="Export draft"
+                      title="Export draft"
+                    >
+                      <DownloadIcon className="h-3.5 w-3.5" />
+                      Export
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        editor?.commands.clearContent();
+                        setPlainText("");
+                        setFile(null);
+                        setLocalError(null);
+                        onDraftChange?.();
+                      }}
+                      disabled={isAnalyzing}
+                      className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:opacity-60"
+                      aria-label="Clear text"
+                      title="Clear text"
+                    >
+                      <TrashIcon className="h-3.5 w-3.5" />
+                      Clear
+                    </button>
+                  </div>
                   <button
                     type="button"
-                    onClick={exportDraft}
-                    disabled={!canExportDraft || isAnalyzing}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent"
-                    aria-label="Export draft"
-                    title="Export draft"
+                    onClick={() => setStatusExpanded((v) => !v)}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[18px] font-bold text-[#274169] hover:bg-[#eef3f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+                    aria-label={
+                      statusExpanded
+                        ? "Hide document status"
+                        : "Show document status"
+                    }
+                    title={statusExpanded ? "Hide status" : "Show status"}
                   >
-                    <DownloadIcon className="h-3.5 w-3.5" />
-                    Export
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      editor?.commands.clearContent();
-                      setFile(null);
-                      setLocalError(null);
-                      onDraftChange?.();
-                    }}
-                    disabled={isAnalyzing}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:opacity-60"
-                    aria-label="Clear text"
-                    title="Clear text"
-                  >
-                    <TrashIcon className="h-3.5 w-3.5" />
-                    Clear
+                    {statusExpanded ? "›" : "‹"}
                   </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setStatusExpanded((v) => !v)}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[18px] font-bold text-[#274169] hover:bg-[#eef3f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-                  aria-label={
-                    statusExpanded
-                      ? "Hide document status"
-                      : "Show document status"
-                  }
-                  title={statusExpanded ? "Hide status" : "Show status"}
-                >
-                  {statusExpanded ? "›" : "‹"}
-                </button>
               </div>
-            </div>
+            )}
           </div>
         </div>
       ) : (
