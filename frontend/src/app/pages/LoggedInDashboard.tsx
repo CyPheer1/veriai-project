@@ -130,6 +130,8 @@ function ScanDock({
                     : "bg-[#fffbeb] text-[#8a5200] border border-[#fcd34d]/40";
               const pillLabel =
                 tone === "ai" ? "AI" : tone === "human" ? "Human" : "Mixed";
+              const displayScore =
+                tone === "human" ? 100 - item.score : item.score;
               return (
                 <button
                   key={item.id}
@@ -138,7 +140,7 @@ function ScanDock({
                   className={`flex w-full flex-col gap-0.5 rounded-[10px] px-2.5 py-2 text-left transition-colors ${
                     isActive ? "bg-[#edf4ff]" : "hover:bg-[#eef3f9]"
                   }`}
-                  aria-label={`Restore scan: ${item.title}, ${item.score}% AI`}
+                  aria-label={`Restore scan: ${item.title}, ${displayScore}% ${pillLabel}`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span
@@ -153,7 +155,7 @@ function ScanDock({
                     <span
                       className={`shrink-0 rounded-[5px] px-1.5 py-0.5 text-[10px] font-semibold ${pillStyle}`}
                     >
-                      {item.score}% {pillLabel}
+                      {displayScore}% {pillLabel}
                     </span>
                   </div>
                   <span className="text-[11px] text-[#7185a3]">

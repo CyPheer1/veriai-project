@@ -462,60 +462,52 @@ export function ResultsPanel({
     return (
       <div className="grid h-full min-h-0 grid-rows-[58px_1fr] overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)]">
         {tabHeader}
-        <section className="relative min-h-0 overflow-hidden p-7">
-          <div className="pointer-events-none h-full min-h-0 overflow-hidden rounded-[12px] border border-[#d7dfed] bg-[#f8fafc]/75 p-5 blur-[3px]">
-            {/* Header */}
-            <div className="mb-4 flex items-center gap-3 border-b border-[#d7dfed] pb-3">
-              <div className="h-7 w-7 rounded-[6px] bg-[#dbe7f6]" />
-              <div>
-                <div className="h-3 w-24 rounded-full bg-[#d0ddf0]" />
-                <div className="mt-1.5 h-2 w-16 rounded-full bg-[#e5ebf4]" />
-              </div>
-            </div>
-            {/* Score block */}
-            <div className="mb-3 rounded-[10px] border border-[#d7dfed] bg-white p-3">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 shrink-0 rounded-full border-[3px] border-[#ef3a43]" />
-                <div className="flex-1">
-                  <div className="h-3 w-32 rounded-full bg-[#fecaca]" />
-                  <div className="mt-2 h-2 w-48 rounded-full bg-[#f1f5fa]" />
-                  <div className="mt-1.5 h-2 w-40 rounded-full bg-[#f1f5fa]" />
+        <section className="relative min-h-0 overflow-hidden">
+          {/* Blurred actual premium report preview */}
+          <div className="pointer-events-none h-full select-none overflow-hidden blur-[3px]">
+            <div className="grid h-full min-h-0 grid-rows-[auto_1fr] px-7 py-6">
+              <div className="flex items-center justify-between gap-4 border-b border-[#d7dfed] pb-4">
+                <div>
+                  <h2 className="text-[20px] font-semibold tracking-[-0.025em] text-[#07112f]">
+                    Report preview
+                  </h2>
+                  <p className="mt-1 text-[13px] font-medium text-[#64748b]">
+                    Review selected blocks before downloading.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="h-10 rounded-[9px] border border-[#d7dfed] bg-white px-4 text-[14px] font-semibold text-[#274169]"
+                  >
+                    ← Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="h-10 rounded-[9px] bg-[#1263F1] px-4 text-[14px] font-semibold text-white"
+                  >
+                    Download
+                  </button>
                 </div>
               </div>
-            </div>
-            {/* Model attribution block */}
-            <div className="mb-3 rounded-[10px] border border-[#d7dfed] bg-white p-3">
-              <div className="mb-3 h-2.5 w-28 rounded-full bg-[#d0ddf0]" />
-              {[90, 68, 42, 18].map((w, i) => (
-                <div key={i} className="mb-1.5 flex items-center gap-2">
-                  <div className="h-5 w-5 rounded-full bg-[#e5ebf4]" />
-                  <div
-                    className="h-2 flex-1 rounded-full bg-[#e5ebf4]"
-                    style={{ maxWidth: `${w}%` }}
-                  />
-                  <div className="h-2 w-7 rounded-full bg-[#d0ddf0]" />
-                </div>
-              ))}
-            </div>
-            {/* Proof section — green/red text lines */}
-            <div className="rounded-[10px] border border-[#d7dfed] bg-white p-3">
-              <div className="mb-3 h-2.5 w-20 rounded-full bg-[#d0ddf0]" />
-              {[
-                { color: "bg-[#bbf7d0]", w: "w-full" },
-                { color: "bg-[#fecaca]", w: "w-11/12" },
-                { color: "bg-[#bbf7d0]", w: "w-full" },
-                { color: "bg-[#bbf7d0]", w: "w-4/5" },
-                { color: "bg-[#fecaca]", w: "w-full" },
-                { color: "bg-[#bbf7d0]", w: "w-3/4" },
-                { color: "bg-[#fecaca]", w: "w-5/6" },
-              ].map((line, i) => (
-                <div
-                  key={i}
-                  className={`mb-1.5 h-2 rounded-full ${line.color} ${line.w}`}
-                />
-              ))}
+              <div className="overflow-hidden py-5">
+                <pre className="veriai-document-font whitespace-pre-wrap rounded-[12px] border border-[#d7dfed] bg-[#f8fafc]/75 p-5 text-[14px] font-medium leading-7 text-[#274169]">
+                  {`Veri4i review report
+
+Verdict: Likely AI-generated. AI signal: 87%. Top model: GPT-4. Date: May 14, 2025.
+
+Interpretation: The submitted text shows a high AI-generation signal. Review highlighted sentences and layer scores before making an academic decision.
+
+Model attribution: GPT-4 93%, Claude 3 89%, Gemini 1.5 91%, Llama 3 86%.
+
+Sentence evidence: 12 likely human-written sentences, 5 uncertain sentences, 7 likely AI-generated sentences.
+
+Detection layers: RoBERTa 78%, Stylistic 65%, Statistical 52%.`}
+                </pre>
+              </div>
             </div>
           </div>
+          {/* Upgrade overlay */}
           <div className="absolute inset-0 flex items-center justify-center bg-white/48 px-8">
             <div className="max-w-[360px] rounded-[14px] border border-[#cbd7ea] bg-white p-5 text-center shadow-[0_22px_54px_rgba(31,45,71,0.16)]">
               <h2 className="text-[16px] font-semibold text-[#07112f]">
@@ -825,6 +817,65 @@ export function ResultsPanel({
           </section>
         )}
 
+        {/* Confidence across text — FREE blurred preview */}
+        {!fullReportAvailable && (
+          <section className="relative border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+            <div className="pointer-events-none select-none blur-[3px]">
+              <div className="flex items-center justify-between pb-3">
+                <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                  Confidence across text
+                </h2>
+                <span className="text-[12px] font-medium text-[#64748b]">
+                  8 chunks
+                </span>
+              </div>
+              <ResponsiveContainer width="100%" height={80}>
+                <AreaChart
+                  data={[42, 61, 78, 88, 95, 82, 74, 65].map((s, i) => ({
+                    i: i + 1,
+                    score: s,
+                  }))}
+                  margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient
+                      id="chunkGradFree"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="#ef3a43"
+                        stopOpacity={0.25}
+                      />
+                      <stop offset="95%" stopColor="#ef3a43" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="i" hide />
+                  <YAxis domain={[0, 100]} hide />
+                  <Area
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#ef3a43"
+                    strokeWidth={1.5}
+                    fill="url(#chunkGradFree)"
+                    dot={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="rounded-[9px] border border-[#cbd7ea] bg-white/95 px-3.5 py-2 text-center shadow-[0_4px_16px_rgba(31,45,71,0.12)]">
+                <p className="text-[13px] font-semibold text-[#52627a]">
+                  Confidence chart is Premium
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Model attribution */}
         {!isHumanResult && (
           <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
@@ -873,13 +924,50 @@ export function ResultsPanel({
                 })}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#d7dfed] bg-[#f8fafc]/60 px-4 py-5 text-center">
-                <p className="text-[13px] font-semibold text-[#52627a]">
-                  Model attribution is Premium
-                </p>
-                <p className="mt-1 text-[12px] font-medium text-[#94a3b8]">
-                  Identifies the most likely source AI model
-                </p>
+              <div className="relative">
+                <div className="pointer-events-none select-none blur-[3px]">
+                  <div className="grid grid-cols-2 content-stretch gap-2.5">
+                    {previewData.modelAttributions.slice(0, 4).map((model) => {
+                      const modelScore = clampScore(model.score);
+                      const scoreColor =
+                        modelScore >= 90 ? "text-[#b32635]" : "text-[#07112f]";
+                      return (
+                        <article
+                          key={model.name}
+                          className="grid min-h-[76px] content-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium text-[#07112f]">
+                              <ModelLogo
+                                name={model.name}
+                                className="h-6 w-6 shrink-0"
+                              />
+                              <span className="truncate">{model.name}</span>
+                            </span>
+                            <span
+                              className={`veriai-mono text-[13px] font-semibold ${scoreColor}`}
+                            >
+                              {modelScore}%
+                            </span>
+                          </div>
+                          <span className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5ebf4]">
+                            <span
+                              className="veriai-bar-fill block h-full rounded-full bg-[#1263F1]"
+                              style={{ width: `${modelScore}%` }}
+                            />
+                          </span>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="rounded-[9px] border border-[#cbd7ea] bg-white/95 px-3.5 py-2 text-center shadow-[0_4px_16px_rgba(31,45,71,0.12)]">
+                    <p className="text-[13px] font-semibold text-[#52627a]">
+                      Model attribution is Premium
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </section>
@@ -893,10 +981,13 @@ export function ResultsPanel({
               <InfoTooltip text="Each chunk of text is scored individually. Green = likely human-written. Red = likely AI-generated." />
             </h2>
             <span className="text-[12px] font-medium text-[#64748b]">
-              {humanSegments.length + aiSegments.length}{" "}
-              {humanSegments.length + aiSegments.length === 1
-                ? "sentence"
-                : "sentences"}
+              {fullReportAvailable
+                ? `${humanSegments.length + aiSegments.length} ${
+                    humanSegments.length + aiSegments.length === 1
+                      ? "sentence"
+                      : "sentences"
+                  }`
+                : "Premium"}
             </span>
           </div>
           {fullReportAvailable ? (
@@ -931,13 +1022,46 @@ export function ResultsPanel({
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#d7dfed] bg-[#f8fafc]/60 px-4 py-5 text-center">
-              <p className="text-[13px] font-semibold text-[#52627a]">
-                Per-sentence highlights are Premium
-              </p>
-              <p className="mt-1 text-[12px] font-medium text-[#94a3b8]">
-                Upgrade to see individual sentence scoring
-              </p>
+            <div className="relative">
+              <div className="pointer-events-none select-none blur-[3px]">
+                <div className="grid content-stretch gap-[9px]">
+                  {[
+                    {
+                      tone: "human" as const,
+                      label: "Likely human-written",
+                      count: 12,
+                    },
+                    {
+                      tone: "ai" as const,
+                      label: "Likely AI-generated",
+                      count: 7,
+                    },
+                  ].map(({ tone, label, count }) => {
+                    const meta = toneMeta(tone);
+                    return (
+                      <div
+                        key={tone}
+                        className="grid grid-cols-[18px_1fr_auto] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5"
+                      >
+                        <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
+                        <span className="text-[14px] font-medium text-[#07112f]">
+                          {label}
+                        </span>
+                        <span className="text-[12px] font-medium text-[#274169]">
+                          {count} sentences
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="rounded-[9px] border border-[#cbd7ea] bg-white/95 px-3.5 py-2 text-center shadow-[0_4px_16px_rgba(31,45,71,0.12)]">
+                  <p className="text-[13px] font-semibold text-[#52627a]">
+                    Per-sentence highlights are Premium
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </section>
