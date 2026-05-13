@@ -50,31 +50,26 @@ function toResults(detail: SubmissionDetailResponse): ResultsData | null {
 const PAGE_SIZE = 10;
 
 function labelDisplay(
-  globalLabel: string | null,
+  item: SubmissionListItemResponse,
 ): { text: string; className: string } | null {
-  if (!globalLabel) return null;
-  const lower = globalLabel.toLowerCase();
-  if (lower === "ai" || lower.includes("ai")) {
+  if (item.globalConfidence === null || item.globalConfidence === undefined)
+    return null;
+  const score = Math.round(item.globalConfidence * 100);
+  if (score >= 65) {
     return {
       text: "AI generated",
       className: "bg-[#fef2f2] text-[#b32635] border border-[#fecaca]",
     };
   }
-  if (lower === "human" || lower.includes("human")) {
+  if (score <= 35) {
     return {
       text: "Human written",
       className: "bg-[#f0fdf4] text-[#17633f] border border-[#bbf7d0]",
     };
   }
-  if (lower === "mixed" || lower.includes("mixed")) {
-    return {
-      text: "Mixed",
-      className: "bg-[#fffbeb] text-[#8a5200] border border-[#fcd34d]",
-    };
-  }
   return {
-    text: globalLabel,
-    className: "bg-[#f8fafc] text-[#52627a] border border-[#d7dfed]",
+    text: "Mixed",
+    className: "bg-[#fffbeb] text-[#8a5200] border border-[#fcd34d]",
   };
 }
 
@@ -226,10 +221,25 @@ export function ScanHistoryPage() {
               </span>
             </div>
 
-            {isLoading ? (
-              <p className="mt-5 text-[13px] text-[#52627a]">
-                Loading history…
-              </p>
+            {isLoading && items.length === 0 ? (
+              <div className="mt-5 flex flex-col gap-3">
+                {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                  <div
+                    key={`skel-${i}`}
+                    className="w-full animate-pulse rounded-[12px] border border-[#eaeff7] px-4 py-3"
+                    aria-hidden="true"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 space-y-2">
+                        <div className="h-3 w-28 rounded-full bg-[#f1f5fa]" />
+                        <div className="h-2.5 w-20 rounded-full bg-[#f5f8fc]" />
+                      </div>
+                      <div className="h-5 w-16 shrink-0 rounded-full bg-[#f5f8fc]" />
+                    </div>
+                    <div className="mt-3 h-2.5 w-36 rounded-full bg-[#f5f8fc]" />
+                  </div>
+                ))}
+              </div>
             ) : items.length === 0 ? (
               <div className="mt-6 rounded-[12px] border border-dashed border-[#cbd7ea] bg-white/75 p-5 text-center text-[13px] text-[#52627a]">
                 No scans yet. Start a new scan to populate this list.
@@ -239,7 +249,7 @@ export function ScanHistoryPage() {
                 <div className="mt-5 flex flex-1 flex-col gap-3">
                   {items.map((item) => {
                     const isActive = selectedId === item.submissionId;
-                    const badge = labelDisplay(item.globalLabel);
+                    const badge = labelDisplay(item);
                     return (
                       <button
                         key={item.submissionId}
@@ -282,24 +292,6 @@ export function ScanHistoryPage() {
                       </button>
                     );
                   })}
-                  {Array.from({
-                    length: Math.max(0, PAGE_SIZE - items.length),
-                  }).map((_, i) => (
-                    <div
-                      key={`ghost-${i}`}
-                      className="w-full flex-1 rounded-[12px] border border-dashed border-[#eaeff7] px-4 py-3"
-                      aria-hidden="true"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 space-y-2">
-                          <div className="h-3 w-28 rounded-full bg-[#f1f5fa]" />
-                          <div className="h-2.5 w-20 rounded-full bg-[#f5f8fc]" />
-                        </div>
-                        <div className="h-5 w-16 shrink-0 rounded-full bg-[#f5f8fc]" />
-                      </div>
-                      <div className="mt-3 h-2.5 w-36 rounded-full bg-[#f5f8fc]" />
-                    </div>
-                  ))}
                 </div>
 
                 {totalPages > 1 && (
