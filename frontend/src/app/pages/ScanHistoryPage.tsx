@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { getTitleWithFallback } from "../utils/scanTitles";
 import { ClockIcon, FileTextIcon } from "@radix-ui/react-icons";
 import { useNavigate } from "react-router";
 import { Header } from "../components/Header";
@@ -46,7 +47,7 @@ function toResults(detail: SubmissionDetailResponse): ResultsData | null {
   };
 }
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 10;
 
 function labelDisplay(
   globalLabel: string | null,
@@ -65,6 +66,12 @@ function labelDisplay(
       className: "bg-[#f0fdf4] text-[#17633f] border border-[#bbf7d0]",
     };
   }
+  if (lower === "mixed" || lower.includes("mixed")) {
+    return {
+      text: "Mixed",
+      className: "bg-[#fffbeb] text-[#8a5200] border border-[#fcd34d]",
+    };
+  }
   return {
     text: globalLabel,
     className: "bg-[#f8fafc] text-[#52627a] border border-[#d7dfed]",
@@ -72,10 +79,15 @@ function labelDisplay(
 }
 
 function itemTitle(item: SubmissionListItemResponse): string {
-  if (item.sourceType === "TEXT") return "Text scan";
-  if (item.sourceType === "PDF") return "PDF document";
-  if (item.sourceType === "DOCX") return "Word document";
-  return item.sourceType ?? "Scan";
+  const fallback =
+    item.sourceType === "TEXT"
+      ? "Text scan"
+      : item.sourceType === "PDF"
+        ? "PDF document"
+        : item.sourceType === "DOCX"
+          ? "Word document"
+          : (item.sourceType ?? "Scan");
+  return getTitleWithFallback(item.submissionId, fallback);
 }
 
 export function ScanHistoryPage() {
@@ -228,7 +240,7 @@ export function ScanHistoryPage() {
               </div>
             ) : (
               <>
-                <div className="mt-5 space-y-3">
+                <div className="mt-5 flex flex-1 flex-col gap-3">
                   {items.map((item) => {
                     const isActive = selectedId === item.submissionId;
                     const badge = labelDisplay(item.globalLabel);
@@ -274,6 +286,24 @@ export function ScanHistoryPage() {
                       </button>
                     );
                   })}
+                  {Array.from({
+                    length: Math.max(0, PAGE_SIZE - items.length),
+                  }).map((_, i) => (
+                    <div
+                      key={`ghost-${i}`}
+                      className="w-full flex-1 rounded-[12px] border border-dashed border-[#eaeff7] px-4 py-3"
+                      aria-hidden="true"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 space-y-2">
+                          <div className="h-3 w-28 rounded-full bg-[#f1f5fa]" />
+                          <div className="h-2.5 w-20 rounded-full bg-[#f5f8fc]" />
+                        </div>
+                        <div className="h-5 w-16 shrink-0 rounded-full bg-[#f5f8fc]" />
+                      </div>
+                      <div className="mt-3 h-2.5 w-36 rounded-full bg-[#f5f8fc]" />
+                    </div>
+                  ))}
                 </div>
 
                 {totalPages > 1 && (
@@ -317,7 +347,10 @@ export function ScanHistoryPage() {
                         Submission details
                       </p>
                       <h2 className="mt-2 text-[20px] font-semibold text-[#0d1526]">
-                        {selectedDetail.sourceFilename ?? "Text submission"}
+                        {getTitleWithFallback(
+                          selectedDetail.submissionId,
+                          selectedDetail.sourceFilename ?? "Text submission",
+                        )}
                       </h2>
                     </div>
                     <span className="rounded-full bg-[#eef3f9] px-3 py-1 text-[11px] font-semibold text-[#274169]">

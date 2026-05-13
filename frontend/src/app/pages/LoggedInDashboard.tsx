@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ClockIcon, FileTextIcon, PlusIcon } from "@radix-ui/react-icons";
+import { FileTextIcon, PlusIcon } from "@radix-ui/react-icons";
+import { saveTitle, getTitleWithFallback } from "../utils/scanTitles";
 import { useNavigate } from "react-router";
 import { Header } from "../components/Header";
 import { AnalyzePayload, InputPanel } from "../components/InputPanel";
@@ -79,8 +80,8 @@ function ScanDock({
 }) {
   return (
     <aside className="flex min-h-0 w-[220px] shrink-0 flex-col border-r border-[#d8e2ee] bg-[#f6f9fd] px-3 py-3 shadow-[8px_0_34px_-32px_rgba(31,45,71,0.45)]">
-      {/* Logo + actions row */}
-      <div className="flex items-center justify-between px-1">
+      {/* Logo centered */}
+      <div className="flex justify-center py-2">
         <div
           className="flex h-10 w-10 items-center justify-center"
           title="veri4i"
@@ -92,27 +93,18 @@ function ScanDock({
             draggable={false}
           />
         </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={onHistory}
-            className="flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#c8daf2] bg-[#edf4ff] text-[#1263F1] transition-colors hover:bg-[#e5efff]"
-            aria-label="Scan history"
-            title="All scans"
-          >
-            <ClockIcon className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onNewScan}
-            className="veriai-pressable flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#1263F1] text-white shadow-[0_10px_20px_-14px_rgba(18,99,241,0.9)] hover:bg-[#0d54d5]"
-            aria-label="Start a new scan"
-            title="New scan"
-          >
-            <PlusIcon className="h-4 w-4" />
-          </button>
-        </div>
       </div>
+
+      {/* New Scan button */}
+      <button
+        type="button"
+        onClick={onNewScan}
+        className="veriai-pressable mt-2 flex w-full items-center justify-center gap-2 rounded-[9px] bg-[#1263F1] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_10px_20px_-14px_rgba(18,99,241,0.9)] hover:bg-[#0d54d5]"
+        aria-label="Start a new scan"
+      >
+        <PlusIcon className="h-4 w-4" />
+        New scan
+      </button>
 
       <div className="my-3 h-px w-full bg-[#dbe4f1]" />
 
@@ -123,16 +115,16 @@ function ScanDock({
             <p className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-[#9aacbf]">
               Recent scans
             </p>
-            {history.slice(0, 8).map((item) => {
+            {history.map((item) => {
               const isActive = activeId === item.id;
               const tone =
                 item.score >= 65 ? "ai" : item.score <= 35 ? "human" : "mixed";
               const pillStyle =
                 tone === "ai"
-                  ? "bg-[#fff0f0] text-[#b32635]"
+                  ? "bg-[#fff0f0] text-[#b32635] border border-[#fca5a5]/40"
                   : tone === "human"
-                    ? "bg-[#f0fdf4] text-[#17633f]"
-                    : "bg-[#fffbeb] text-[#8a5200]";
+                    ? "bg-[#f0fdf4] text-[#17633f] border border-[#86efac]/40"
+                    : "bg-[#fffbeb] text-[#8a5200] border border-[#fcd34d]/40";
               const pillLabel =
                 tone === "ai" ? "AI" : tone === "human" ? "Human" : "Mixed";
               return (
@@ -147,14 +139,16 @@ function ScanDock({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span
-                      className={`truncate text-[12px] font-semibold leading-tight ${
-                        isActive ? "text-[#1263F1]" : "text-[#0d1526]"
+                      className={`truncate text-[12px] leading-tight ${
+                        isActive
+                          ? "font-semibold text-[#1263F1]"
+                          : "font-medium text-[#0d1526]"
                       }`}
                     >
                       {item.title}
                     </span>
                     <span
-                      className={`shrink-0 rounded-[5px] px-1.5 py-0.5 text-[10px] font-bold ${pillStyle}`}
+                      className={`shrink-0 rounded-[5px] px-1.5 py-0.5 text-[10px] font-semibold ${pillStyle}`}
                     >
                       {item.score}% {pillLabel}
                     </span>
@@ -221,15 +215,18 @@ export function LoggedInDashboard() {
   useEffect(() => {
     if (!token || historyLoadedRef.current) return;
     historyLoadedRef.current = true;
-    listSubmissionsRequest(token, 0, 8)
+    listSubmissionsRequest(token, 0, 20)
       .then((page) => {
         const items: ScanHistoryItem[] = page.items
           .filter((item) => item.status === "COMPLETED")
           .map((item) => ({
             id: item.submissionId,
-            title: item.sourceFilename
-              ? item.sourceFilename.replace(/\.[^.]+$/, "")
-              : `Scan · ${item.wordCount} words`,
+            title: getTitleWithFallback(
+              item.submissionId,
+              item.sourceFilename
+                ? item.sourceFilename.replace(/\.[^.]+$/, "")
+                : `Scan · ${item.wordCount} words`,
+            ),
             score: Math.round((item.globalConfidence ?? 0) * 100),
             model: item.globalLabel ?? "",
             timestamp: item.completedAt ?? item.submittedAt,
@@ -239,7 +236,7 @@ export function LoggedInDashboard() {
           // merge: keep in-session items, append backend items not already present
           const existingIds = new Set(prev.map((h) => h.id));
           const fresh = items.filter((i) => !existingIds.has(i.id));
-          return [...prev, ...fresh].slice(0, 8);
+          return [...prev, ...fresh].slice(0, 20);
         });
       })
       .catch(() => {});
@@ -264,6 +261,7 @@ export function LoggedInDashboard() {
 
     if (item.results) {
       setResults(item.results);
+      setShowHighlights(true);
       return;
     }
 
@@ -278,6 +276,7 @@ export function LoggedInDashboard() {
         };
         setResults(nextResults);
         setShowHighlights(true);
+        setHasDraftChanges(false);
         setScanHistory((prev) =>
           prev.map((h) =>
             h.id === item.id ? { ...h, results: nextResults } : h,
@@ -338,9 +337,11 @@ export function LoggedInDashboard() {
         ...detail.frontendPayload,
         submittedAt: detail.completedAt ?? detail.submittedAt,
       };
+      const scanTitle = normalizeScanTitle(documentTitle);
+      saveTitle(accepted.submissionId, scanTitle);
       const historyItem: ScanHistoryItem = {
         id: accepted.submissionId,
-        title: normalizeScanTitle(documentTitle),
+        title: scanTitle,
         score: Math.round(nextResults.aiScore),
         model: nextResults.model,
         timestamp:
@@ -357,7 +358,7 @@ export function LoggedInDashboard() {
         [
           historyItem,
           ...items.filter((item) => item.id !== historyItem.id),
-        ].slice(0, 8),
+        ].slice(0, 20),
       );
       void refreshUser().catch(() => {});
     } catch (error) {

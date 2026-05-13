@@ -142,11 +142,11 @@ export function InputPanel({
       },
     },
     onUpdate: ({ editor: e }) => {
+      if (isProgrammaticUpdateRef.current) {
+        // Programmatic update (setContent, setEditable, etc.) — ignore entirely
+        return;
+      }
       if (isHighlightModeRef.current) {
-        if (isProgrammaticUpdateRef.current) {
-          // setContent() called programmatically to apply highlights — ignore
-          return;
-        }
         // User actually typed while highlights were showing — auto-dismiss
         isHighlightModeRef.current = false;
         setIsHighlightMode(false);
@@ -189,7 +189,12 @@ export function InputPanel({
   // Sync editable with isAnalyzing only — highlight mode no longer locks editing
   useEffect(() => {
     if (!editor) return;
+    isProgrammaticUpdateRef.current = true;
     editor.setEditable(!isAnalyzing);
+    // Reset after a tick — setEditable dispatches a transaction that fires onUpdate
+    setTimeout(() => {
+      isProgrammaticUpdateRef.current = false;
+    }, 0);
   }, [isAnalyzing, editor]);
 
   // Apply highlight segments into the editor
@@ -203,6 +208,7 @@ export function InputPanel({
         setIsHighlightMode(false);
         // Strip marks but keep text visible during new analysis
         setTimeout(() => {
+          isProgrammaticUpdateRef.current = true;
           const { from, to } = editor.state.selection;
           editor
             .chain()
@@ -210,6 +216,9 @@ export function InputPanel({
             .unsetMark("highlight")
             .setTextSelection({ from, to })
             .run();
+          setTimeout(() => {
+            isProgrammaticUpdateRef.current = false;
+          }, 0);
         }, 0);
       }
       return;
@@ -242,7 +251,9 @@ export function InputPanel({
       content: [{ type: "paragraph", content: inlineNodes }],
     });
 
-    isProgrammaticUpdateRef.current = false;
+    setTimeout(() => {
+      isProgrammaticUpdateRef.current = false;
+    }, 0);
     setIsHighlightMode(true);
   }, [highlightSegments, editor]);
 
@@ -261,7 +272,7 @@ export function InputPanel({
   }, [resetKey, editor]);
 
   const wordCount = useMemo(() => countWords(plainText), [plainText]);
-  const characterCount = plainText.length;
+  const characterCount = plainText.replace(/[\n\r]/g, "").length;
 
   const isPro = userPlan?.toUpperCase() === "PRO";
   const exceedsFreeWordLimit =
@@ -549,7 +560,13 @@ export function InputPanel({
                 onClick={() =>
                   editor?.chain().focus().setTextAlign("left").run()
                 }
-                isActive={editor?.isActive({ textAlign: "left" }) ?? false}
+                isActive={
+                  (editor?.isActive({ textAlign: "left" }) ||
+                    (!editor?.isActive({ textAlign: "center" }) &&
+                      !editor?.isActive({ textAlign: "right" }) &&
+                      !editor?.isActive({ textAlign: "justify" }))) ??
+                  false
+                }
                 disabled={toolbarDisabled}
               >
                 <TextAlignLeftIcon className="h-4 w-4" />
@@ -690,13 +707,13 @@ export function InputPanel({
           </div>
         </div>
       ) : (
-        <div className="p-6">
+        <div className="flex min-h-0 flex-1 flex-col p-5">
           {isPro ? (
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={isAnalyzing}
-              className="veriai-pressable flex min-h-[420px] w-full flex-col items-center justify-center rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff] px-8 text-center hover:bg-[#f2f7ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-70"
+              className="veriai-pressable flex flex-1 w-full flex-col items-center justify-center rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff] px-8 text-center hover:bg-[#f2f7ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-70"
             >
               <UploadIcon className="h-11 w-11 text-[#1263F1]" />
               <span className="mt-5 max-w-full">
@@ -711,7 +728,7 @@ export function InputPanel({
               </span>
             </button>
           ) : (
-            <div className="relative min-h-[420px] overflow-hidden rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff]">
+            <div className="relative flex flex-1 overflow-hidden rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff]">
               <div className="absolute inset-6 rounded-[12px] border border-[#d7dfed] bg-white/80 p-5 blur-[3px]">
                 <div className="h-8 w-44 rounded-[8px] bg-[#e7eef8]" />
                 <div className="mt-5 grid gap-3">
@@ -720,7 +737,7 @@ export function InputPanel({
                   <div className="h-4 w-2/3 rounded-full bg-[#dbe7f6]" />
                 </div>
               </div>
-              <div className="relative z-10 flex min-h-[420px] flex-col items-center justify-center px-8 text-center">
+              <div className="relative z-10 flex h-full flex-col items-center justify-center px-8 text-center">
                 <UploadIcon className="h-11 w-11 text-[#1263F1]" />
                 <h3 className="mt-5 text-[20px] font-semibold tracking-[-0.02em] text-[#0d1526]">
                   File upload is Premium
