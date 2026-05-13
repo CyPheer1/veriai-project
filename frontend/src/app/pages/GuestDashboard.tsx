@@ -216,10 +216,10 @@ export function GuestDashboard() {
               </div>
               <div className="border-l border-[#d7dfed] px-3 py-4">
                 <strong className="veriai-mono block text-[21px] text-[#0d1526]">
-                  0
+                  &lt;30s
                 </strong>
                 <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#64748b]">
-                  Stored files
+                  Avg. scan
                 </span>
               </div>
             </div>
