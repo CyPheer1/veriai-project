@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { FileTextIcon, PlusIcon } from "@radix-ui/react-icons";
-import { patchSubmissionTitleRequest } from "../services/api";
+import {
+  patchSubmissionTitleRequest,
+  extractFileTextRequest,
+} from "../services/api";
 import { useNavigate } from "react-router";
 import { Header } from "../components/Header";
 import { AnalyzePayload, InputPanel } from "../components/InputPanel";
@@ -289,6 +292,12 @@ export function LoggedInDashboard() {
     setDocumentTitle(title);
   };
 
+  const handleExtractFile = async (file: File): Promise<string> => {
+    if (!token) throw new Error("Not authenticated");
+    const result = await extractFileTextRequest(token, file);
+    return result.text;
+  };
+
   const handleTitleBlur = () => {
     if (!activeScanId || !token) return;
     const title = normalizeScanTitle(documentTitle);
@@ -436,6 +445,20 @@ export function LoggedInDashboard() {
                         : undefined
                     }
                     onExitHighlight={() => setShowHighlights(false)}
+                    onExtractFile={
+                      user?.plan?.toUpperCase() === "PRO"
+                        ? handleExtractFile
+                        : undefined
+                    }
+                    restoreText={
+                      showHighlights &&
+                      !!results &&
+                      !isAnalyzing &&
+                      (results?.segments?.length ?? 0) === 0 &&
+                      results?.submittedText
+                        ? results.submittedText
+                        : null
+                    }
                   />
                 </div>
 

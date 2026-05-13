@@ -270,39 +270,28 @@ export function ResultsPanel({
   const models = display.modelAttributions ?? [];
   const chunks = display.chunks ?? [];
   const fullReportAvailable = display.fullReportAvailable !== false;
-  const shownModels = fullReportAvailable
-    ? models
-    : (previewData.modelAttributions ?? []);
+  const shownModels = fullReportAvailable ? models : [];
   const shownChunks = fullReportAvailable ? chunks : previewData.chunks;
   const analysisLayers = [
     {
       label: "RoBERTa Classifier",
-      score: fullReportAvailable
-        ? (display.layer1Score ?? 0)
-        : (previewData.layer1Score ?? 60),
+      score: display.layer1Score ?? 0,
       tone: "ai" as const,
     },
     {
       label: "Stylistic Analysis",
-      score: fullReportAvailable
-        ? (display.layer2Score ?? 0)
-        : (previewData.layer2Score ?? 25),
+      score: fullReportAvailable ? (display.layer2Score ?? 0) : 0,
       tone: "mixed" as const,
     },
     {
       label: "Statistical Analysis",
-      score: fullReportAvailable
-        ? (display.layer3Score ?? 0)
-        : (previewData.layer3Score ?? 15),
+      score: fullReportAvailable ? (display.layer3Score ?? 0) : 0,
       tone: "human" as const,
     },
   ];
   const rawSegments = display.segments ?? [];
-  const shownSegments = fullReportAvailable
-    ? rawSegments
-    : (previewData.segments ?? []);
-  const humanSegments = shownSegments.filter((s) => !s.isAI);
-  const aiSegments = shownSegments.filter((s) => s.isAI);
+  const humanSegments = rawSegments.filter((s) => !s.isAI);
+  const aiSegments = rawSegments.filter((s) => s.isAI);
   const primaryModel = models[0]?.name ?? display.model;
   const isHumanResult = (display.aiScore ?? 0) < 50;
   const submittedDate = display.submittedAt
@@ -399,10 +388,12 @@ export function ResultsPanel({
   };
 
   // Chart data
-  const layerChartData = analysisLayers.map((l) => ({
-    name: l.label.split(" ")[0],
-    score: clampScore(l.score),
-  }));
+  const layerChartData = fullReportAvailable
+    ? analysisLayers.map((l) => ({
+        name: l.label.split(" ")[0],
+        score: clampScore(l.score),
+      }))
+    : [{ name: "RoBERTa", score: clampScore(display.layer1Score ?? 0) }];
 
   const wc = display.writingCharacteristics;
   const radarData = wc
@@ -472,16 +463,58 @@ export function ResultsPanel({
       <div className="grid h-full min-h-0 grid-rows-[58px_1fr] overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)]">
         {tabHeader}
         <section className="relative min-h-0 overflow-hidden p-7">
-          <div className="h-full min-h-0 overflow-hidden rounded-[12px] border border-[#d7dfed] bg-[#f8fafc]/75 p-5 blur-[3px]">
-            <pre className="veriai-document-font whitespace-pre-wrap text-[14px] font-medium leading-7 text-[#274169]">
+          <div className="pointer-events-none h-full min-h-0 overflow-hidden rounded-[12px] border border-[#d7dfed] bg-[#f8fafc]/75 p-5 blur-[3px]">
+            {/* Header */}
+            <div className="mb-4 flex items-center gap-3 border-b border-[#d7dfed] pb-3">
+              <div className="h-7 w-7 rounded-[6px] bg-[#dbe7f6]" />
+              <div>
+                <div className="h-3 w-24 rounded-full bg-[#d0ddf0]" />
+                <div className="mt-1.5 h-2 w-16 rounded-full bg-[#e5ebf4]" />
+              </div>
+            </div>
+            {/* Score block */}
+            <div className="mb-3 rounded-[10px] border border-[#d7dfed] bg-white p-3">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 shrink-0 rounded-full border-[3px] border-[#ef3a43]" />
+                <div className="flex-1">
+                  <div className="h-3 w-32 rounded-full bg-[#fecaca]" />
+                  <div className="mt-2 h-2 w-48 rounded-full bg-[#f1f5fa]" />
+                  <div className="mt-1.5 h-2 w-40 rounded-full bg-[#f1f5fa]" />
+                </div>
+              </div>
+            </div>
+            {/* Model attribution block */}
+            <div className="mb-3 rounded-[10px] border border-[#d7dfed] bg-white p-3">
+              <div className="mb-3 h-2.5 w-28 rounded-full bg-[#d0ddf0]" />
+              {[90, 68, 42, 18].map((w, i) => (
+                <div key={i} className="mb-1.5 flex items-center gap-2">
+                  <div className="h-5 w-5 rounded-full bg-[#e5ebf4]" />
+                  <div
+                    className="h-2 flex-1 rounded-full bg-[#e5ebf4]"
+                    style={{ maxWidth: `${w}%` }}
+                  />
+                  <div className="h-2 w-7 rounded-full bg-[#d0ddf0]" />
+                </div>
+              ))}
+            </div>
+            {/* Proof section — green/red text lines */}
+            <div className="rounded-[10px] border border-[#d7dfed] bg-white p-3">
+              <div className="mb-3 h-2.5 w-20 rounded-full bg-[#d0ddf0]" />
               {[
-                "Veri4i review report",
-                `Verdict: ${display.label}. AI signal: ${score}%.`,
-                "Model attribution: GPT-4 93%, Claude 3 89%, Gemini 1.5 91%.",
-                "Sentence evidence: likely human, uncertain, and likely AI-generated groups.",
-                "Detection layers: RoBERTa classifier, stylistic analysis, statistical analysis.",
-              ].join("\n\n")}
-            </pre>
+                { color: "bg-[#bbf7d0]", w: "w-full" },
+                { color: "bg-[#fecaca]", w: "w-11/12" },
+                { color: "bg-[#bbf7d0]", w: "w-full" },
+                { color: "bg-[#bbf7d0]", w: "w-4/5" },
+                { color: "bg-[#fecaca]", w: "w-full" },
+                { color: "bg-[#bbf7d0]", w: "w-3/4" },
+                { color: "bg-[#fecaca]", w: "w-5/6" },
+              ].map((line, i) => (
+                <div
+                  key={i}
+                  className={`mb-1.5 h-2 rounded-full ${line.color} ${line.w}`}
+                />
+              ))}
+            </div>
           </div>
           <div className="absolute inset-0 flex items-center justify-center bg-white/48 px-8">
             <div className="max-w-[360px] rounded-[14px] border border-[#cbd7ea] bg-white p-5 text-center shadow-[0_22px_54px_rgba(31,45,71,0.16)]">
@@ -804,42 +837,51 @@ export function ResultsPanel({
                 ranked by confidence
               </span>
             </div>
-            <div
-              className={`grid grid-cols-2 content-stretch gap-2.5 ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
-            >
-              {shownModels.slice(0, 4).map((model) => {
-                const modelScore = clampScore(model.score);
-                const scoreColor =
-                  modelScore >= 90 ? "text-[#b32635]" : "text-[#07112f]";
-                return (
-                  <article
-                    key={model.name}
-                    className="grid min-h-[76px] content-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium text-[#07112f]">
-                        <ModelLogo
-                          name={model.name}
-                          className="h-6 w-6 shrink-0"
+            {fullReportAvailable ? (
+              <div className="grid grid-cols-2 content-stretch gap-2.5">
+                {shownModels.slice(0, 4).map((model) => {
+                  const modelScore = clampScore(model.score);
+                  const scoreColor =
+                    modelScore >= 90 ? "text-[#b32635]" : "text-[#07112f]";
+                  return (
+                    <article
+                      key={model.name}
+                      className="grid min-h-[76px] content-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium text-[#07112f]">
+                          <ModelLogo
+                            name={model.name}
+                            className="h-6 w-6 shrink-0"
+                          />
+                          <span className="truncate">{model.name}</span>
+                        </span>
+                        <span
+                          className={`veriai-mono text-[13px] font-semibold ${scoreColor}`}
+                        >
+                          {modelScore}%
+                        </span>
+                      </div>
+                      <span className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5ebf4]">
+                        <span
+                          className="veriai-bar-fill block h-full rounded-full bg-[#1263F1]"
+                          style={{ width: `${modelScore}%` }}
                         />
-                        <span className="truncate">{model.name}</span>
                       </span>
-                      <span
-                        className={`veriai-mono text-[13px] font-semibold ${scoreColor}`}
-                      >
-                        {modelScore}%
-                      </span>
-                    </div>
-                    <span className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5ebf4]">
-                      <span
-                        className="veriai-bar-fill block h-full rounded-full bg-[#1263F1]"
-                        style={{ width: `${modelScore}%` }}
-                      />
-                    </span>
-                  </article>
-                );
-              })}
-            </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#d7dfed] bg-[#f8fafc]/60 px-4 py-5 text-center">
+                <p className="text-[13px] font-semibold text-[#52627a]">
+                  Model attribution is Premium
+                </p>
+                <p className="mt-1 text-[12px] font-medium text-[#94a3b8]">
+                  Identifies the most likely source AI model
+                </p>
+              </div>
+            )}
           </section>
         )}
 
@@ -857,38 +899,47 @@ export function ResultsPanel({
                 : "sentences"}
             </span>
           </div>
-          <div
-            className={`grid content-stretch gap-[9px] ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
-          >
-            {[
-              {
-                tone: "human" as const,
-                label: "Likely human-written",
-                count: humanSegments.length,
-              },
-              {
-                tone: "ai" as const,
-                label: "Likely AI-generated",
-                count: aiSegments.length,
-              },
-            ].map(({ tone, label, count }) => {
-              const meta = toneMeta(tone);
-              return (
-                <div
-                  key={tone}
-                  className="grid grid-cols-[18px_1fr_auto] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5"
-                >
-                  <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
-                  <span className="text-[14px] font-medium text-[#07112f]">
-                    {label}
-                  </span>
-                  <span className="text-[12px] font-medium text-[#274169]">
-                    {count} {count === 1 ? "sentence" : "sentences"}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+          {fullReportAvailable ? (
+            <div className="grid content-stretch gap-[9px]">
+              {[
+                {
+                  tone: "human" as const,
+                  label: "Likely human-written",
+                  count: humanSegments.length,
+                },
+                {
+                  tone: "ai" as const,
+                  label: "Likely AI-generated",
+                  count: aiSegments.length,
+                },
+              ].map(({ tone, label, count }) => {
+                const meta = toneMeta(tone);
+                return (
+                  <div
+                    key={tone}
+                    className="grid grid-cols-[18px_1fr_auto] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5"
+                  >
+                    <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
+                    <span className="text-[14px] font-medium text-[#07112f]">
+                      {label}
+                    </span>
+                    <span className="text-[12px] font-medium text-[#274169]">
+                      {count} {count === 1 ? "sentence" : "sentences"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#d7dfed] bg-[#f8fafc]/60 px-4 py-5 text-center">
+              <p className="text-[13px] font-semibold text-[#52627a]">
+                Per-sentence highlights are Premium
+              </p>
+              <p className="mt-1 text-[12px] font-medium text-[#94a3b8]">
+                Upgrade to see individual sentence scoring
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Writing characteristics (RadarChart) — human results + PRO only */}
@@ -993,6 +1044,11 @@ export function ResultsPanel({
               {analysisLayers[0] &&
                 `RoBERTa ${clampScore(analysisLayers[0].score)}% · Stylistic ${clampScore(analysisLayers[1]?.score ?? 0)}% · Statistical ${clampScore(analysisLayers[2]?.score ?? 0)}%`}
             </p>
+            {!fullReportAvailable && (
+              <p className="mt-2 text-center text-[12px] font-medium text-[#94a3b8]">
+                Stylistic &amp; Statistical layers are Premium
+              </p>
+            )}
           </div>
         </section>
 

@@ -39,6 +39,10 @@ interface InputPanelProps {
   /** When provided, applies sentence-level colour highlights directly in the editor */
   highlightSegments?: { text: string; isAI: boolean }[];
   onExitHighlight?: () => void;
+  /** Called when user selects a file; should return the extracted plain text */
+  onExtractFile?: (file: File) => Promise<string>;
+  /** When set, loads plain text into the editor (used when restoring a FREE scan) */
+  restoreText?: string | null;
 }
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -110,10 +114,13 @@ export function InputPanel({
   resetKey = 0,
   highlightSegments,
   onExitHighlight,
+  onExtractFile,
+  restoreText,
 }: InputPanelProps) {
   const [mode, setMode] = useState<"text" | "file">("text");
   const [file, setFile] = useState<File | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [isExtractingFile, setIsExtractingFile] = useState(false);
   const [statusExpanded, setStatusExpanded] = useState(true);
   const [plainText, setPlainText] = useState("");
   const [isHighlightMode, setIsHighlightMode] = useState(false);
@@ -271,6 +278,23 @@ export function InputPanel({
     setStatusExpanded(true);
   }, [resetKey, editor]);
 
+  // Restore plain text into editor (e.g. FREE user viewing an old scan)
+  useEffect(() => {
+    if (!editor || !restoreText) return;
+    isProgrammaticUpdateRef.current = true;
+    const html = restoreText
+      .split(/\n\n+/)
+      .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
+      .join("");
+    editor.commands.setContent(html || `<p>${restoreText}</p>`);
+    setPlainText(restoreText);
+    isHighlightModeRef.current = false;
+    setIsHighlightMode(false);
+    setTimeout(() => {
+      isProgrammaticUpdateRef.current = false;
+    }, 0);
+  }, [restoreText, editor]);
+
   const wordCount = useMemo(() => countWords(plainText), [plainText]);
   const characterCount = plainText.replace(/[\n\r]/g, "").length;
 
@@ -305,6 +329,40 @@ export function InputPanel({
     setFile(selectedFile);
     setMode("file");
     onDraftChange?.();
+
+    // If extraction callback provided, extract text and load into editor
+    if (onExtractFile) {
+      setIsExtractingFile(true);
+      onExtractFile(selectedFile)
+        .then((text) => {
+          if (!editor) return;
+          isProgrammaticUpdateRef.current = true;
+          const html = text
+            .split(/\n\n+/)
+            .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
+            .join("");
+          editor.commands.setContent(html || `<p>${text}</p>`);
+          setPlainText(text);
+          setMode("text");
+          setFile(null);
+          isHighlightModeRef.current = false;
+          setIsHighlightMode(false);
+          setTimeout(() => {
+            isProgrammaticUpdateRef.current = false;
+          }, 0);
+          onDraftChange?.();
+        })
+        .catch((err: unknown) => {
+          setLocalError(
+            err instanceof Error
+              ? err.message
+              : "Could not extract text from file.",
+          );
+        })
+        .finally(() => {
+          setIsExtractingFile(false);
+        });
+    }
   };
 
   const submit = () => {
@@ -715,17 +773,31 @@ export function InputPanel({
               disabled={isAnalyzing}
               className="veriai-pressable flex flex-1 w-full flex-col items-center justify-center rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff] px-8 text-center hover:bg-[#f2f7ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              <UploadIcon className="h-11 w-11 text-[#1263F1]" />
-              <span className="mt-5 max-w-full">
-                <span className="block truncate text-[20px] font-semibold tracking-[-0.02em] text-[#0d1526]">
-                  {file ? file.name : "Drop a PDF or DOCX here"}
-                </span>
-                <span className="mt-3 block text-[14px] leading-6 text-[#52627a]">
-                  {file
-                    ? formatFileSize(file.size)
-                    : "Click anywhere in this area to choose a document. Up to 10MB."}
-                </span>
-              </span>
+              {isExtractingFile ? (
+                <>
+                  <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[#d8e3f2] border-t-[#1263F1]" />
+                  <span className="mt-5 text-[18px] font-semibold tracking-[-0.02em] text-[#0d1526]">
+                    Extracting text…
+                  </span>
+                  <span className="mt-2 text-[13px] text-[#52627a]">
+                    {file?.name}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <UploadIcon className="h-11 w-11 text-[#1263F1]" />
+                  <span className="mt-5 max-w-full">
+                    <span className="block truncate text-[20px] font-semibold tracking-[-0.02em] text-[#0d1526]">
+                      {file ? file.name : "Drop a PDF or DOCX here"}
+                    </span>
+                    <span className="mt-3 block text-[14px] leading-6 text-[#52627a]">
+                      {file
+                        ? formatFileSize(file.size)
+                        : "Click anywhere in this area to choose a document. Up to 10MB."}
+                    </span>
+                  </span>
+                </>
+              )}
             </button>
           ) : (
             <div className="relative flex flex-1 overflow-hidden rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff]">

@@ -98,6 +98,12 @@ export interface SubmissionListItemResponse {
   customTitle: string | null;
 }
 
+export interface ExtractTextResponse {
+  text: string;
+  wordCount: number;
+  filename: string;
+}
+
 export interface SubmissionPageResponse {
   items: SubmissionListItemResponse[];
   page: number;
@@ -326,6 +332,22 @@ export async function pollSubmissionResult(
   }
 
   throw new ApiRequestError("Timed out while waiting for analysis result", 408);
+}
+
+export async function extractFileTextRequest(
+  token: string,
+  file: File,
+): Promise<ExtractTextResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return requestJson<ExtractTextResponse>(
+    "/api/v1/submissions/extract",
+    {
+      method: "POST",
+      body: formData,
+    },
+    token,
+  );
 }
 
 export async function patchSubmissionTitleRequest(

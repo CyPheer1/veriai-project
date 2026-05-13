@@ -4,6 +4,7 @@ import com.example.backendjava.dto.submission.SubmissionAcceptedResponse;
 import com.example.backendjava.dto.submission.SubmissionDetailResponse;
 import com.example.backendjava.dto.submission.SubmissionPageResponse;
 import com.example.backendjava.dto.submission.TextAnalyzeRequest;
+import com.example.backendjava.dto.submission.ExtractTextResponse;
 import com.example.backendjava.dto.submission.UpdateTitleRequest;
 import com.example.backendjava.service.SubmissionService;
 import jakarta.validation.Valid;
@@ -44,6 +45,14 @@ public class SubmissionController {
             @RequestPart("file") MultipartFile file
     ) {
         return ResponseEntity.accepted().body(submissionService.createFileSubmission(principal.getName(), file));
+    }
+
+    @PostMapping(path = "/submissions/extract", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ExtractTextResponse> extractFile(
+            Principal principal,
+            @RequestPart("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(submissionService.extractFileText(principal.getName(), file));
     }
 
     @GetMapping(path = {"/submissions/{submissionId}", "/analyze/{submissionId}"})

@@ -3,6 +3,7 @@ package com.example.backendjava.service;
 import com.example.backendjava.dto.internal.InternalChunkResultRequest;
 import com.example.backendjava.dto.internal.InternalStatusUpdateRequest;
 import com.example.backendjava.dto.internal.InternalSubmissionResultRequest;
+import com.example.backendjava.dto.submission.ExtractTextResponse;
 import com.example.backendjava.dto.submission.SubmissionAcceptedResponse;
 import com.example.backendjava.dto.submission.SubmissionDetailResponse;
 import com.example.backendjava.dto.submission.SubmissionListItemResponse;
@@ -117,6 +118,13 @@ public class SubmissionService {
                 saved.getSubmittedAt(),
                 "Submission accepted and queued for AI processing"
         );
+    }
+
+    @Transactional(readOnly = true)
+    public ExtractTextResponse extractFileText(String email, MultipartFile file) {
+        User user = getUserByEmail(email);
+        ExtractedContent content = fileExtractionService.extractText(file, user.getPlan());
+        return new ExtractTextResponse(content.text(), countWords(content.text()), content.sourceFilename());
     }
 
     @Transactional(readOnly = true)
