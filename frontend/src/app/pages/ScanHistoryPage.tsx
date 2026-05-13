@@ -181,12 +181,12 @@ export function ScanHistoryPage() {
         usageLabel={usageLabel}
       />
       <main className="mx-auto max-w-[1320px] px-5 pb-14 pt-8 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#64748b]">
               Scan history
             </p>
-            <h1 className="veriai-display-font mt-2 text-[34px] font-semibold tracking-[-0.03em] text-[#0d1526]">
+            <h1 className="veriai-display-font mt-2 text-[28px] font-semibold tracking-[-0.03em] text-[#0d1526] sm:text-[34px]">
               Review past submissions.
             </h1>
             <p className="mt-1 text-[13px] text-[#64748b]">
@@ -196,7 +196,7 @@ export function ScanHistoryPage() {
           <button
             type="button"
             onClick={() => navigate("/dashboard")}
-            className="veriai-pressable h-11 rounded-[10px] bg-[#1263F1] px-5 text-[14px] font-semibold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5]"
+            className="veriai-pressable h-11 w-full rounded-[10px] bg-[#1263F1] px-5 text-[14px] font-semibold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] sm:w-auto"
           >
             Start new scan
           </button>
@@ -208,8 +208,8 @@ export function ScanHistoryPage() {
           </p>
         )}
 
-        <section className="mt-8 grid items-stretch gap-6 lg:grid-cols-[360px_1fr]">
-          <div className="veriai-card-surface flex flex-col rounded-[16px] p-5">
+        <section className="mt-8 grid items-start gap-6 lg:grid-cols-[360px_1fr]">
+          <div className="veriai-card-surface flex flex-col rounded-[16px] p-4 sm:p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-[15px] font-semibold text-[#0d1526]">
                 Recent scans
@@ -321,15 +321,15 @@ export function ScanHistoryPage() {
             )}
           </div>
 
-          <div className="flex h-full flex-col">
+          <div className="flex flex-col">
             {detailLoading && !selectedDetail ? (
               <div className="veriai-card-surface rounded-[16px] p-6 text-[13px] text-[#52627a]">
                 Loading scan details…
               </div>
             ) : selectedDetail ? (
-              <div className="flex h-full flex-col gap-5">
-                <div className="veriai-card-surface rounded-[16px] p-6">
-                  <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-5">
+                <div className="veriai-card-surface rounded-[16px] p-5 sm:p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#64748b]">
                         Submission details
@@ -344,7 +344,7 @@ export function ScanHistoryPage() {
                       {statusLabel(selectedDetail.status)}
                     </span>
                   </div>
-                  <div className="mt-4 grid gap-3 text-[13px] text-[#52627a] sm:grid-cols-3">
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-[13px] text-[#52627a] sm:grid-cols-3">
                     <div>
                       <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94a3b8]">
                         Source
@@ -373,7 +373,7 @@ export function ScanHistoryPage() {
                 </div>
 
                 {results ? (
-                  <div className="min-h-0 flex-1">
+                  <div className="min-h-[480px]">
                     <ResultsPanel
                       data={results}
                       isAnalyzing={selectedDetail.status === "PROCESSING"}

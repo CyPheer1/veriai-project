@@ -483,8 +483,8 @@ export function InputPanel({
       {mode === "text" ? (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
           {/* Normal toolbar — always visible */}
-          <div className="flex min-h-[52px] shrink-0 items-center border-b border-[#d7dfed] bg-white px-5">
-            <div className="flex flex-wrap items-center gap-1.5">
+          <div className="veriai-hide-scrollbar flex min-h-[52px] shrink-0 items-center overflow-x-auto border-b border-[#d7dfed] bg-white px-5">
+            <div className="flex min-w-max items-center gap-1.5">
               {/* Paragraph / Heading dropdown */}
               <div ref={paragraphMenuRef} className="relative">
                 <button

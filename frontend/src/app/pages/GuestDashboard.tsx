@@ -169,7 +169,7 @@ export function GuestDashboard() {
             <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#667892]">
               Academic AI evidence review
             </p>
-            <h1 className="veriai-display-font mt-4 text-[46px] font-semibold leading-[0.98] tracking-[-0.045em] text-[#0d1526] text-balance md:text-[66px]">
+            <h1 className="veriai-display-font mt-4 text-[38px] font-semibold leading-[0.98] tracking-[-0.045em] text-[#0d1526] text-balance sm:text-[46px] md:text-[66px]">
               Verify writing without losing the document context.
             </h1>
             <p className="mt-4 max-w-[56ch] text-[16px] leading-7 text-[#40516d]">
@@ -197,7 +197,7 @@ export function GuestDashboard() {
               </button>
             </div>
 
-            <div className="veriai-card-surface veriai-reveal mt-7 grid max-w-[500px] grid-cols-3 overflow-hidden rounded-[12px] text-center">
+            <div className="veriai-card-surface veriai-reveal mt-7 grid w-full max-w-[500px] grid-cols-3 overflow-hidden rounded-[12px] text-center">
               <div className="px-3 py-4">
                 <strong className="veriai-mono block text-[21px] text-[#0d1526]">
                   3k
@@ -278,7 +278,7 @@ export function GuestDashboard() {
           </div>
         </section>
 
-        <section className="veriai-reveal mx-auto max-w-[860px] px-5 py-14 sm:px-6 lg:px-8">
+        <div className="veriai-reveal mx-auto grid max-w-[860px] gap-8 px-4 py-10 sm:gap-10 sm:px-6 sm:py-14 lg:px-8">
           <div className="mb-8 text-center">
             <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#64748b]">
               Try it now
@@ -291,7 +291,7 @@ export function GuestDashboard() {
             {/* ── Scan card ── */}
             <div className="veriai-card-surface overflow-hidden rounded-[18px]">
               {/* Tab bar */}
-              <div className="flex h-[62px] items-end justify-between gap-4 border-b border-[#d7dfed] bg-[#fbfcff] px-5">
+              <div className="flex h-auto min-h-[62px] flex-wrap items-center justify-between gap-3 border-b border-[#d7dfed] bg-[#fbfcff] px-4 py-3 sm:h-[62px] sm:flex-nowrap sm:items-end sm:px-5 sm:py-0">
                 <div
                   className="flex h-full items-end gap-7"
                   role="tablist"
@@ -372,7 +372,7 @@ export function GuestDashboard() {
                     id="landing-text"
                     value={scanText}
                     onChange={(event) => setScanText(event.target.value)}
-                    rows={11}
+                    rows={8}
                     className="w-full resize-none bg-transparent px-5 py-5 text-[15px] leading-7 text-[#0d1526] outline-none placeholder:text-[#94a3b8]"
                     placeholder="Paste the draft you want to review…"
                   />
@@ -418,21 +418,21 @@ export function GuestDashboard() {
             </div>
 
             {/* ── CTA strip ── */}
-            <div className="mt-5 flex items-center justify-between rounded-[14px] border border-[#d7dfed] bg-white/80 px-6 py-4">
+            <div className="mt-5 flex flex-col gap-3 rounded-[14px] border border-[#d7dfed] bg-white/80 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <p className="text-[14px] text-[#52627a]">
                 Free includes 3,000 daily credits. Premium is $10/month.
               </p>
               <button
                 type="button"
                 onClick={() => navigate("/signup")}
-                className="veriai-pressable flex h-10 items-center gap-2 rounded-[9px] bg-[#1263F1] px-5 text-[14px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.9)] hover:bg-[#0d54d5]"
+                className="veriai-pressable flex h-10 w-full items-center justify-center gap-2 rounded-[9px] bg-[#1263F1] px-5 text-[14px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.9)] hover:bg-[#0d54d5] sm:w-auto"
               >
                 <DocumentSearchButtonIcon className="h-4 w-4" />
                 Get started free
               </button>
             </div>
           </div>
-        </section>
+        </div>
 
         <section className="veriai-reveal border-y border-[#d7dfed] bg-[#fbfcff]/72 backdrop-blur">
           <div className="mx-auto grid max-w-[1320px] gap-4 px-5 py-14 sm:grid-cols-2 sm:px-6 lg:px-8">

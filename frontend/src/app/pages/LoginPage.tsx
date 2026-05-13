@@ -38,7 +38,8 @@ function Feature({
 }
 
 export function LoginPage() {
-  const { login, authError, clearAuthError, isLoggedIn, authLoading } = useApp();
+  const { login, authError, clearAuthError, isLoggedIn, authLoading } =
+    useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -82,9 +83,12 @@ export function LoginPage() {
 
   return (
     <div className="veriai-academic-bg min-h-screen">
-      <main className="veriai-reveal mx-auto flex min-h-screen max-w-[1280px] items-center px-5 pb-12 pt-10 sm:px-6 lg:px-8">
-        <section className="veriai-card-surface grid w-full overflow-hidden rounded-[20px] lg:grid-cols-[0.98fr_1.02fr]">
-          <div className="relative min-h-[720px] overflow-hidden bg-[#f8fafc] p-6 sm:p-10">
+      <main className="veriai-reveal mx-auto flex min-h-screen max-w-[1280px] items-center px-4 pb-10 pt-8 sm:px-6 lg:px-8">
+        <section
+          className="veriai-card-surface grid w-full overflow-hidden rounded-[20px] lg:grid-cols-[0.98fr_1.02fr]"
+          style={{ alignItems: "stretch" }}
+        >
+          <div className="relative hidden min-h-[720px] overflow-hidden bg-[#f8fafc] p-6 sm:p-10 lg:block">
             <img
               src="/assets/generated/study-setting.png"
               alt="Academic workspace with research material prepared for review"
@@ -142,6 +146,19 @@ export function LoginPage() {
             onSubmit={handleSubmit}
             className="bg-white/88 px-6 py-10 sm:px-12 lg:px-14 lg:py-14"
           >
+            {/* Logo — only visible on mobile/tablet when left panel is hidden */}
+            <div className="mb-7 flex items-center gap-3 lg:hidden">
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="veriai-icon-button inline-flex rounded-[10px] p-0.5"
+              >
+                <Logo className="h-9 w-auto" />
+              </button>
+              <span className="text-[14px] font-semibold text-[#40516d]">
+                VeriAI
+              </span>
+            </div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#64748b]">
               VeriAI access
             </p>

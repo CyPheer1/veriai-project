@@ -159,15 +159,15 @@ function ScoreRing({ score }: { score: number }) {
 
   return (
     <div
-      className="relative flex h-[122px] w-[122px] shrink-0 items-center justify-center rounded-full"
+      className="relative flex h-[96px] w-[96px] shrink-0 items-center justify-center rounded-full sm:h-[122px] sm:w-[122px]"
       style={{
         background: `conic-gradient(#f7a51c 0deg ${angle}deg, #e8edf5 ${angle}deg 360deg)`,
       }}
       aria-label={`Confidence ${normalized}%`}
       role="img"
     >
-      <div className="flex h-[94px] w-[94px] flex-col items-center justify-center rounded-full bg-white">
-        <span className="text-[34px] font-bold leading-none tracking-[-0.045em] text-[#07112f]">
+      <div className="flex h-[74px] w-[74px] flex-col items-center justify-center rounded-full bg-white sm:h-[94px] sm:w-[94px]">
+        <span className="text-[26px] font-bold leading-none tracking-[-0.045em] text-[#07112f] sm:text-[34px]">
           {normalized}%
         </span>
       </div>
@@ -420,9 +420,9 @@ export function ResultsPanel({
     : [];
 
   const tabHeader = (
-    <div className="flex h-[58px] shrink-0 items-center border-b border-[#d7dfed] bg-[#fbfcff]/75 px-7">
+    <div className="flex h-[58px] shrink-0 items-center overflow-x-auto border-b border-[#d7dfed] bg-[#fbfcff]/75 px-4 veriai-hide-scrollbar sm:px-7">
       <div
-        className="flex h-full gap-12"
+        className="flex h-full gap-8 sm:gap-12"
         role="tablist"
         aria-label="Result view"
       >
@@ -789,14 +789,14 @@ export function ResultsPanel({
       <div className="min-h-0 flex-1 overflow-y-auto">
         {/* Verdict section */}
         <section className="border-b border-[#d7dfed]">
-          <div className="grid h-[180px] grid-cols-[142px_1fr] items-center gap-5 px-7">
+          <div className="grid h-auto min-h-[140px] grid-cols-[100px_1fr] items-center gap-3 px-4 py-4 sm:h-[180px] sm:grid-cols-[142px_1fr] sm:gap-5 sm:px-7 sm:py-0">
             <ScoreRing score={score} />
             <div className="min-w-0">
-              <h2 className="flex items-center gap-3 text-[20px] font-semibold tracking-[-0.02em] text-[#ef3a43]">
+              <h2 className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.02em] text-[#ef3a43] sm:gap-3 sm:text-[20px]">
                 <span className="h-3.5 w-3.5 rounded-full bg-[#ef3a43]" />
                 {display.label}
               </h2>
-              <p className="mt-3 max-w-[38ch] text-[14px] font-medium leading-6 text-[#152342]">
+              <p className="mt-2 max-w-[38ch] text-[13px] font-medium leading-6 text-[#152342] sm:mt-3 sm:text-[14px]">
                 {fullReportAvailable
                   ? "The full ensemble result includes model attribution, sentence evidence, and analysis-layer scores."
                   : "Free analysis uses the layer 1 detector and returns the global score and label."}

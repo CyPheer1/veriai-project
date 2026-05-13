@@ -74,19 +74,25 @@ function ScanDock({
   onNewScan,
   onRestore,
   onHistory,
+  mobileOpen = false,
+  onMobileClose,
 }: {
   history: ScanHistoryItem[];
   activeId: string | null;
   onNewScan: () => void;
   onRestore: (item: ScanHistoryItem) => void;
   onHistory: () => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }) {
   return (
-    <aside className="flex min-h-0 w-[220px] shrink-0 flex-col border-r border-[#d8e2ee] bg-[#f6f9fd] px-3 py-3 shadow-[8px_0_34px_-32px_rgba(31,45,71,0.45)]">
-      {/* Logo centered */}
-      <div className="flex justify-center py-2">
+    <aside
+      className={`fixed inset-y-0 left-0 z-40 flex min-h-0 w-[260px] shrink-0 flex-col border-r border-[#d8e2ee] bg-[#f6f9fd] px-3 py-3 shadow-[8px_0_34px_-32px_rgba(31,45,71,0.45)] transition-transform duration-300 ease-out md:relative md:inset-auto md:z-auto md:w-[220px] md:translate-x-0 md:transition-none ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+    >
+      {/* Logo row */}
+      <div className="flex items-center justify-between py-2">
         <div
-          className="flex h-10 w-10 items-center justify-center"
+          className="hidden h-10 w-10 items-center justify-center md:flex"
           title="veri4i"
         >
           <img
@@ -96,6 +102,24 @@ function ScanDock({
             draggable={false}
           />
         </div>
+        <span className="pl-1 text-[13px] font-semibold text-[#274169] md:hidden">
+          Scans
+        </span>
+        <button
+          type="button"
+          onClick={onMobileClose}
+          aria-label="Close sidebar"
+          className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[#52627a] hover:bg-[#eef3f9] md:hidden"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path
+              d="M1 1l12 12M13 1L1 13"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
       </div>
 
       {/* New Scan button */}
@@ -207,6 +231,7 @@ export function LoggedInDashboard() {
   const [hasDraftChanges, setHasDraftChanges] = useState(false);
   const [showHighlights, setShowHighlights] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const headerTitle = documentTitle;
   const headerStatus = analysisError
     ? "Failed"
@@ -402,16 +427,25 @@ export function LoggedInDashboard() {
 
   return (
     <div className="veriai-academic-bg h-screen overflow-hidden text-[#121a2b]">
-      <div className="grid h-screen min-h-0 grid-cols-[220px_1fr] overflow-hidden">
+      <div className="grid h-screen min-h-0 grid-cols-1 overflow-hidden md:grid-cols-[220px_1fr]">
+        {/* Mobile backdrop */}
+        {mobileSidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/40 md:hidden"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+        )}
         <ScanDock
           history={scanHistory}
           activeId={activeScanId}
           onNewScan={handleNewScan}
           onRestore={restoreScan}
           onHistory={() => navigate("/history")}
+          mobileOpen={mobileSidebarOpen}
+          onMobileClose={() => setMobileSidebarOpen(false)}
         />
 
-        <div className="min-w-0 overflow-hidden">
+        <div className="flex min-w-0 flex-col overflow-hidden">
           <Header
             variant="dashboard"
             contextTitle={headerTitle}
@@ -424,10 +458,29 @@ export function LoggedInDashboard() {
             usageLabel={scanUsageLabel(user)}
           />
 
-          <main className="h-[calc(100vh-72px)] overflow-hidden px-6 pt-[18px]">
-            <div className="flex h-full min-h-0">
-              <section className="grid min-h-0 min-w-0 flex-1 items-stretch gap-5 xl:grid-cols-[minmax(0,0.63fr)_minmax(520px,0.37fr)]">
-                <div className="min-h-0 min-w-0">
+          {/* Mobile-only: hamburger to open sidebar */}
+          <div className="flex shrink-0 items-center gap-2 border-b border-[#d8e2ee] bg-[#f6f9fd] px-4 py-2 md:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[#274169] hover:bg-[#e4ecf7]"
+              aria-label="Open scan history"
+            >
+              <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+                <rect width="18" height="2" rx="1" fill="currentColor" />
+                <rect y="6" width="18" height="2" rx="1" fill="currentColor" />
+                <rect y="12" width="18" height="2" rx="1" fill="currentColor" />
+              </svg>
+            </button>
+            <span className="text-[13px] font-semibold text-[#274169]">
+              {activeScanId ? "Scan history" : "New scan"}
+            </span>
+          </div>
+
+          <main className="overflow-y-auto px-3 pb-6 pt-3 md:h-[calc(100vh-72px)] md:overflow-hidden md:px-6 md:pb-0 md:pt-[18px]">
+            <div className="flex min-h-0 flex-col gap-4 md:h-full md:flex-row md:gap-0">
+              <section className="flex w-full flex-col gap-4 md:grid md:min-h-0 md:min-w-0 md:flex-1 md:items-stretch md:gap-5 xl:grid-cols-[minmax(0,0.63fr)_minmax(520px,0.37fr)]">
+                <div className="h-[62vh] min-h-[380px] md:h-auto md:min-h-0 md:min-w-0">
                   <InputPanel
                     onAnalyze={handleAnalyze}
                     onDraftChange={handleDraftChange}
@@ -464,7 +517,7 @@ export function LoggedInDashboard() {
                   />
                 </div>
 
-                <div className="min-h-0 min-w-0">
+                <div className="min-h-[420px] md:min-h-0 md:min-w-0">
                   <ResultsPanel
                     data={results}
                     isAnalyzing={isAnalyzing}
