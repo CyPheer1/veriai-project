@@ -175,7 +175,6 @@ public class SubmissionService {
 
     @Transactional
     public SubmissionDetailResponse upsertInternalResult(UUID submissionId, InternalSubmissionResultRequest request) {
-</thinking>
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Submission not found"));
 
