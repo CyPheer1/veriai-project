@@ -280,12 +280,12 @@ export function ResultsPanel({
     },
     {
       label: "Stylistic Analysis",
-      score: fullReportAvailable ? (display.layer2Score ?? 0) : 0,
+      score: fullReportAvailable ? (display.layer2Score ?? 0) : 62,
       tone: "mixed" as const,
     },
     {
       label: "Statistical Analysis",
-      score: fullReportAvailable ? (display.layer3Score ?? 0) : 0,
+      score: fullReportAvailable ? (display.layer3Score ?? 0) : 45,
       tone: "human" as const,
     },
   ];
@@ -388,12 +388,10 @@ export function ResultsPanel({
   };
 
   // Chart data
-  const layerChartData = fullReportAvailable
-    ? analysisLayers.map((l) => ({
-        name: l.label.split(" ")[0],
-        score: clampScore(l.score),
-      }))
-    : [{ name: "RoBERTa", score: clampScore(display.layer1Score ?? 0) }];
+  const layerChartData = analysisLayers.map((l) => ({
+    name: l.label.split(" ")[0],
+    score: clampScore(l.score),
+  }));
 
   const wc = display.writingCharacteristics;
   const radarData = wc
@@ -463,47 +461,90 @@ export function ResultsPanel({
       <div className="grid h-full min-h-0 grid-rows-[58px_1fr] overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)]">
         {tabHeader}
         <section className="relative min-h-0 overflow-hidden">
-          {/* Blurred actual premium report preview */}
+          {/* Blurred step-1 question wizard */}
           <div className="pointer-events-none h-full select-none overflow-hidden blur-[3px]">
-            <div className="grid h-full min-h-0 grid-rows-[auto_1fr] px-7 py-6">
-              <div className="flex items-center justify-between gap-4 border-b border-[#d7dfed] pb-4">
-                <div>
-                  <h2 className="text-[20px] font-semibold tracking-[-0.025em] text-[#07112f]">
-                    Report preview
+            <div className="grid h-full min-h-0 grid-rows-[1fr_auto] px-7 py-6">
+              <div className="flex min-h-0 items-center justify-center">
+                <div className="w-full max-w-[560px] rounded-[14px] border border-[#d7dfed] bg-[#f8fafc]/75 p-6 shadow-[0_18px_42px_rgba(31,45,71,0.08)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="veriai-mono text-[12px] font-semibold text-[#7185a3]">
+                      Question 1 of 5
+                    </span>
+                    <span className="rounded-[8px] border border-[#d7dfed] bg-white px-2.5 py-1 text-[12px] font-semibold text-[#274169]">
+                      Verdict summary
+                    </span>
+                  </div>
+                  <h2 className="mt-6 text-[24px] font-semibold leading-[1.15] tracking-[-0.035em] text-[#07112f]">
+                    Include the verdict summary?
                   </h2>
-                  <p className="mt-1 text-[13px] font-medium text-[#64748b]">
-                    Review selected blocks before downloading.
+                  <p className="mt-3 text-[14px] font-medium leading-7 text-[#52627a]">
+                    AI signal, label, top model, and submission date.
                   </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    className="h-10 rounded-[9px] border border-[#d7dfed] bg-white px-4 text-[14px] font-semibold text-[#274169]"
-                  >
-                    ← Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="h-10 rounded-[9px] bg-[#1263F1] px-4 text-[14px] font-semibold text-white"
-                  >
-                    Download
-                  </button>
+                  <div className="mt-6 grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      className="rounded-[12px] border border-[#1263F1] bg-[#edf4ff] px-4 py-4 text-left"
+                    >
+                      <span className="block text-[15px] font-semibold text-[#1263F1]">
+                        Include
+                      </span>
+                      <span className="mt-1 block text-[12px] font-medium leading-5 text-[#7185a3]">
+                        Add this block to the final report
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-[12px] border border-[#d7dfed] bg-white px-4 py-4 text-left"
+                    >
+                      <span className="block text-[15px] font-semibold text-[#274169]">
+                        Skip
+                      </span>
+                      <span className="mt-1 block text-[12px] font-medium leading-5 text-[#7185a3]">
+                        Leave this block out
+                      </span>
+                    </button>
+                  </div>
+                  <div className="mt-5 rounded-[12px] border border-[#d7dfed] bg-white p-4">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7185a3]">
+                      Block preview
+                    </span>
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {(
+                        [
+                          ["Verdict", "AI generated"],
+                          ["Top model", "GPT-4"],
+                          ["Date", "May 14, 2025"],
+                        ] as [string, string][]
+                      ).map(([label, value]) => (
+                        <div
+                          key={label}
+                          className="rounded-[9px] border border-[#d7dfed] bg-[#f8fafc]/75 px-3 py-2.5"
+                        >
+                          <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#7185a3]">
+                            {label}
+                          </span>
+                          <strong className="mt-1 block truncate text-[12px] font-semibold text-[#07112f]">
+                            {value}
+                          </strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="overflow-hidden py-5">
-                <pre className="veriai-document-font whitespace-pre-wrap rounded-[12px] border border-[#d7dfed] bg-[#f8fafc]/75 p-5 text-[14px] font-medium leading-7 text-[#274169]">
-                  {`Veri4i review report
-
-Verdict: Likely AI-generated. AI signal: 87%. Top model: GPT-4. Date: May 14, 2025.
-
-Interpretation: The submitted text shows a high AI-generation signal. Review highlighted sentences and layer scores before making an academic decision.
-
-Model attribution: GPT-4 93%, Claude 3 89%, Gemini 1.5 91%, Llama 3 86%.
-
-Sentence evidence: 12 likely human-written sentences, 5 uncertain sentences, 7 likely AI-generated sentences.
-
-Detection layers: RoBERTa 78%, Stylistic 65%, Statistical 52%.`}
-                </pre>
+              <div className="flex items-center justify-between border-t border-[#d7dfed] pt-4">
+                <button
+                  type="button"
+                  className="flex h-10 items-center gap-2 rounded-[9px] border border-[#d7dfed] bg-white px-4 text-[14px] font-semibold text-[#274169] opacity-45"
+                >
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  className="flex h-10 items-center gap-2 rounded-[9px] bg-[#1263F1] px-4 text-[14px] font-semibold text-white"
+                >
+                  Next →
+                </button>
               </div>
             </div>
           </div>
@@ -819,7 +860,7 @@ Detection layers: RoBERTa 78%, Stylistic 65%, Statistical 52%.`}
 
         {/* Confidence across text — FREE blurred preview */}
         {!fullReportAvailable && (
-          <section className="relative border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+          <section className="border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
             <div className="pointer-events-none select-none blur-[3px]">
               <div className="flex items-center justify-between pb-3">
                 <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
@@ -865,13 +906,6 @@ Detection layers: RoBERTa 78%, Stylistic 65%, Statistical 52%.`}
                   />
                 </AreaChart>
               </ResponsiveContainer>
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="rounded-[9px] border border-[#cbd7ea] bg-white/95 px-3.5 py-2 text-center shadow-[0_4px_16px_rgba(31,45,71,0.12)]">
-                <p className="text-[13px] font-semibold text-[#52627a]">
-                  Confidence chart is Premium
-                </p>
-              </div>
             </div>
           </section>
         )}
@@ -924,49 +958,40 @@ Detection layers: RoBERTa 78%, Stylistic 65%, Statistical 52%.`}
                 })}
               </div>
             ) : (
-              <div className="relative">
-                <div className="pointer-events-none select-none blur-[3px]">
-                  <div className="grid grid-cols-2 content-stretch gap-2.5">
-                    {previewData.modelAttributions.slice(0, 4).map((model) => {
-                      const modelScore = clampScore(model.score);
-                      const scoreColor =
-                        modelScore >= 90 ? "text-[#b32635]" : "text-[#07112f]";
-                      return (
-                        <article
-                          key={model.name}
-                          className="grid min-h-[76px] content-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium text-[#07112f]">
-                              <ModelLogo
-                                name={model.name}
-                                className="h-6 w-6 shrink-0"
-                              />
-                              <span className="truncate">{model.name}</span>
-                            </span>
-                            <span
-                              className={`veriai-mono text-[13px] font-semibold ${scoreColor}`}
-                            >
-                              {modelScore}%
-                            </span>
-                          </div>
-                          <span className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5ebf4]">
-                            <span
-                              className="veriai-bar-fill block h-full rounded-full bg-[#1263F1]"
-                              style={{ width: `${modelScore}%` }}
+              <div className="pointer-events-none select-none blur-[3px]">
+                <div className="grid grid-cols-2 content-stretch gap-2.5">
+                  {previewData.modelAttributions.slice(0, 4).map((model) => {
+                    const modelScore = clampScore(model.score);
+                    const scoreColor =
+                      modelScore >= 90 ? "text-[#b32635]" : "text-[#07112f]";
+                    return (
+                      <article
+                        key={model.name}
+                        className="grid min-h-[76px] content-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium text-[#07112f]">
+                            <ModelLogo
+                              name={model.name}
+                              className="h-6 w-6 shrink-0"
                             />
+                            <span className="truncate">{model.name}</span>
                           </span>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="rounded-[9px] border border-[#cbd7ea] bg-white/95 px-3.5 py-2 text-center shadow-[0_4px_16px_rgba(31,45,71,0.12)]">
-                    <p className="text-[13px] font-semibold text-[#52627a]">
-                      Model attribution is Premium
-                    </p>
-                  </div>
+                          <span
+                            className={`veriai-mono text-[13px] font-semibold ${scoreColor}`}
+                          >
+                            {modelScore}%
+                          </span>
+                        </div>
+                        <span className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5ebf4]">
+                          <span
+                            className="veriai-bar-fill block h-full rounded-full bg-[#1263F1]"
+                            style={{ width: `${modelScore}%` }}
+                          />
+                        </span>
+                      </article>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -987,7 +1012,7 @@ Detection layers: RoBERTa 78%, Stylistic 65%, Statistical 52%.`}
                       ? "sentence"
                       : "sentences"
                   }`
-                : "Premium"}
+                : ""}
             </span>
           </div>
           {fullReportAvailable ? (
@@ -1022,49 +1047,83 @@ Detection layers: RoBERTa 78%, Stylistic 65%, Statistical 52%.`}
               })}
             </div>
           ) : (
-            <div className="relative">
-              <div className="pointer-events-none select-none blur-[3px]">
-                <div className="grid content-stretch gap-[9px]">
-                  {[
-                    {
-                      tone: "human" as const,
-                      label: "Likely human-written",
-                      count: 12,
-                    },
-                    {
-                      tone: "ai" as const,
-                      label: "Likely AI-generated",
-                      count: 7,
-                    },
-                  ].map(({ tone, label, count }) => {
-                    const meta = toneMeta(tone);
-                    return (
-                      <div
-                        key={tone}
-                        className="grid grid-cols-[18px_1fr_auto] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5"
-                      >
-                        <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
-                        <span className="text-[14px] font-medium text-[#07112f]">
-                          {label}
-                        </span>
-                        <span className="text-[12px] font-medium text-[#274169]">
-                          {count} sentences
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="rounded-[9px] border border-[#cbd7ea] bg-white/95 px-3.5 py-2 text-center shadow-[0_4px_16px_rgba(31,45,71,0.12)]">
-                  <p className="text-[13px] font-semibold text-[#52627a]">
-                    Per-sentence highlights are Premium
-                  </p>
-                </div>
+            <div className="pointer-events-none select-none blur-[3px]">
+              <div className="grid content-stretch gap-[9px]">
+                {[
+                  {
+                    tone: "human" as const,
+                    label: "Likely human-written",
+                    count: 12,
+                  },
+                  {
+                    tone: "ai" as const,
+                    label: "Likely AI-generated",
+                    count: 7,
+                  },
+                ].map(({ tone, label, count }) => {
+                  const meta = toneMeta(tone);
+                  return (
+                    <div
+                      key={tone}
+                      className="grid grid-cols-[18px_1fr_auto] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5"
+                    >
+                      <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
+                      <span className="text-[14px] font-medium text-[#07112f]">
+                        {label}
+                      </span>
+                      <span className="text-[12px] font-medium text-[#274169]">
+                        {count} sentences
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
         </section>
+
+        {/* Writing characteristics — FREE blurred preview (human results only) */}
+        {isHumanResult && !fullReportAvailable && (
+          <section className="border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+            <div className="pointer-events-none select-none blur-[3px]">
+              <div className="pb-3">
+                <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                  Writing characteristics
+                </h2>
+              </div>
+              <ResponsiveContainer width="100%" height={180}>
+                <RadarChart
+                  data={[
+                    { metric: "Vocabulary", value: 61 },
+                    { metric: "Variation", value: 44 },
+                    { metric: "Burstiness", value: 58 },
+                    { metric: "Unpredictability", value: 72 },
+                    { metric: "Entropy", value: 53 },
+                  ]}
+                  margin={{ top: 8, right: 24, left: 24, bottom: 8 }}
+                >
+                  <PolarGrid stroke="#e5ebf4" />
+                  <PolarAngleAxis
+                    dataKey="metric"
+                    tick={{ fontSize: 10, fill: "#7185a3", fontWeight: 500 }}
+                  />
+                  <PolarRadiusAxis
+                    domain={[0, 100]}
+                    tick={false}
+                    axisLine={false}
+                  />
+                  <Radar
+                    dataKey="value"
+                    stroke="#1263F1"
+                    fill="#1263F1"
+                    fillOpacity={0.12}
+                    strokeWidth={1.5}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+        )}
 
         {/* Writing characteristics (RadarChart) — human results + PRO only */}
         {isHumanResult && fullReportAvailable && radarData.length > 0 && (
@@ -1168,11 +1227,6 @@ Detection layers: RoBERTa 78%, Stylistic 65%, Statistical 52%.`}
               {analysisLayers[0] &&
                 `RoBERTa ${clampScore(analysisLayers[0].score)}% · Stylistic ${clampScore(analysisLayers[1]?.score ?? 0)}% · Statistical ${clampScore(analysisLayers[2]?.score ?? 0)}%`}
             </p>
-            {!fullReportAvailable && (
-              <p className="mt-2 text-center text-[12px] font-medium text-[#94a3b8]">
-                Stylistic &amp; Statistical layers are Premium
-              </p>
-            )}
           </div>
         </section>
 

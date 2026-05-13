@@ -272,6 +272,15 @@
         top: 110px;
     }
 
+    .veriai-hide-scrollbar {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .veriai-hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
     .veriai-feature-scroll {
         max-height: 520px;
         overflow-y: auto;

@@ -112,7 +112,7 @@ function ScanDock({
       <div className="my-3 h-px w-full bg-[#dbe4f1]" />
 
       {/* Recent scans list */}
-      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+      <div className="veriai-hide-scrollbar flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {history.length ? (
           <>
             <p className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-[#9aacbf]">
