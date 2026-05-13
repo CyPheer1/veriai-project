@@ -18,6 +18,7 @@ public record FrontendResultsResponse(
         String accessLevel,
         Integer layer1Score,
         Integer layer2Score,
-        Integer layer3Score
+        Integer layer3Score,
+        FrontendWritingMetricsResponse writingCharacteristics
 ) {
 }

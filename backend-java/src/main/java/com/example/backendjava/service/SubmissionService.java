@@ -163,7 +163,19 @@ public class SubmissionService {
     }
 
     @Transactional
+    public void updateTitle(String email, UUID submissionId, String title) {
+        User user = getUserByEmail(email);
+        Submission submission = submissionRepository.findByIdAndUserId(submissionId, user.getId())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Submission not found"));
+        String trimmed = (title == null || title.isBlank()) ? null : title.trim();
+        submission.setCustomTitle(trimmed);
+        submission.setUpdatedAt(Instant.now());
+        submissionRepository.save(submission);
+    }
+
+    @Transactional
     public SubmissionDetailResponse upsertInternalResult(UUID submissionId, InternalSubmissionResultRequest request) {
+</thinking>
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Submission not found"));
 

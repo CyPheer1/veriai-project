@@ -50,6 +50,9 @@ public class Submission {
     @Column(name = "source_filename", length = 255)
     private String sourceFilename;
 
+    @Column(name = "custom_title", length = 500)
+    private String customTitle;
+
     @Column(name = "original_text", nullable = false, columnDefinition = "TEXT")
     private String originalText;
 

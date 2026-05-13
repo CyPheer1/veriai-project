@@ -16,6 +16,7 @@ public record SubmissionDetailResponse(
         Instant completedAt,
         String errorMessage,
         AnalysisResultResponse result,
-        FrontendResultsResponse frontendPayload
+        FrontendResultsResponse frontendPayload,
+        String customTitle
 ) {
 }

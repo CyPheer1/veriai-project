@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FileTextIcon, PlusIcon } from "@radix-ui/react-icons";
-import { saveTitle, getTitleWithFallback } from "../utils/scanTitles";
+import { patchSubmissionTitleRequest } from "../services/api";
 import { useNavigate } from "react-router";
 import { Header } from "../components/Header";
 import { AnalyzePayload, InputPanel } from "../components/InputPanel";
@@ -221,12 +221,7 @@ export function LoggedInDashboard() {
           .filter((item) => item.status === "COMPLETED")
           .map((item) => ({
             id: item.submissionId,
-            title: getTitleWithFallback(
-              item.submissionId,
-              item.sourceFilename
-                ? item.sourceFilename.replace(/\.[^.]+$/, "")
-                : `Scan · ${item.wordCount} words`,
-            ),
+            title: item.customTitle || `Scan · ${item.wordCount} words`,
             score: Math.round((item.globalConfidence ?? 0) * 100),
             model: item.globalLabel ?? "",
             timestamp: item.completedAt ?? item.submittedAt,
@@ -292,7 +287,15 @@ export function LoggedInDashboard() {
 
   const handleTitleChange = (title: string) => {
     setDocumentTitle(title);
-    setHasDraftChanges(true);
+  };
+
+  const handleTitleBlur = () => {
+    if (!activeScanId || !token) return;
+    const title = normalizeScanTitle(documentTitle);
+    setDocumentTitle(title);
+    void patchSubmissionTitleRequest(token, activeScanId, title).catch(
+      () => {},
+    );
   };
 
   const handleDraftChange = () => {
@@ -338,7 +341,11 @@ export function LoggedInDashboard() {
         submittedAt: detail.completedAt ?? detail.submittedAt,
       };
       const scanTitle = normalizeScanTitle(documentTitle);
-      saveTitle(accepted.submissionId, scanTitle);
+      void patchSubmissionTitleRequest(
+        token,
+        accepted.submissionId,
+        scanTitle,
+      ).catch(() => {});
       const historyItem: ScanHistoryItem = {
         id: accepted.submissionId,
         title: scanTitle,
@@ -398,6 +405,7 @@ export function LoggedInDashboard() {
             variant="dashboard"
             contextTitle={headerTitle}
             onContextTitleChange={handleTitleChange}
+            onContextTitleBlur={handleTitleBlur}
             contextDetail={formatHeaderDate(
               hasDraftChanges ? null : results?.submittedAt,
             )}

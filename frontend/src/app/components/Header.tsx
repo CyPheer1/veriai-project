@@ -3,8 +3,11 @@ import { useNavigate } from "react-router";
 import {
   BellIcon,
   CheckCircledIcon,
+  CrossCircledIcon,
   ExitIcon,
+  Pencil1Icon,
   QuestionMarkCircledIcon,
+  UpdateIcon,
 } from "@radix-ui/react-icons";
 import { useApp } from "../context/AppContext";
 
@@ -15,6 +18,7 @@ interface HeaderProps {
   contextDetail?: string;
   contextStatus?: string;
   usageLabel?: string;
+  onContextTitleBlur?: () => void;
 }
 
 export function Logo({
@@ -39,6 +43,7 @@ export function Header({
   contextDetail,
   contextStatus,
   usageLabel,
+  onContextTitleBlur,
 }: HeaderProps) {
   const navigate = useNavigate();
   const { isLoggedIn, user, logout, upgradeToPro } = useApp();
@@ -85,9 +90,9 @@ export function Header({
     const statusTone = contextStatus?.toLowerCase().includes("fail")
       ? "text-[#b32635]"
       : contextStatus?.toLowerCase().includes("analyz")
-        ? "text-[#1f5cc4]"
+        ? "text-[#1263F1]"
         : contextStatus?.toLowerCase().includes("draft")
-          ? "text-[#8a5200]"
+          ? "text-[#64748b]"
           : "text-[#17633f]";
 
     return (
@@ -100,8 +105,9 @@ export function Header({
                 onChange={(event) => onContextTitleChange(event.target.value)}
                 onBlur={(event) => {
                   if (!event.target.value.trim()) {
-                    onContextTitleChange("Untitled scan");
+                    onContextTitleChange?.("Untitled scan");
                   }
+                  onContextTitleBlur?.();
                 }}
                 aria-label="Scan title"
                 className="h-5 w-[104px] shrink-0 rounded-[5px] border border-transparent bg-transparent p-0 font-semibold leading-5 text-[#0d1526] outline-none transition-colors hover:bg-[#eef3f9]/70 focus:border-[#1263F1] focus:bg-white focus:px-1 focus:ring-2 focus:ring-[#1263F1]/10"
@@ -122,7 +128,16 @@ export function Header({
                 <span className="text-[#94a3b8]">•</span>
                 <span className={`flex items-center gap-1.5 ${statusTone}`}>
                   {contextStatus === "Saved" && (
-                    <CheckCircledIcon className="h-4 w-4" />
+                    <CheckCircledIcon className="h-3.5 w-3.5" />
+                  )}
+                  {contextStatus === "Draft" && (
+                    <Pencil1Icon className="h-3.5 w-3.5" />
+                  )}
+                  {contextStatus === "Analyzing" && (
+                    <UpdateIcon className="h-3.5 w-3.5 animate-spin" />
+                  )}
+                  {contextStatus === "Failed" && (
+                    <CrossCircledIcon className="h-3.5 w-3.5" />
                   )}
                   {contextStatus}
                 </span>
@@ -191,9 +206,24 @@ export function Header({
               </button>
               {openPanel === "notifications" && (
                 <div
-                  className="absolute right-0 top-11 z-30 h-[180px] w-[280px] rounded-[14px] border border-[#d8e0ec] bg-white shadow-[0_22px_54px_rgba(31,45,71,0.16)]"
+                  className="absolute right-0 top-11 z-30 w-[280px] rounded-[14px] border border-[#d8e0ec] bg-white p-4 shadow-[0_22px_54px_rgba(31,45,71,0.16)]"
                   aria-label="Notifications panel"
-                />
+                >
+                  <p className="text-[13px] font-semibold text-[#0d1526]">
+                    Notifications
+                  </p>
+                  <div className="mt-6 flex flex-col items-center justify-center gap-3 pb-2 text-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1f5fb]">
+                      <BellIcon className="h-5 w-5 text-[#94a3b8]" />
+                    </div>
+                    <p className="text-[13px] font-semibold text-[#52627a]">
+                      No notifications
+                    </p>
+                    <p className="max-w-[18ch] text-[12px] font-medium leading-5 text-[#94a3b8]">
+                      You're all caught up for now.
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
             <div className="flex min-w-0 items-center gap-2 border-l border-[#d8e0ec] pl-3">

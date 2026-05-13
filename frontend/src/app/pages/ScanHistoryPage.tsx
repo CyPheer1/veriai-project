@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { getTitleWithFallback } from "../utils/scanTitles";
+
 import { ClockIcon, FileTextIcon } from "@radix-ui/react-icons";
 import { useNavigate } from "react-router";
 import { Header } from "../components/Header";
@@ -79,15 +79,11 @@ function labelDisplay(
 }
 
 function itemTitle(item: SubmissionListItemResponse): string {
-  const fallback =
-    item.sourceType === "TEXT"
-      ? "Text scan"
-      : item.sourceType === "PDF"
-        ? "PDF document"
-        : item.sourceType === "DOCX"
-          ? "Word document"
-          : (item.sourceType ?? "Scan");
-  return getTitleWithFallback(item.submissionId, fallback);
+  if (item.customTitle) return item.customTitle;
+  if (item.sourceType === "TEXT") return "Text scan";
+  if (item.sourceType === "PDF") return "PDF document";
+  if (item.sourceType === "DOCX") return "Word document";
+  return item.sourceType ?? "Scan";
 }
 
 export function ScanHistoryPage() {
@@ -347,10 +343,9 @@ export function ScanHistoryPage() {
                         Submission details
                       </p>
                       <h2 className="mt-2 text-[20px] font-semibold text-[#0d1526]">
-                        {getTitleWithFallback(
-                          selectedDetail.submissionId,
-                          selectedDetail.sourceFilename ?? "Text submission",
-                        )}
+                        {selectedDetail.customTitle ||
+                          selectedDetail.sourceFilename ||
+                          "Text submission"}
                       </h2>
                     </div>
                     <span className="rounded-full bg-[#eef3f9] px-3 py-1 text-[11px] font-semibold text-[#274169]">

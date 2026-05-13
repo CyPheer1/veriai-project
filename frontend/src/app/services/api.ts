@@ -81,6 +81,7 @@ export interface SubmissionDetailResponse {
   completedAt: string | null;
   errorMessage: string | null;
   frontendPayload: FrontendResultsResponse | null;
+  customTitle: string | null;
 }
 
 export interface SubmissionListItemResponse {
@@ -94,6 +95,7 @@ export interface SubmissionListItemResponse {
   globalLabel: string | null;
   globalConfidence: number | null;
   errorMessage: string | null;
+  customTitle: string | null;
 }
 
 export interface SubmissionPageResponse {
@@ -194,7 +196,10 @@ async function requestJson<T>(
   return (await response.json()) as T;
 }
 
-export async function loginRequest(email: string, password: string): Promise<AuthResponse> {
+export async function loginRequest(
+  email: string,
+  password: string,
+): Promise<AuthResponse> {
   return requestJson<AuthResponse>("/api/v1/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
@@ -213,21 +218,35 @@ export async function registerRequest(
 }
 
 export async function meRequest(token: string): Promise<AuthUserResponse> {
-  return requestJson<AuthUserResponse>("/api/v1/auth/me", { method: "GET" }, token);
+  return requestJson<AuthUserResponse>(
+    "/api/v1/auth/me",
+    { method: "GET" },
+    token,
+  );
 }
 
-export async function createCheckoutSessionRequest(token: string): Promise<CheckoutSessionResponse> {
-  return requestJson<CheckoutSessionResponse>("/api/v1/billing/checkout-session", { method: "POST" }, token);
+export async function createCheckoutSessionRequest(
+  token: string,
+): Promise<CheckoutSessionResponse> {
+  return requestJson<CheckoutSessionResponse>(
+    "/api/v1/billing/checkout-session",
+    { method: "POST" },
+    token,
+  );
 }
 
 export async function submitTextRequest(
   token: string,
   text: string,
 ): Promise<SubmissionAcceptedResponse> {
-  return requestJson<SubmissionAcceptedResponse>("/api/v1/submissions/text", {
-    method: "POST",
-    body: JSON.stringify({ text }),
-  }, token);
+  return requestJson<SubmissionAcceptedResponse>(
+    "/api/v1/submissions/text",
+    {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    },
+    token,
+  );
 }
 
 export async function submitFileRequest(
@@ -237,17 +256,25 @@ export async function submitFileRequest(
   const formData = new FormData();
   formData.append("file", file);
 
-  return requestJson<SubmissionAcceptedResponse>("/api/v1/submissions/file", {
-    method: "POST",
-    body: formData,
-  }, token);
+  return requestJson<SubmissionAcceptedResponse>(
+    "/api/v1/submissions/file",
+    {
+      method: "POST",
+      body: formData,
+    },
+    token,
+  );
 }
 
 export async function getSubmissionRequest(
   token: string,
   submissionId: string,
 ): Promise<SubmissionDetailResponse> {
-  return requestJson<SubmissionDetailResponse>(`/api/v1/submissions/${submissionId}`, { method: "GET" }, token);
+  return requestJson<SubmissionDetailResponse>(
+    `/api/v1/submissions/${submissionId}`,
+    { method: "GET" },
+    token,
+  );
 }
 
 export async function listSubmissionsRequest(
@@ -260,7 +287,11 @@ export async function listSubmissionsRequest(
     size: String(size),
   }).toString();
 
-  return requestJson<SubmissionPageResponse>(`/api/v1/submissions?${query}`, { method: "GET" }, token);
+  return requestJson<SubmissionPageResponse>(
+    `/api/v1/submissions?${query}`,
+    { method: "GET" },
+    token,
+  );
 }
 
 function delay(ms: number): Promise<void> {
@@ -295,6 +326,21 @@ export async function pollSubmissionResult(
   }
 
   throw new ApiRequestError("Timed out while waiting for analysis result", 408);
+}
+
+export async function patchSubmissionTitleRequest(
+  token: string,
+  submissionId: string,
+  title: string,
+): Promise<void> {
+  await requestJson<void>(
+    `/api/v1/submissions/${submissionId}/title`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ title }),
+    },
+    token,
+  );
 }
 
 export function getErrorMessage(error: unknown, fallback: string): string {

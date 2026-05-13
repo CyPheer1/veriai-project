@@ -1,6 +1,49 @@
 import { useState } from "react";
 import { InfoCircledIcon } from "@radix-ui/react-icons";
+
+function InfoTooltip({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span
+      className="relative inline-flex"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <InfoCircledIcon className="h-[14px] w-[14px] cursor-default text-[#9aacbf] transition-colors hover:text-[#1263F1]" />
+      {show && (
+        <span className="pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-50 w-[210px] -translate-x-1/2 rounded-[10px] border border-[#d7dfed] bg-white px-3 py-2.5 text-left text-[12px] font-medium leading-[1.55] text-[#52627a] shadow-[0_8px_28px_rgba(31,45,71,0.13)]">
+          {text}
+          {/* arrow */}
+          <span
+            className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#d7dfed]"
+            style={{ marginTop: 0 }}
+          />
+          <span
+            className="absolute left-1/2 top-full -translate-x-1/2 border-[3.5px] border-transparent border-t-white"
+            style={{ marginTop: -1 }}
+          />
+        </span>
+      )}
+    </span>
+  );
+}
 import { ModelLogo } from "./DesignIcons";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  AreaChart,
+  Area,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+} from "recharts";
 
 interface Segment {
   text: string;
@@ -9,6 +52,16 @@ interface Segment {
 interface ModelAttribution {
   name: string;
   score: number;
+}
+
+interface WritingCharacteristics {
+  vocabularyDiversity: number | null;
+  avgSentenceLength: number | null;
+  sentenceLengthVariance: number | null;
+  burstinessScore: number | null;
+  perplexity: number | null;
+  avgTokenEntropy: number | null;
+  logicalConnectorRatio: number | null;
 }
 
 export interface ResultsData {
@@ -29,6 +82,7 @@ export interface ResultsData {
   layer1Score?: number;
   layer2Score?: number;
   layer3Score?: number;
+  writingCharacteristics?: WritingCharacteristics | null;
 }
 
 const previewData: ResultsData = {
@@ -78,6 +132,15 @@ const previewData: ResultsData = {
   ],
   fullReportAvailable: true,
   accessLevel: "PREMIUM",
+  writingCharacteristics: {
+    vocabularyDiversity: 0.61,
+    avgSentenceLength: 17.5,
+    sentenceLengthVariance: 29.0,
+    burstinessScore: 1.65,
+    perplexity: 42.0,
+    avgTokenEntropy: 3.8,
+    logicalConnectorRatio: 0.042,
+  },
 };
 
 function clampScore(score: number): number {
@@ -334,8 +397,41 @@ export function ResultsPanel({
     anchor.click();
     URL.revokeObjectURL(url);
   };
+
+  // Chart data
+  const layerChartData = analysisLayers.map((l) => ({
+    name: l.label.split(" ")[0],
+    score: clampScore(l.score),
+  }));
+
+  const wc = display.writingCharacteristics;
+  const radarData = wc
+    ? [
+        {
+          metric: "Vocabulary",
+          value: Math.min(100, Math.round((wc.vocabularyDiversity ?? 0) * 100)),
+        },
+        {
+          metric: "Variation",
+          value: Math.min(100, Math.round(wc.sentenceLengthVariance ?? 0)),
+        },
+        {
+          metric: "Burstiness",
+          value: Math.min(100, Math.round((wc.burstinessScore ?? 0) * 25)),
+        },
+        {
+          metric: "Unpredictability",
+          value: Math.min(100, Math.round((wc.perplexity ?? 0) / 2)),
+        },
+        {
+          metric: "Entropy",
+          value: Math.min(100, Math.round((wc.avgTokenEntropy ?? 0) * 16)),
+        },
+      ]
+    : [];
+
   const tabHeader = (
-    <div className="flex h-[58px] items-center border-b border-[#d7dfed] bg-[#fbfcff]/75 px-7">
+    <div className="flex h-[58px] shrink-0 items-center border-b border-[#d7dfed] bg-[#fbfcff]/75 px-7">
       <div
         className="flex h-full gap-12"
         role="tablist"
@@ -437,10 +533,12 @@ export function ResultsPanel({
                     {currentReportStep.detail}
                   </p>
                   <div className="mt-6 grid grid-cols-2 gap-3">
-                    {[
-                      [true, "Include", "Add this block to the final report"],
-                      [false, "Skip", "Leave this block out"],
-                    ].map(([value, label, help]) => {
+                    {(
+                      [
+                        [true, "Include", "Add this block to the final report"],
+                        [false, "Skip", "Leave this block out"],
+                      ] as [boolean, string, string][]
+                    ).map(([value, label, help]) => {
                       const selected =
                         reportSections[currentReportStep.key] === value;
                       return (
@@ -475,11 +573,13 @@ export function ResultsPanel({
                     </span>
                     {currentReportStep.key === "verdict" && (
                       <div className="mt-3 grid grid-cols-3 gap-2">
-                        {[
-                          ["Verdict", display.label],
-                          ["Top model", primaryModel],
-                          ["Date", submittedDate],
-                        ].map(([label, value]) => (
+                        {(
+                          [
+                            ["Verdict", display.label],
+                            ["Top model", primaryModel],
+                            ["Date", submittedDate],
+                          ] as [string, string][]
+                        ).map(([label, value]) => (
                           <div
                             key={label}
                             className="rounded-[9px] border border-[#d7dfed] bg-[#f8fafc]/75 px-3 py-2.5"
@@ -616,216 +716,310 @@ export function ResultsPanel({
     );
   }
 
+  // Analysis tab
   return (
-    <div
-      className={`relative grid h-full min-h-0 overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] ${
-        fullReportAvailable
-          ? "grid-rows-[238px_226px_178px_minmax(198px,1fr)]"
-          : "grid-rows-[238px_226px_178px_minmax(198px,1fr)]"
-      }`}
-    >
-      <section className="min-h-0 overflow-hidden border-b border-[#d7dfed]">
-        {tabHeader}
-
-        <div className="grid h-[180px] grid-cols-[142px_1fr] items-center gap-5 px-7">
-          <ScoreRing score={score} />
-          <div className="min-w-0">
-            <h2 className="flex items-center gap-3 text-[20px] font-semibold tracking-[-0.02em] text-[#ef3a43]">
-              <span className="h-3.5 w-3.5 rounded-full bg-[#ef3a43]" />
-              {display.label}
-            </h2>
-            <p className="mt-3 max-w-[38ch] text-[14px] font-medium leading-6 text-[#152342]">
-              {fullReportAvailable
-                ? "The full ensemble result includes model attribution, sentence evidence, and analysis-layer scores."
-                : "Free analysis uses the layer 1 detector and returns the global score and label."}
-            </p>
-            <p className="mt-4 flex items-start gap-2 text-[12px] font-medium leading-5 text-[#64748b]">
-              <InfoCircledIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#7c8aa5]" />
-              <span>
-                Probabilistic signal only. Review evidence before making an
-                academic judgment.
-              </span>
-            </p>
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)]">
+      {tabHeader}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {/* Verdict section */}
+        <section className="border-b border-[#d7dfed]">
+          <div className="grid h-[180px] grid-cols-[142px_1fr] items-center gap-5 px-7">
+            <ScoreRing score={score} />
+            <div className="min-w-0">
+              <h2 className="flex items-center gap-3 text-[20px] font-semibold tracking-[-0.02em] text-[#ef3a43]">
+                <span className="h-3.5 w-3.5 rounded-full bg-[#ef3a43]" />
+                {display.label}
+              </h2>
+              <p className="mt-3 max-w-[38ch] text-[14px] font-medium leading-6 text-[#152342]">
+                {fullReportAvailable
+                  ? "The full ensemble result includes model attribution, sentence evidence, and analysis-layer scores."
+                  : "Free analysis uses the layer 1 detector and returns the global score and label."}
+              </p>
+              <p className="mt-4 flex items-start gap-2 text-[12px] font-medium leading-5 text-[#64748b]">
+                <InfoCircledIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#7c8aa5]" />
+                <span>
+                  Probabilistic signal only. Review evidence before making an
+                  academic judgment.
+                </span>
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {!isHumanResult && (
+        {/* Confidence across text (AreaChart) — PRO + has chunks */}
+        {fullReportAvailable && chunks.length > 0 && (
+          <section className="border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+            <div className="flex items-center justify-between pb-3">
+              <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                Confidence across text{" "}
+                <InfoTooltip text="Per-chunk AI confidence score across the document. Red peaks indicate likely AI-generated passages; blue troughs indicate likely human-written ones." />
+              </h2>
+              <span className="text-[12px] font-medium text-[#64748b]">
+                {chunks.length} chunks
+              </span>
+            </div>
+            <ResponsiveContainer width="100%" height={80}>
+              <AreaChart
+                data={chunks.map((c, i) => ({ i: i + 1, score: c.score }))}
+                margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="chunkGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef3a43" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#ef3a43" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="i" hide />
+                <YAxis domain={[0, 100]} hide />
+                <Tooltip
+                  formatter={(v) => [`${v}%`, "AI confidence"]}
+                  contentStyle={{
+                    fontSize: 12,
+                    borderRadius: 8,
+                    border: "1px solid #d7dfed",
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="score"
+                  stroke="#ef3a43"
+                  strokeWidth={1.5}
+                  fill="url(#chunkGrad)"
+                  dot={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </section>
+        )}
+
+        {/* Model attribution */}
+        {!isHumanResult && (
+          <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+            <div className="flex items-center justify-between pb-3">
+              <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                Model attribution{" "}
+                <InfoTooltip text="Estimates which AI model most likely generated this text based on statistical pattern matching. Results are probabilistic, not definitive." />
+              </h2>
+              <span className="text-[12px] font-medium text-[#64748b]">
+                ranked by confidence
+              </span>
+            </div>
+            <div
+              className={`grid grid-cols-2 content-stretch gap-2.5 ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
+            >
+              {shownModels.slice(0, 4).map((model) => {
+                const modelScore = clampScore(model.score);
+                const scoreColor =
+                  modelScore >= 90 ? "text-[#b32635]" : "text-[#07112f]";
+                return (
+                  <article
+                    key={model.name}
+                    className="grid min-h-[76px] content-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium text-[#07112f]">
+                        <ModelLogo
+                          name={model.name}
+                          className="h-6 w-6 shrink-0"
+                        />
+                        <span className="truncate">{model.name}</span>
+                      </span>
+                      <span
+                        className={`veriai-mono text-[13px] font-semibold ${scoreColor}`}
+                      >
+                        {modelScore}%
+                      </span>
+                    </div>
+                    <span className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5ebf4]">
+                      <span
+                        className="veriai-bar-fill block h-full rounded-full bg-[#1263F1]"
+                        style={{ width: `${modelScore}%` }}
+                      />
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Sentence-level highlights */}
         <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
           <div className="flex items-center justify-between pb-3">
             <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
-              Model attribution{" "}
-              <span title="Estimates which AI model most likely generated this text based on statistical pattern matching. Results are probabilistic, not definitive.">
-                <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
-              </span>
+              Sentence-level highlights{" "}
+              <InfoTooltip text="Each chunk of text is scored individually. Green = likely human-written. Red = likely AI-generated." />
             </h2>
             <span className="text-[12px] font-medium text-[#64748b]">
-              ranked by confidence
+              {humanSegments.length + aiSegments.length}{" "}
+              {humanSegments.length + aiSegments.length === 1
+                ? "sentence"
+                : "sentences"}
             </span>
           </div>
           <div
-            className={`grid grid-cols-2 content-stretch gap-2.5 ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
+            className={`grid content-stretch gap-[9px] ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
           >
-            {shownModels.slice(0, 4).map((model) => {
-              const modelScore = clampScore(model.score);
-              const scoreColor =
-                modelScore >= 90 ? "text-[#b32635]" : "text-[#07112f]";
+            {[
+              {
+                tone: "human" as const,
+                label: "Likely human-written",
+                count: humanSegments.length,
+              },
+              {
+                tone: "ai" as const,
+                label: "Likely AI-generated",
+                count: aiSegments.length,
+              },
+            ].map(({ tone, label, count }) => {
+              const meta = toneMeta(tone);
               return (
-                <article
-                  key={model.name}
-                  className="grid min-h-[76px] content-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
+                <div
+                  key={tone}
+                  className="grid grid-cols-[18px_1fr_auto] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium text-[#07112f]">
-                      <ModelLogo
-                        name={model.name}
-                        className="h-6 w-6 shrink-0"
-                      />
-                      <span className="truncate">{model.name}</span>
-                    </span>
-                    <span
-                      className={`veriai-mono text-[13px] font-semibold ${scoreColor}`}
-                    >
-                      {modelScore}%
-                    </span>
-                  </div>
-                  <span className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5ebf4]">
-                    <span
-                      className="veriai-bar-fill block h-full rounded-full bg-[#1263F1]"
-                      style={{ width: `${modelScore}%` }}
-                    />
+                  <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
+                  <span className="text-[14px] font-medium text-[#07112f]">
+                    {label}
                   </span>
-                </article>
+                  <span className="text-[12px] font-medium text-[#274169]">
+                    {count} {count === 1 ? "sentence" : "sentences"}
+                  </span>
+                </div>
               );
             })}
           </div>
         </section>
-      )}
 
-      <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
-        <div className="flex items-center justify-between pb-3">
-          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
-            Sentence-level highlights{" "}
-            <span title="Each chunk of text is scored individually. Green = likely human-written. Red = likely AI-generated.">
-              <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
-            </span>
-          </h2>
-          <span className="text-[12px] font-medium text-[#64748b]">
-            {humanSegments.length + aiSegments.length}{" "}
-            {humanSegments.length + aiSegments.length === 1
-              ? "sentence"
-              : "sentences"}
-          </span>
-        </div>
-        <div
-          className={`grid content-stretch gap-[9px] ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
-        >
-          {[
-            {
-              tone: "human" as const,
-              label: "Likely human-written",
-              count: humanSegments.length,
-            },
-            {
-              tone: "ai" as const,
-              label: "Likely AI-generated",
-              count: aiSegments.length,
-            },
-          ].map(({ tone, label, count }) => {
-            const meta = toneMeta(tone);
-            return (
-              <div
-                key={tone}
-                className="grid grid-cols-[18px_1fr_auto] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5"
+        {/* Writing characteristics (RadarChart) — human results + PRO only */}
+        {isHumanResult && fullReportAvailable && radarData.length > 0 && (
+          <section className="border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+            <div className="flex items-center justify-between pb-3">
+              <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                Writing characteristics
+                <InfoTooltip text="Linguistic and statistical features that characterise this text as human-written. Higher values indicate stronger human signals." />
+              </h2>
+            </div>
+            <ResponsiveContainer width="100%" height={180}>
+              <RadarChart
+                data={radarData}
+                margin={{ top: 8, right: 24, left: 24, bottom: 8 }}
               >
-                <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
-                <span className="text-[14px] font-medium text-[#07112f]">
-                  {label}
-                </span>
-                <span className="text-[12px] font-medium text-[#274169]">
-                  {count} {count === 1 ? "sentence" : "sentences"}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+                <PolarGrid stroke="#e5ebf4" />
+                <PolarAngleAxis
+                  dataKey="metric"
+                  tick={{ fontSize: 10, fill: "#7185a3", fontWeight: 500 }}
+                />
+                <PolarRadiusAxis
+                  domain={[0, 100]}
+                  tick={false}
+                  axisLine={false}
+                />
+                <Radar
+                  dataKey="value"
+                  stroke="#1263F1"
+                  fill="#1263F1"
+                  fillOpacity={0.12}
+                  strokeWidth={1.5}
+                />
+                <Tooltip
+                  formatter={(v) => [`${v}`, "Human signal"]}
+                  contentStyle={{
+                    fontSize: 12,
+                    borderRadius: 8,
+                    border: "1px solid #d7dfed",
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </section>
+        )}
 
-      <section className="relative grid min-h-0 grid-rows-[auto_1fr] px-[22px] pb-[14px] pt-4">
-        <div className="flex items-center justify-between pb-3">
-          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
-            Analysis layers{" "}
-            <span title="RoBERTa: fine-tuned transformer classifier (primary signal). Stylistic: linguistic feature analysis. Statistical: perplexity and entropy scoring.">
-              <InfoCircledIcon className="h-4 w-4 text-[#7c8aa5]" />
+        {/* Analysis layers (BarChart) */}
+        <section className="relative grid min-h-0 grid-rows-[auto_1fr] px-[22px] pb-[14px] pt-4">
+          <div className="flex items-center justify-between pb-3">
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+              Analysis layers{" "}
+              <InfoTooltip text="RoBERTa: fine-tuned transformer classifier (primary signal). Stylistic: linguistic feature analysis. Statistical: perplexity and entropy scoring." />
+            </h2>
+            <span className="text-[12px] font-medium text-[#64748b]">
+              signal mix
             </span>
-          </h2>
-          <span className="text-[12px] font-medium text-[#64748b]">
-            signal mix
-          </span>
-        </div>
-        <div
-          className={`grid min-h-0 grid-cols-3 content-stretch gap-2.5 ${fullReportAvailable ? "" : "blur-[2px] opacity-60"}`}
-        >
-          {analysisLayers.map((layer) => {
-            const value = clampScore(layer.score);
-            return (
-              <article
-                key={layer.label}
-                className="flex min-h-0 flex-col justify-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
-              >
-                <div className="min-w-0">
-                  <h3 className="truncate text-[12px] font-semibold text-[#07112f]">
-                    {layer.label}
-                  </h3>
-                  <strong className="veriai-mono mt-2 block text-[22px] font-semibold leading-none text-[#1263F1]">
-                    {value}%
-                  </strong>
-                </div>
-                <div className="mt-2">
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e5ebf4]">
-                    <div
-                      className="veriai-bar-fill h-full rounded-full bg-[#1263F1]"
-                      style={{ width: `${value}%` }}
-                    />
-                  </div>
-                  <span className="mt-1.5 block text-[10px] font-medium text-[#7185a3]">
-                    {value >= 75
-                      ? "Strong AI signal"
-                      : value >= 45
-                        ? "Moderate signal"
-                        : "Low AI signal"}
-                  </span>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-      {!fullReportAvailable && (
-        <div
-          className="absolute inset-x-0 bottom-0 flex items-center justify-center"
-          style={{ top: "238px" }}
-        >
-          <div className="rounded-[14px] border border-[#cbd7ea] bg-white px-7 py-6 text-center shadow-[0_22px_54px_rgba(31,45,71,0.16)]">
-            <p className="text-[16px] font-semibold text-[#07112f]">
-              Unlock the full report
-            </p>
-            <p className="mt-2 max-w-[28ch] text-[13px] font-medium leading-6 text-[#52627a]">
-              Attribution, sentence evidence, and analysis layers are Premium.
-            </p>
-            {onUpgrade && (
-              <button
-                type="button"
-                onClick={onUpgrade}
-                disabled={isUpgrading}
-                className="veriai-pressable mt-4 h-10 rounded-[9px] bg-[#1263F1] px-6 text-[13px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60"
-              >
-                {isUpgrading ? "Upgrading..." : "Upgrade account"}
-              </button>
-            )}
           </div>
-        </div>
-      )}
+          <div
+            className={`${!fullReportAvailable ? "pointer-events-none blur-[2px] opacity-60" : ""}`}
+          >
+            <ResponsiveContainer width="100%" height={140}>
+              <BarChart
+                data={layerChartData}
+                barCategoryGap="35%"
+                maxBarSize={56}
+                margin={{ top: 16, right: 4, left: 4, bottom: 0 }}
+              >
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 11, fill: "#7185a3", fontWeight: 500 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis domain={[0, 100]} hide />
+                <Tooltip
+                  cursor={{ fill: "rgba(18,99,241,0.05)" }}
+                  formatter={(value) => [`${value}%`, "AI signal"]}
+                  contentStyle={{
+                    fontSize: 12,
+                    borderRadius: 8,
+                    border: "1px solid #d7dfed",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                  }}
+                />
+                <Bar dataKey="score" radius={[6, 6, 0, 0]}>
+                  {layerChartData.map((entry, i) => (
+                    <Cell
+                      key={i}
+                      fill={
+                        entry.score >= 65
+                          ? "#ef3a43"
+                          : entry.score >= 45
+                            ? "#f6b52d"
+                            : "#1263F1"
+                      }
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <p className="mt-1 text-center text-[11px] font-medium text-[#9aacbf]">
+              {analysisLayers[0] &&
+                `RoBERTa ${clampScore(analysisLayers[0].score)}% · Stylistic ${clampScore(analysisLayers[1]?.score ?? 0)}% · Statistical ${clampScore(analysisLayers[2]?.score ?? 0)}%`}
+            </p>
+          </div>
+        </section>
+
+        {/* Upgrade overlay — sticky at bottom of scroll container */}
+        {!fullReportAvailable && (
+          <div className="sticky bottom-0 flex items-center justify-center bg-gradient-to-t from-white/95 to-white/60 px-4 pb-4 pt-8">
+            <div className="rounded-[14px] border border-[#cbd7ea] bg-white px-7 py-6 text-center shadow-[0_22px_54px_rgba(31,45,71,0.16)]">
+              <p className="text-[16px] font-semibold text-[#07112f]">
+                Unlock the full report
+              </p>
+              <p className="mt-2 max-w-[28ch] text-[13px] font-medium leading-6 text-[#52627a]">
+                Attribution, sentence evidence, and analysis layers are Premium.
+              </p>
+              {onUpgrade && (
+                <button
+                  type="button"
+                  onClick={onUpgrade}
+                  disabled={isUpgrading}
+                  className="veriai-pressable mt-4 h-10 rounded-[9px] bg-[#1263F1] px-6 text-[13px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60"
+                >
+                  {isUpgrading ? "Upgrading..." : "Upgrade account"}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

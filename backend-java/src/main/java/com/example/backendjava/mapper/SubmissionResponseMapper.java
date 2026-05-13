@@ -5,6 +5,7 @@ import com.example.backendjava.dto.submission.ChunkResponse;
 import com.example.backendjava.dto.submission.FrontendChunkScoreResponse;
 import com.example.backendjava.dto.submission.FrontendModelAttributionResponse;
 import com.example.backendjava.dto.submission.FrontendResultsResponse;
+import com.example.backendjava.dto.submission.FrontendWritingMetricsResponse;
 import com.example.backendjava.dto.submission.FrontendSegmentResponse;
 import com.example.backendjava.dto.submission.FrontendStatsResponse;
 import com.example.backendjava.dto.submission.LayerScoresResponse;
@@ -44,7 +45,8 @@ public class SubmissionResponseMapper {
                 submission.getCompletedAt(),
                 result != null ? labelAsString(result.getGlobalLabel()) : null,
                 result != null ? toDouble(result.getGlobalConfidence()) : null,
-                submission.getErrorMessage()
+                submission.getErrorMessage(),
+                submission.getCustomTitle()
         );
     }
 
@@ -108,7 +110,8 @@ public class SubmissionResponseMapper {
                 submission.getCompletedAt(),
                 submission.getErrorMessage(),
                 analysisResult,
-                frontendPayload
+                frontendPayload,
+                submission.getCustomTitle()
         );
     }
 
@@ -133,6 +136,10 @@ public class SubmissionResponseMapper {
         int layer2 = result.getLayer2Score() != null ? toPercent(result.getLayer2Score()) : 0;
         int layer3 = result.getLayer3Score() != null ? toPercent(result.getLayer3Score()) : 0;
 
+        Map<String, Object> stylisticAgg = parseObjectMap(result.getStylisticFeatures());
+        Map<String, Object> statisticalAgg = parseObjectMap(result.getStatisticalFeatures());
+        FrontendWritingMetricsResponse writingMetrics = buildWritingMetrics(stylisticAgg, statisticalAgg);
+
         if (!fullReportAvailable) {
             return new FrontendResultsResponse(
                     aiScore,
@@ -150,7 +157,8 @@ public class SubmissionResponseMapper {
                     "FREE",
                     layer1,
                     0,
-                    0
+                    0,
+                    writingMetrics
             );
         }
 
@@ -197,8 +205,29 @@ public class SubmissionResponseMapper {
                 "PREMIUM",
                 layer1,
                 layer2,
-                layer3
+                layer3,
+                writingMetrics
         );
+    }
+
+    private FrontendWritingMetricsResponse buildWritingMetrics(
+            Map<String, Object> stylistic,
+            Map<String, Object> statistical) {
+        return new FrontendWritingMetricsResponse(
+                extractDouble(stylistic, "type_token_ratio"),
+                extractDouble(stylistic, "avg_sentence_length"),
+                extractDouble(stylistic, "sentence_length_variance"),
+                extractDouble(stylistic, "burstiness_score"),
+                extractDouble(statistical, "perplexity"),
+                extractDouble(statistical, "avg_token_entropy"),
+                extractDouble(stylistic, "logical_connector_ratio")
+        );
+    }
+
+    private Double extractDouble(Map<String, Object> map, String key) {
+        Object val = map.get(key);
+        if (val instanceof Number n) return n.doubleValue();
+        return null;
     }
 
     private Map<String, Double> parseDoubleMap(String json) {
