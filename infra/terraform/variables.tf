@@ -111,6 +111,56 @@ variable "grafana_admin_password" {
   sensitive   = true
 }
 
+variable "billing_enabled" {
+  type        = bool
+  description = "Enable Stripe billing endpoints"
+  default     = false
+}
+
+variable "billing_direct_upgrade_enabled" {
+  type        = bool
+  description = "Enable non-Stripe direct upgrade endpoint. Keep false outside local testing."
+  default     = false
+}
+
+variable "stripe_secret_key" {
+  type        = string
+  description = "Stripe secret API key"
+  sensitive   = true
+  default     = ""
+}
+
+variable "stripe_webhook_secret" {
+  type        = string
+  description = "Stripe webhook signing secret"
+  sensitive   = true
+  default     = ""
+}
+
+variable "stripe_price_id" {
+  type        = string
+  description = "Stripe price ID for Premium"
+  default     = ""
+}
+
+variable "stripe_checkout_mode" {
+  type        = string
+  description = "Stripe Checkout mode: payment or subscription"
+  default     = "payment"
+}
+
+variable "stripe_success_path" {
+  type        = string
+  description = "Frontend success path after Stripe checkout"
+  default     = "/billing/success"
+}
+
+variable "stripe_cancel_path" {
+  type        = string
+  description = "Frontend cancel path after Stripe checkout"
+  default     = "/billing/cancel"
+}
+
 variable "load_models_on_startup" {
   type        = bool
   description = "Load ML models at FastAPI startup"

@@ -106,6 +106,30 @@ resource "google_secret_manager_secret_version" "jwt_secret" {
   secret_data = var.jwt_secret
 }
 
+resource "google_secret_manager_secret" "stripe_secret_key" {
+  secret_id = "${var.service_name_prefix}-stripe-secret-key"
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "stripe_secret_key" {
+  secret      = google_secret_manager_secret.stripe_secret_key.id
+  secret_data = var.stripe_secret_key
+}
+
+resource "google_secret_manager_secret" "stripe_webhook_secret" {
+  secret_id = "${var.service_name_prefix}-stripe-webhook-secret"
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "stripe_webhook_secret" {
+  secret      = google_secret_manager_secret.stripe_webhook_secret.id
+  secret_data = var.stripe_webhook_secret
+}
+
 resource "google_redis_instance" "redis" {
   name               = "${var.service_name_prefix}-redis"
   tier               = var.redis_tier
@@ -214,6 +238,52 @@ resource "google_cloud_run_v2_service" "backend" {
       env {
         name  = "PREMIUM_MONTHLY_PRICE_USD"
         value = "10"
+      }
+      env {
+        name  = "BILLING_ENABLED"
+        value = var.billing_enabled ? "true" : "false"
+      }
+      env {
+        name  = "BILLING_DIRECT_UPGRADE_ENABLED"
+        value = var.billing_direct_upgrade_enabled ? "true" : "false"
+      }
+      env {
+        name = "STRIPE_SECRET_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.stripe_secret_key.secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "STRIPE_WEBHOOK_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.stripe_webhook_secret.secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name  = "STRIPE_PRICE_ID"
+        value = var.stripe_price_id
+      }
+      env {
+        name  = "STRIPE_CHECKOUT_MODE"
+        value = var.stripe_checkout_mode
+      }
+      env {
+        name  = "APP_PUBLIC_URL"
+        value = var.frontend_url
+      }
+      env {
+        name  = "STRIPE_SUCCESS_PATH"
+        value = var.stripe_success_path
+      }
+      env {
+        name  = "STRIPE_CANCEL_PATH"
+        value = var.stripe_cancel_path
       }
       env {
         name  = "AI_SERVICE_BASE_URL"
