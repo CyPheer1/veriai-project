@@ -97,7 +97,7 @@ export function Header({
 
     return (
       <header className="sticky top-0 z-20 border-b border-[#d8e0ec] bg-[#fbfcff]/88 backdrop-blur-xl">
-        <div className="grid h-[72px] w-full grid-cols-[1fr_auto] items-center gap-4 px-6">
+        <div className="grid h-[72px] w-full grid-cols-[1fr_auto] items-center gap-3 px-4 sm:px-6 lg:gap-4">
           <div className="flex min-w-0 items-center justify-start md:hidden">
             <div
               className="rounded-[10px] p-0.5 text-[11px] font-bold text-[#274169] shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
@@ -130,14 +130,16 @@ export function Header({
             )}
             {contextDetail && (
               <>
-                <span className="text-[#94a3b8]">•</span>
-                <span>{contextDetail}</span>
+                <span className="hidden text-[#94a3b8] xl:inline">•</span>
+                <span className="hidden xl:inline">{contextDetail}</span>
               </>
             )}
             {contextStatus && (
               <>
-                <span className="text-[#94a3b8]">•</span>
-                <span className={`flex items-center gap-1.5 ${statusTone}`}>
+                <span className="hidden text-[#94a3b8] xl:inline">•</span>
+                <span
+                  className={`hidden items-center gap-1.5 xl:flex ${statusTone}`}
+                >
                   {contextStatus === "Saved" && (
                     <CheckCircledIcon className="h-3.5 w-3.5" />
                   )}
@@ -157,7 +159,7 @@ export function Header({
           </div>
           <div className="flex min-w-0 items-center justify-end gap-3 text-[#111827]">
             <div
-              className="hidden rounded-[10px] p-0.5 text-[14px] font-semibold text-[#274169] shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:block"
+              className="hidden rounded-[10px] p-0.5 text-[14px] font-semibold text-[#274169] shadow-[0_1px_2px_rgba(15,23,42,0.04)] md:block"
               style={{ background: creditRingStyle }}
               aria-label={`${accountUsage}, ${planLabel} plan`}
             >
@@ -171,12 +173,12 @@ export function Header({
                 type="button"
                 onClick={handleUpgrade}
                 disabled={isUpgrading}
-                className="hidden h-9 rounded-[9px] bg-[#1263F1] px-3 text-[12px] font-bold text-white shadow-[0_12px_24px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60 md:block"
+                className="hidden h-9 rounded-[9px] bg-[#1263F1] px-3 text-[12px] font-bold text-white shadow-[0_12px_24px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60 lg:block"
               >
                 {isUpgrading ? "Upgrading..." : "Upgrade"}
               </button>
             )}
-            <div className="relative hidden lg:block">
+            <div className="relative hidden xl:block">
               <button
                 type="button"
                 onClick={() =>
@@ -201,7 +203,7 @@ export function Header({
                 </div>
               )}
             </div>
-            <div className="relative hidden lg:block">
+            <div className="relative hidden xl:block">
               <button
                 type="button"
                 onClick={() =>
@@ -241,7 +243,7 @@ export function Header({
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#edf4ff] text-[12px] font-bold text-[#193b8f]">
                 {user?.initials ?? "AK"}
               </span>
-              <span className="hidden max-w-[180px] truncate text-[13px] font-semibold text-[#172033] md:block">
+              <span className="hidden max-w-[180px] truncate text-[13px] font-semibold text-[#172033] xl:block">
                 {user?.name ?? user?.email ?? "Reviewer"}
               </span>
             </div>

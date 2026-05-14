@@ -422,9 +422,9 @@ export function InputPanel({
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[14px] border border-[#d7dfed] bg-[#eef3f8]">
       {/* Top bar: tabs + analyze button */}
-      <div className="flex min-h-[72px] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#d7dfed] bg-[#fbfcff] px-4 py-3 sm:h-[72px] sm:gap-4 sm:px-[26px] sm:py-0">
+      <div className="flex min-h-[72px] shrink-0 flex-col items-stretch justify-between gap-3 border-b border-[#d7dfed] bg-[#fbfcff] px-4 py-3 sm:h-[72px] sm:flex-row sm:items-center sm:gap-4 sm:px-[26px] sm:py-0">
         <div
-          className="flex h-11 min-w-0 flex-1 items-end gap-5 sm:h-full sm:flex-none sm:gap-8"
+          className="veriai-hide-scrollbar flex h-11 min-w-0 items-end gap-5 overflow-x-auto sm:h-full sm:flex-none sm:gap-8 sm:overflow-visible"
           role="tablist"
           aria-label="Analysis input mode"
         >
@@ -469,7 +469,7 @@ export function InputPanel({
           type="button"
           onClick={submit}
           disabled={isAnalyzing || (!canSubmitText && !canSubmitFile)}
-          className="veriai-pressable flex h-11 min-w-[132px] items-center justify-center gap-2 rounded-[8px] bg-[#1263F1] px-4 text-[14px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[154px] sm:gap-3 sm:px-5 sm:text-[15px]"
+          className="veriai-pressable flex h-11 w-full min-w-[132px] items-center justify-center gap-2 rounded-[8px] bg-[#1263F1] px-4 text-[14px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[154px] sm:gap-3 sm:px-5 sm:text-[15px]"
         >
           <DocumentSearchButtonIcon className="h-5 w-5" />
           {isAnalyzing
