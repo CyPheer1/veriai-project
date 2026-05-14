@@ -176,7 +176,7 @@ public class SubmissionService {
         Submission submission = submissionRepository.findByIdAndUserId(submissionId, user.getId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Submission not found"));
         String trimmed = (title == null || title.isBlank()) ? null : title.trim();
-        submission.setCustomTitle(trimmed);
+        submission.setSourceFilename(trimmed);
         submission.setUpdatedAt(Instant.now());
         submissionRepository.save(submission);
     }

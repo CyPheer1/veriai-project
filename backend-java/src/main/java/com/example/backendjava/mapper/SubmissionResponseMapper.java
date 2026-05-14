@@ -46,7 +46,7 @@ public class SubmissionResponseMapper {
                 result != null ? labelAsString(result.getGlobalLabel()) : null,
                 result != null ? toDouble(result.getGlobalConfidence()) : null,
                 submission.getErrorMessage(),
-                submission.getCustomTitle()
+                submission.getSourceFilename()
         );
     }
 
@@ -111,7 +111,7 @@ public class SubmissionResponseMapper {
                 submission.getErrorMessage(),
                 analysisResult,
                 frontendPayload,
-                submission.getCustomTitle()
+                submission.getSourceFilename()
         );
     }
 
