@@ -683,7 +683,7 @@ export function InputPanel({
               <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 px-4">
                 {statusExpanded ? (
                   <div
-                    className="pointer-events-auto ml-auto flex h-10 max-w-full items-center justify-end overflow-hidden rounded-full border border-[#cbd7e8]/85 bg-white/78 pl-2 text-[11px] font-semibold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md sm:max-w-[620px] sm:pl-4 sm:text-[12px]"
+                    className="pointer-events-auto ml-auto flex h-10 w-fit max-w-full items-center justify-end overflow-hidden rounded-full border border-[#cbd7e8]/85 bg-white/78 pl-2 text-[11px] font-semibold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md sm:max-w-[620px] sm:pl-4 sm:text-[12px]"
                     aria-label="Document status"
                   >
                   <div
