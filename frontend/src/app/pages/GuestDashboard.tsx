@@ -225,14 +225,14 @@ export function GuestDashboard() {
             </div>
           </div>
 
-          <div className="veriai-reveal-slow relative">
+          <div className="veriai-reveal-slow relative min-h-[610px] overflow-hidden rounded-[18px] sm:min-h-[560px] lg:min-h-0 lg:overflow-visible lg:rounded-none">
             <img
               src="/assets/generated/academic-desk.png"
               alt="Academic desk with an annotated paper and AI detection review notes"
-              className="veriai-ink-shadow veriai-hero-float aspect-[16/10] w-full rounded-[18px] border border-[#cbd7ea] object-cover"
+              className="veriai-ink-shadow veriai-hero-float absolute inset-0 h-full w-full rounded-[18px] border border-[#cbd7ea] object-cover lg:static lg:aspect-[16/10] lg:h-auto"
               draggable={false}
             />
-            <div className="mt-4 lg:absolute lg:bottom-6 lg:left-6 lg:w-[500px]">
+            <div className="absolute inset-x-4 bottom-4 lg:bottom-6 lg:left-6 lg:right-auto lg:w-[500px]">
               <div className="veriai-hero-float-subtle">
                 <HighlightPreview />
               </div>
