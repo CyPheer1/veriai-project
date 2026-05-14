@@ -459,11 +459,11 @@ export function LoggedInDashboard() {
           />
 
           {/* Mobile-only: hamburger to open sidebar */}
-          <div className="flex shrink-0 items-center gap-2 border-b border-[#d8e2ee] bg-[#f6f9fd] px-4 py-2 md:hidden">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#d8e2ee] bg-[#f6f9fd] px-4 py-2 md:hidden">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[#274169] hover:bg-[#e4ecf7]"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] text-[#274169] hover:bg-[#e4ecf7]"
               aria-label="Open scan history"
             >
               <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
@@ -472,8 +472,11 @@ export function LoggedInDashboard() {
                 <rect y="12" width="18" height="2" rx="1" fill="currentColor" />
               </svg>
             </button>
-            <span className="text-[13px] font-semibold text-[#274169]">
+            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#274169]">
               {activeScanId ? "Scan history" : "New scan"}
+            </span>
+            <span className="shrink-0 rounded-full border border-[#d7dfed] bg-white/85 px-2.5 py-1 text-[11px] font-bold text-[#2563EB] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+              {scanUsageLabel(user)}
             </span>
           </div>
 

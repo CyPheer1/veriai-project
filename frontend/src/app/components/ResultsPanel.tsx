@@ -222,7 +222,7 @@ export function ResultsPanel({
 
   if (!data && !isAnalyzing) {
     return (
-      <div className="flex h-full flex-col items-center justify-center rounded-[14px] border border-dashed border-[#d7dfed] bg-white/60 px-8 text-center">
+      <div className="flex h-full flex-col items-center justify-center rounded-[14px] border border-dashed border-[#d7dfed] bg-white/60 px-5 text-center sm:px-8">
         <div className="flex h-14 w-14 items-center justify-center rounded-[14px] bg-[#e7eef8] text-[#1f5cc4]">
           <svg
             width="26"
@@ -241,10 +241,12 @@ export function ResultsPanel({
         <h3 className="mt-5 text-[17px] font-semibold text-[#0d1526]">
           No results yet
         </h3>
-        <p className="mt-2 max-w-[28ch] text-[13px] leading-6 text-[#64748b]">
-          Paste or upload a document and press{" "}
-          <strong className="text-[#0d1526]">Analyze</strong> to see results
-          here.
+        <p className="mt-2 max-w-[26ch] text-[13px] leading-6 text-[#64748b]">
+          Paste or upload a document and press
+          <strong className="mx-1 whitespace-nowrap text-[#0d1526]">
+            Analyze
+          </strong>
+          to see results here.
         </p>
       </div>
     );
@@ -1169,25 +1171,25 @@ export function ResultsPanel({
         )}
 
         {/* Analysis layers (BarChart) */}
-        <section className="relative grid min-h-0 grid-rows-[auto_1fr] px-4 pb-[14px] pt-4 sm:px-[22px]">
-          <div className="flex items-center justify-between pb-3">
-            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
-              Analysis layers{" "}
-              <InfoTooltip text="RoBERTa: fine-tuned transformer classifier (primary signal). Stylistic: linguistic feature analysis. Statistical: perplexity and entropy scoring." />
-            </h2>
-            <span className="text-[12px] font-medium text-[#64748b]">
-              signal mix
-            </span>
-          </div>
+        <section className="relative px-4 pb-[14px] pt-4 sm:px-[22px]">
           <div
-            className={`${!fullReportAvailable ? "pointer-events-none blur-[2px] opacity-60" : ""}`}
+            className={`grid min-h-0 grid-rows-[auto_1fr] ${!fullReportAvailable ? "pointer-events-none select-none blur-[3px]" : ""}`}
           >
+            <div className="flex items-center justify-between gap-3 pb-3">
+              <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                Analysis layers{" "}
+                <InfoTooltip text="RoBERTa: fine-tuned transformer classifier (primary signal). Stylistic: linguistic feature analysis. Statistical: perplexity and entropy scoring." />
+              </h2>
+              <span className="shrink-0 text-[12px] font-medium text-[#64748b]">
+                signal mix
+              </span>
+            </div>
             <ResponsiveContainer width="100%" height={140}>
               <BarChart
                 data={layerChartData}
-                barCategoryGap="35%"
-                maxBarSize={56}
-                margin={{ top: 16, right: 4, left: 4, bottom: 0 }}
+                barCategoryGap="28%"
+                maxBarSize={48}
+                margin={{ top: 12, right: 2, left: 2, bottom: 0 }}
               >
                 <XAxis
                   dataKey="name"
