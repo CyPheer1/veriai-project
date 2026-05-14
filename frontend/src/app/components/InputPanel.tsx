@@ -680,12 +680,16 @@ export function InputPanel({
 
             {/* Floating status bar (hidden in highlight mode) */}
             {!isHighlightMode && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center px-2 sm:justify-end sm:px-4">
+              <div
+                className={`pointer-events-none absolute inset-x-0 bottom-4 z-10 flex px-2 sm:justify-end sm:px-4 ${
+                  statusExpanded ? "justify-center" : "justify-end"
+                }`}
+              >
                 <div
                   className={`pointer-events-auto flex h-10 items-center justify-end overflow-hidden rounded-full border border-[#cbd7e8]/85 bg-white/78 text-[12px] font-semibold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md transition-[max-width,opacity] duration-200 ${
                     statusExpanded
                       ? "max-w-[calc(100vw-32px)] pl-2 sm:max-w-[620px] sm:pl-4"
-                      : "max-w-10"
+                      : "w-10 max-w-10"
                   }`}
                   aria-label="Document status"
                 >
