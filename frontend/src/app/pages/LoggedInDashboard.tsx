@@ -477,10 +477,10 @@ export function LoggedInDashboard() {
             </span>
           </div>
 
-          <main className="overflow-y-auto px-3 pb-6 pt-3 md:h-[calc(100vh-72px)] md:overflow-hidden md:px-6 md:pb-0 md:pt-[18px]">
-            <div className="flex min-h-0 flex-col gap-4 md:h-full md:flex-row md:gap-0">
-              <section className="flex w-full flex-col gap-4 md:grid md:min-h-0 md:min-w-0 md:flex-1 md:items-stretch md:gap-5 xl:grid-cols-[minmax(0,0.63fr)_minmax(520px,0.37fr)]">
-                <div className="h-[62vh] min-h-[380px] md:h-auto md:min-h-0 md:min-w-0">
+          <main className="overflow-y-auto px-3 pb-6 pt-3 md:h-[calc(100vh-72px)] md:px-6 md:pb-0 md:pt-[18px] min-[1700px]:overflow-hidden">
+            <div className="flex min-h-0 flex-col gap-4 min-[1700px]:h-full min-[1700px]:flex-row min-[1700px]:gap-0">
+              <section className="flex w-full flex-col gap-4 md:min-w-0 md:flex-1 min-[1700px]:grid min-[1700px]:min-h-0 min-[1700px]:items-stretch min-[1700px]:gap-5 min-[1700px]:grid-cols-[minmax(0,0.63fr)_minmax(520px,0.37fr)]">
+                <div className="h-[62vh] min-h-[380px] md:min-w-0 min-[1700px]:h-auto min-[1700px]:min-h-0">
                   <InputPanel
                     onAnalyze={handleAnalyze}
                     onDraftChange={handleDraftChange}
@@ -517,7 +517,7 @@ export function LoggedInDashboard() {
                   />
                 </div>
 
-                <div className="h-[680px] md:h-auto md:min-h-0 md:min-w-0">
+                <div className="h-[680px] md:min-w-0 min-[1700px]:h-auto min-[1700px]:min-h-0">
                   <ResultsPanel
                     data={results}
                     isAnalyzing={isAnalyzing}
