@@ -680,18 +680,20 @@ export function InputPanel({
 
             {/* Floating status bar (hidden in highlight mode) */}
             {!isHighlightMode && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-end px-4">
+              <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center px-2 sm:justify-end sm:px-4">
                 <div
                   className={`pointer-events-auto flex h-10 items-center justify-end overflow-hidden rounded-full border border-[#cbd7e8]/85 bg-white/78 text-[12px] font-semibold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md transition-[max-width,opacity] duration-200 ${
-                    statusExpanded ? "max-w-[620px] pl-4" : "max-w-10"
+                    statusExpanded
+                      ? "max-w-[calc(100vw-32px)] pl-2 sm:max-w-[620px] sm:pl-4"
+                      : "max-w-10"
                   }`}
                   aria-label="Document status"
                 >
                   <div
-                    className={`flex min-w-0 items-center gap-2 whitespace-nowrap pr-3 text-[12px] font-semibold ${statusExpanded ? "opacity-100" : "opacity-0"}`}
+                    className={`flex min-w-0 items-center gap-1 whitespace-nowrap pr-1 text-[12px] font-semibold sm:gap-2 sm:pr-3 ${statusExpanded ? "opacity-100" : "opacity-0"}`}
                   >
                     <span
-                      className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[#274169]"
+                      className="inline-flex h-7 items-center gap-1 rounded-full px-1.5 text-[#274169] sm:gap-1.5 sm:px-2"
                       title="Words"
                       aria-label={`${wordCount.toLocaleString()} words`}
                     >
@@ -704,7 +706,7 @@ export function InputPanel({
                       </span>
                     </span>
                     <span
-                      className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[#274169]"
+                      className="inline-flex h-7 items-center gap-1 rounded-full px-1.5 text-[#274169] sm:gap-1.5 sm:px-2"
                       title="Characters"
                       aria-label={`${characterCount.toLocaleString()} characters`}
                     >
@@ -714,19 +716,19 @@ export function InputPanel({
                       <span>{characterCount.toLocaleString()}</span>
                     </span>
                     <span
-                      className="mx-1 h-5 w-px bg-[#cbd7e8]"
+                      className="mx-0.5 h-5 w-px bg-[#cbd7e8] sm:mx-1"
                       aria-hidden="true"
                     />
                     <button
                       type="button"
                       onClick={exportDraft}
                       disabled={!canExportDraft || isAnalyzing}
-                      className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent"
+                      className="inline-flex h-7 items-center gap-1 rounded-full px-1.5 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent sm:gap-1.5 sm:px-2"
                       aria-label="Export draft"
                       title="Export draft"
                     >
                       <DownloadIcon className="h-3.5 w-3.5" />
-                      Export
+                      <span className="hidden sm:inline">Export</span>
                     </button>
                     <button
                       type="button"
@@ -738,12 +740,12 @@ export function InputPanel({
                         onDraftChange?.();
                       }}
                       disabled={isAnalyzing}
-                      className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:opacity-60"
+                      className="inline-flex h-7 items-center gap-1 rounded-full px-1.5 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:opacity-60 sm:gap-1.5 sm:px-2"
                       aria-label="Clear text"
                       title="Clear text"
                     >
                       <TrashIcon className="h-3.5 w-3.5" />
-                      Clear
+                      <span className="hidden sm:inline">Clear</span>
                     </button>
                   </div>
                   <button
