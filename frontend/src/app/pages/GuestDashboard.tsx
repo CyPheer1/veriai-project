@@ -549,7 +549,7 @@ export function GuestDashboard() {
                       For full document evidence and unlimited review.
                     </p>
                   </div>
-                  <span className="rounded-full bg-[#1263F1] px-3 py-1 text-[12px] font-bold text-white">
+                  <span className="shrink-0 whitespace-nowrap rounded-full bg-[#1263F1] px-3 py-1 text-[12px] font-bold leading-5 text-white">
                     Full report
                   </span>
                 </div>
@@ -577,10 +577,7 @@ export function GuestDashboard() {
         <footer className="veriai-reveal bg-[#101828] px-5 py-10 text-white sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-[1320px] flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-[#4a6080]">
-                VeriAI
-              </p>
-              <h2 className="veriai-display-font mt-3 text-[32px] font-semibold tracking-[-0.035em]">
+              <h2 className="veriai-display-font text-[32px] font-semibold tracking-[-0.035em]">
                 Detect AI-generated writing with evidence you can explain.
               </h2>
               <p className="mt-3 max-w-[44ch] text-[14px] leading-6 text-[#6b84a3]">
