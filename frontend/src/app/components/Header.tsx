@@ -98,6 +98,17 @@ export function Header({
     return (
       <header className="sticky top-0 z-20 border-b border-[#d8e0ec] bg-[#fbfcff]/88 backdrop-blur-xl">
         <div className="grid h-[72px] w-full grid-cols-[1fr_auto] items-center gap-4 px-6">
+          <div className="flex min-w-0 items-center justify-start md:hidden">
+            <div
+              className="rounded-[10px] p-0.5 text-[11px] font-bold text-[#274169] shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+              style={{ background: creditRingStyle }}
+              aria-label={`${accountUsage}, ${planLabel} plan`}
+            >
+              <span className="block rounded-[8px] bg-white/95 px-3 py-[6px] shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
+                <span className="text-[#2563EB]">{accountUsage}</span>
+              </span>
+            </div>
+          </div>
           <div className="hidden min-w-0 items-center justify-start gap-3 text-[14px] font-semibold text-[#274169] md:flex">
             {onContextTitleChange ? (
               <input

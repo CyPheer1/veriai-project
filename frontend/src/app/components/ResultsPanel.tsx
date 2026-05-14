@@ -241,12 +241,9 @@ export function ResultsPanel({
         <h3 className="mt-5 text-[17px] font-semibold text-[#0d1526]">
           No results yet
         </h3>
-        <p className="mt-2 max-w-[26ch] text-[13px] leading-6 text-[#64748b]">
-          Paste or upload a document and press
-          <strong className="mx-1 whitespace-nowrap text-[#0d1526]">
-            Analyze
-          </strong>
-          to see results here.
+        <p className="mt-2 max-w-[24ch] text-[13px] leading-6 text-[#64748b]">
+          Paste or upload a document, then press{" "}
+          <strong className="whitespace-nowrap text-[#0d1526]">Analyze</strong>.
         </p>
       </div>
     );
@@ -1000,55 +997,57 @@ export function ResultsPanel({
         )}
 
         {/* Sentence-level highlights */}
-        <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
-          <div className="flex items-center justify-between pb-3">
-            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
-              Sentence-level highlights{" "}
-              <InfoTooltip text="Each chunk of text is scored individually. Green = likely human-written. Red = likely AI-generated." />
-            </h2>
-            <span className="text-[12px] font-medium text-[#64748b]">
-              {fullReportAvailable
-                ? `${humanSegments.length + aiSegments.length} ${
-                    humanSegments.length + aiSegments.length === 1
-                      ? "sentence"
-                      : "sentences"
-                  }`
-                : ""}
-            </span>
-          </div>
-          {fullReportAvailable ? (
-            <div className="grid content-stretch gap-[9px]">
-              {[
-                {
-                  tone: "human" as const,
-                  label: "Likely human-written",
-                  count: humanSegments.length,
-                },
-                {
-                  tone: "ai" as const,
-                  label: "Likely AI-generated",
-                  count: aiSegments.length,
-                },
-              ].map(({ tone, label, count }) => {
-                const meta = toneMeta(tone);
-                return (
-                  <div
-                    key={tone}
-                    className="grid grid-cols-[18px_1fr] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5 sm:grid-cols-[18px_1fr_auto]"
-                  >
-                    <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
-                    <span className="text-[14px] font-medium text-[#07112f]">
-                      {label}
-                    </span>
-                    <span className="col-start-2 text-[12px] font-medium text-[#274169] sm:col-start-auto">
-                      {count} {count === 1 ? "sentence" : "sentences"}
-                    </span>
-                  </div>
-                );
-              })}
+        <section className="relative border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
+          <div
+            className={`grid min-h-0 grid-rows-[auto_1fr] ${!fullReportAvailable ? "pointer-events-none select-none blur-[3px]" : ""}`}
+          >
+            <div className="flex items-center justify-between gap-3 pb-3">
+              <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                Sentence-level highlights{" "}
+                <InfoTooltip text="Each chunk of text is scored individually. Green = likely human-written. Red = likely AI-generated." />
+              </h2>
+              <span className="shrink-0 text-[12px] font-medium text-[#64748b]">
+                {fullReportAvailable
+                  ? `${humanSegments.length + aiSegments.length} ${
+                      humanSegments.length + aiSegments.length === 1
+                        ? "sentence"
+                        : "sentences"
+                    }`
+                  : "19 sentences"}
+              </span>
             </div>
-          ) : (
-            <div className="pointer-events-none select-none blur-[3px]">
+            {fullReportAvailable ? (
+              <div className="grid content-stretch gap-[9px]">
+                {[
+                  {
+                    tone: "human" as const,
+                    label: "Likely human-written",
+                    count: humanSegments.length,
+                  },
+                  {
+                    tone: "ai" as const,
+                    label: "Likely AI-generated",
+                    count: aiSegments.length,
+                  },
+                ].map(({ tone, label, count }) => {
+                  const meta = toneMeta(tone);
+                  return (
+                    <div
+                      key={tone}
+                      className="grid grid-cols-[18px_1fr] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5 sm:grid-cols-[18px_1fr_auto]"
+                    >
+                      <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
+                      <span className="text-[14px] font-medium text-[#07112f]">
+                        {label}
+                      </span>
+                      <span className="col-start-2 text-[12px] font-medium text-[#274169] sm:col-start-auto">
+                        {count} {count === 1 ? "sentence" : "sentences"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
               <div className="grid content-stretch gap-[9px]">
                 {[
                   {
@@ -1079,8 +1078,8 @@ export function ResultsPanel({
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </section>
 
         {/* Writing characteristics — FREE blurred preview (human results only) */}

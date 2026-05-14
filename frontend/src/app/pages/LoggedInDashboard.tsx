@@ -459,7 +459,7 @@ export function LoggedInDashboard() {
           />
 
           {/* Mobile-only: hamburger to open sidebar */}
-          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#d8e2ee] bg-[#f6f9fd] px-4 py-2 md:hidden">
+          <div className="flex shrink-0 items-center gap-3 border-b border-[#d8e2ee] bg-[#f6f9fd] px-4 py-2 md:hidden">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(true)}
@@ -474,9 +474,6 @@ export function LoggedInDashboard() {
             </button>
             <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#274169]">
               {activeScanId ? "Scan history" : "New scan"}
-            </span>
-            <span className="shrink-0 rounded-full border border-[#d7dfed] bg-white/85 px-2.5 py-1 text-[11px] font-bold text-[#2563EB] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-              {scanUsageLabel(user)}
             </span>
           </div>
 
@@ -520,7 +517,7 @@ export function LoggedInDashboard() {
                   />
                 </div>
 
-                <div className="min-h-[420px] md:min-h-0 md:min-w-0">
+                <div className="min-h-[260px] md:min-h-0 md:min-w-0">
                   <ResultsPanel
                     data={results}
                     isAnalyzing={isAnalyzing}
