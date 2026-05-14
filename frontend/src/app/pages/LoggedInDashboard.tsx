@@ -517,7 +517,7 @@ export function LoggedInDashboard() {
                   />
                 </div>
 
-                <div className="min-h-[260px] md:min-h-0 md:min-w-0">
+                <div className="min-h-[420px] md:min-h-0 md:min-w-0">
                   <ResultsPanel
                     data={results}
                     isAnalyzing={isAnalyzing}
