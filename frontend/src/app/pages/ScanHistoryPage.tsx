@@ -208,8 +208,8 @@ export function ScanHistoryPage() {
           </p>
         )}
 
-        <section className="mt-8 grid items-start gap-6 lg:grid-cols-[360px_1fr]">
-          <div className="veriai-card-surface flex flex-col rounded-[16px] p-4 sm:p-5">
+        <section className="mt-8 grid items-start gap-6 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-stretch">
+          <div className="veriai-card-surface flex flex-col rounded-[16px] p-4 sm:p-5 lg:h-full">
             <div className="flex items-center justify-between">
               <h2 className="text-[15px] font-semibold text-[#0d1526]">
                 Recent scans
@@ -321,13 +321,13 @@ export function ScanHistoryPage() {
             )}
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex min-w-0 flex-col lg:h-full">
             {detailLoading && !selectedDetail ? (
               <div className="veriai-card-surface rounded-[16px] p-6 text-[13px] text-[#52627a]">
                 Loading scan details…
               </div>
             ) : selectedDetail ? (
-              <div className="flex flex-col gap-5">
+              <div className="flex min-w-0 flex-col gap-5 lg:h-full">
                 <div className="veriai-card-surface rounded-[16px] p-5 sm:p-6">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -373,7 +373,7 @@ export function ScanHistoryPage() {
                 </div>
 
                 {results ? (
-                  <div className="min-h-[480px]">
+                  <div className="min-h-[480px] min-w-0 lg:flex-1">
                     <ResultsPanel
                       data={results}
                       isAnalyzing={selectedDetail.status === "PROCESSING"}

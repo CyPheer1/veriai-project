@@ -1,32 +1,5 @@
 import { useState } from "react";
 import { InfoCircledIcon } from "@radix-ui/react-icons";
-
-function InfoTooltip({ text }: { text: string }) {
-  const [show, setShow] = useState(false);
-  return (
-    <span
-      className="relative inline-flex"
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
-    >
-      <InfoCircledIcon className="h-[14px] w-[14px] cursor-default text-[#9aacbf] transition-colors hover:text-[#1263F1]" />
-      {show && (
-        <span className="pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-50 w-[210px] -translate-x-1/2 rounded-[10px] border border-[#d7dfed] bg-white px-3 py-2.5 text-left text-[12px] font-medium leading-[1.55] text-[#52627a] shadow-[0_8px_28px_rgba(31,45,71,0.13)]">
-          {text}
-          {/* arrow */}
-          <span
-            className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#d7dfed]"
-            style={{ marginTop: 0 }}
-          />
-          <span
-            className="absolute left-1/2 top-full -translate-x-1/2 border-[3.5px] border-transparent border-t-white"
-            style={{ marginTop: -1 }}
-          />
-        </span>
-      )}
-    </span>
-  );
-}
 import { ModelLogo } from "./DesignIcons";
 import {
   BarChart,
@@ -44,6 +17,32 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
 } from "recharts";
+
+function InfoTooltip({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span
+      className="relative inline-flex"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <InfoCircledIcon className="h-[14px] w-[14px] cursor-default text-[#9aacbf] transition-colors hover:text-[#1263F1]" />
+      {show && (
+        <span className="pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-50 w-[210px] -translate-x-1/2 rounded-[10px] border border-[#d7dfed] bg-white px-3 py-2.5 text-left text-[12px] font-medium leading-[1.55] text-[#52627a] shadow-[0_8px_28px_rgba(31,45,71,0.13)]">
+          {text}
+          <span
+            className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#d7dfed]"
+            style={{ marginTop: 0 }}
+          />
+          <span
+            className="absolute left-1/2 top-full -translate-x-1/2 border-[3.5px] border-transparent border-t-white"
+            style={{ marginTop: -1 }}
+          />
+        </span>
+      )}
+    </span>
+  );
+}
 
 interface Segment {
   text: string;
@@ -463,7 +462,7 @@ export function ResultsPanel({
         <section className="relative min-h-0 overflow-hidden">
           {/* Blurred step-1 question wizard */}
           <div className="pointer-events-none h-full select-none overflow-hidden blur-[3px]">
-            <div className="grid h-full min-h-0 grid-rows-[1fr_auto] px-7 py-6">
+            <div className="grid h-full min-h-0 grid-rows-[1fr_auto] px-4 py-5 sm:px-7 sm:py-6">
               <div className="flex min-h-0 items-center justify-center">
                 <div className="w-full max-w-[560px] rounded-[14px] border border-[#d7dfed] bg-[#f8fafc]/75 p-6 shadow-[0_18px_42px_rgba(31,45,71,0.08)]">
                   <div className="flex items-center justify-between gap-3">
@@ -480,7 +479,7 @@ export function ResultsPanel({
                   <p className="mt-3 text-[14px] font-medium leading-7 text-[#52627a]">
                     AI signal, label, top model, and submission date.
                   </p>
-                  <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <button
                       type="button"
                       className="rounded-[12px] border border-[#1263F1] bg-[#edf4ff] px-4 py-4 text-left"
@@ -508,7 +507,7 @@ export function ResultsPanel({
                     <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7185a3]">
                       Block preview
                     </span>
-                    <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
                       {(
                         [
                           ["Verdict", "AI generated"],
@@ -549,7 +548,7 @@ export function ResultsPanel({
             </div>
           </div>
           {/* Upgrade overlay */}
-          <div className="absolute inset-0 flex items-center justify-center bg-white/48 px-8">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/48 px-4 sm:px-8">
             <div className="max-w-[360px] rounded-[14px] border border-[#cbd7ea] bg-white p-5 text-center shadow-[0_22px_54px_rgba(31,45,71,0.16)]">
               <h2 className="text-[16px] font-semibold text-[#07112f]">
                 Report export is Premium
@@ -581,7 +580,7 @@ export function ResultsPanel({
         {tabHeader}
         <section className="min-h-0 overflow-hidden">
           {!isPreviewStep ? (
-            <div className="grid h-full min-h-0 grid-rows-[1fr_auto] px-7 py-6">
+            <div className="grid h-full min-h-0 grid-rows-[1fr_auto] px-4 py-5 sm:px-7 sm:py-6">
               <div className="flex min-h-0 items-center justify-center">
                 <div className="w-full max-w-[560px] rounded-[14px] border border-[#d7dfed] bg-[#f8fafc]/75 p-6 shadow-[0_18px_42px_rgba(31,45,71,0.08)]">
                   <div className="flex items-center justify-between gap-3">
@@ -598,7 +597,7 @@ export function ResultsPanel({
                   <p className="mt-3 text-[14px] font-medium leading-7 text-[#52627a]">
                     {currentReportStep.detail}
                   </p>
-                  <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {(
                       [
                         [true, "Include", "Add this block to the final report"],
@@ -638,7 +637,7 @@ export function ResultsPanel({
                       Block preview
                     </span>
                     {currentReportStep.key === "verdict" && (
-                      <div className="mt-3 grid grid-cols-3 gap-2">
+                      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
                         {(
                           [
                             ["Verdict", display.label],
@@ -743,8 +742,8 @@ export function ResultsPanel({
               </div>
             </div>
           ) : (
-            <div className="grid h-full min-h-0 grid-rows-[auto_1fr] px-7 py-6">
-              <div className="flex items-center justify-between gap-4 border-b border-[#d7dfed] pb-4">
+            <div className="grid h-full min-h-0 grid-rows-[auto_1fr] px-4 py-5 sm:px-7 sm:py-6">
+              <div className="flex flex-col gap-3 border-b border-[#d7dfed] pb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div>
                   <h2 className="text-[20px] font-semibold tracking-[-0.025em] text-[#07112f]">
                     Report preview
@@ -814,7 +813,7 @@ export function ResultsPanel({
 
         {/* Confidence across text (AreaChart) — PRO + has chunks */}
         {fullReportAvailable && chunks.length > 0 && (
-          <section className="border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+          <section className="border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
             <div className="flex items-center justify-between pb-3">
               <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
                 Confidence across text{" "}
@@ -860,7 +859,7 @@ export function ResultsPanel({
 
         {/* Confidence across text — FREE blurred preview */}
         {!fullReportAvailable && (
-          <section className="border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+          <section className="border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
             <div className="pointer-events-none select-none blur-[3px]">
               <div className="flex items-center justify-between pb-3">
                 <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
@@ -912,7 +911,7 @@ export function ResultsPanel({
 
         {/* Model attribution */}
         {!isHumanResult && (
-          <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+          <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
             <div className="flex items-center justify-between pb-3">
               <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
                 Model attribution{" "}
@@ -923,7 +922,7 @@ export function ResultsPanel({
               </span>
             </div>
             {fullReportAvailable ? (
-              <div className="grid grid-cols-2 content-stretch gap-2.5">
+              <div className="grid grid-cols-1 content-stretch gap-2.5 sm:grid-cols-2">
                 {shownModels.slice(0, 4).map((model) => {
                   const modelScore = clampScore(model.score);
                   const scoreColor =
@@ -959,7 +958,7 @@ export function ResultsPanel({
               </div>
             ) : (
               <div className="pointer-events-none select-none blur-[3px]">
-                <div className="grid grid-cols-2 content-stretch gap-2.5">
+                <div className="grid grid-cols-1 content-stretch gap-2.5 sm:grid-cols-2">
                   {previewData.modelAttributions.slice(0, 4).map((model) => {
                     const modelScore = clampScore(model.score);
                     const scoreColor =
@@ -999,7 +998,7 @@ export function ResultsPanel({
         )}
 
         {/* Sentence-level highlights */}
-        <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+        <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
           <div className="flex items-center justify-between pb-3">
             <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
               Sentence-level highlights{" "}
@@ -1033,13 +1032,13 @@ export function ResultsPanel({
                 return (
                   <div
                     key={tone}
-                    className="grid grid-cols-[18px_1fr_auto] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5"
+                    className="grid grid-cols-[18px_1fr] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5 sm:grid-cols-[18px_1fr_auto]"
                   >
                     <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
                     <span className="text-[14px] font-medium text-[#07112f]">
                       {label}
                     </span>
-                    <span className="text-[12px] font-medium text-[#274169]">
+                    <span className="col-start-2 text-[12px] font-medium text-[#274169] sm:col-start-auto">
                       {count} {count === 1 ? "sentence" : "sentences"}
                     </span>
                   </div>
@@ -1065,13 +1064,13 @@ export function ResultsPanel({
                   return (
                     <div
                       key={tone}
-                      className="grid grid-cols-[18px_1fr_auto] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5"
+                      className="grid grid-cols-[18px_1fr] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5 sm:grid-cols-[18px_1fr_auto]"
                     >
                       <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
                       <span className="text-[14px] font-medium text-[#07112f]">
                         {label}
                       </span>
-                      <span className="text-[12px] font-medium text-[#274169]">
+                      <span className="col-start-2 text-[12px] font-medium text-[#274169] sm:col-start-auto">
                         {count} sentences
                       </span>
                     </div>
@@ -1084,7 +1083,7 @@ export function ResultsPanel({
 
         {/* Writing characteristics — FREE blurred preview (human results only) */}
         {isHumanResult && !fullReportAvailable && (
-          <section className="border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+          <section className="border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
             <div className="pointer-events-none select-none blur-[3px]">
               <div className="pb-3">
                 <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
@@ -1127,7 +1126,7 @@ export function ResultsPanel({
 
         {/* Writing characteristics (RadarChart) — human results + PRO only */}
         {isHumanResult && fullReportAvailable && radarData.length > 0 && (
-          <section className="border-b border-[#d7dfed] px-[22px] pb-[14px] pt-4">
+          <section className="border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
             <div className="flex items-center justify-between pb-3">
               <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
                 Writing characteristics
@@ -1170,7 +1169,7 @@ export function ResultsPanel({
         )}
 
         {/* Analysis layers (BarChart) */}
-        <section className="relative grid min-h-0 grid-rows-[auto_1fr] px-[22px] pb-[14px] pt-4">
+        <section className="relative grid min-h-0 grid-rows-[auto_1fr] px-4 pb-[14px] pt-4 sm:px-[22px]">
           <div className="flex items-center justify-between pb-3">
             <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
               Analysis layers{" "}
@@ -1233,7 +1232,7 @@ export function ResultsPanel({
         {/* Upgrade overlay — sticky at bottom of scroll container */}
         {!fullReportAvailable && (
           <div className="sticky bottom-0 flex items-center justify-center bg-gradient-to-t from-white/95 to-white/60 px-4 pb-4 pt-8">
-            <div className="rounded-[14px] border border-[#cbd7ea] bg-white px-7 py-6 text-center shadow-[0_22px_54px_rgba(31,45,71,0.16)]">
+            <div className="rounded-[14px] border border-[#cbd7ea] bg-white px-5 py-6 text-center shadow-[0_22px_54px_rgba(31,45,71,0.16)] sm:px-7">
               <p className="text-[16px] font-semibold text-[#07112f]">
                 Unlock the full report
               </p>

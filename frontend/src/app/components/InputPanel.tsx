@@ -422,9 +422,9 @@ export function InputPanel({
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[14px] border border-[#d7dfed] bg-[#eef3f8]">
       {/* Top bar: tabs + analyze button */}
-      <div className="flex h-[72px] shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[#d7dfed] bg-[#fbfcff] px-[26px]">
+      <div className="flex min-h-[72px] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#d7dfed] bg-[#fbfcff] px-4 py-3 sm:h-[72px] sm:gap-4 sm:px-[26px] sm:py-0">
         <div
-          className="flex h-full items-end gap-8"
+          className="flex h-11 min-w-0 flex-1 items-end gap-5 sm:h-full sm:flex-none sm:gap-8"
           role="tablist"
           aria-label="Analysis input mode"
         >
@@ -436,7 +436,7 @@ export function InputPanel({
               setMode("text");
               setLocalError(null);
             }}
-            className={`veriai-pressable flex h-full items-center gap-3 border-b-2 px-0 pt-1 text-[15px] font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] ${
+            className={`veriai-pressable flex h-full shrink-0 items-center gap-2 border-b-2 px-0 pt-1 text-[14px] font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] sm:gap-3 sm:text-[15px] ${
               mode === "text"
                 ? "border-[#2563EB] text-[#2563EB]"
                 : "border-transparent text-[#52627a] hover:text-[#0d1526]"
@@ -454,7 +454,7 @@ export function InputPanel({
               setMode("file");
               setLocalError(null);
             }}
-            className={`veriai-pressable flex h-full items-center gap-3 border-b-2 px-0 pt-1 text-[15px] font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] ${
+            className={`veriai-pressable flex h-full shrink-0 items-center gap-2 border-b-2 px-0 pt-1 text-[14px] font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] sm:gap-3 sm:text-[15px] ${
               mode === "file"
                 ? "border-[#2563EB] text-[#2563EB]"
                 : "border-transparent text-[#52627a] hover:text-[#0d1526]"
@@ -469,7 +469,7 @@ export function InputPanel({
           type="button"
           onClick={submit}
           disabled={isAnalyzing || (!canSubmitText && !canSubmitFile)}
-          className="veriai-pressable flex h-11 min-w-[154px] items-center justify-center gap-3 rounded-[8px] bg-[#1263F1] px-5 text-[15px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-60"
+          className="veriai-pressable flex h-11 min-w-[132px] items-center justify-center gap-2 rounded-[8px] bg-[#1263F1] px-4 text-[14px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[154px] sm:gap-3 sm:px-5 sm:text-[15px]"
         >
           <DocumentSearchButtonIcon className="h-5 w-5" />
           {isAnalyzing
@@ -765,7 +765,7 @@ export function InputPanel({
           </div>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col p-5">
+        <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
           {isPro ? (
             <button
               type="button"
@@ -800,8 +800,8 @@ export function InputPanel({
               )}
             </button>
           ) : (
-            <div className="relative flex flex-1 overflow-hidden rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff]">
-              <div className="absolute inset-6 rounded-[12px] border border-[#d7dfed] bg-white/80 p-5 blur-[3px]">
+            <div className="relative flex min-h-[320px] flex-1 overflow-hidden rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff] sm:min-h-0">
+              <div className="absolute inset-4 rounded-[12px] border border-[#d7dfed] bg-white/80 p-5 blur-[3px] sm:inset-6">
                 <div className="h-8 w-44 rounded-[8px] bg-[#e7eef8]" />
                 <div className="mt-5 grid gap-3">
                   <div className="h-4 rounded-full bg-[#dbe7f6]" />
@@ -809,25 +809,27 @@ export function InputPanel({
                   <div className="h-4 w-2/3 rounded-full bg-[#dbe7f6]" />
                 </div>
               </div>
-              <div className="relative z-10 flex h-full flex-col items-center justify-center px-8 text-center">
-                <UploadIcon className="h-11 w-11 text-[#1263F1]" />
-                <h3 className="mt-5 text-[20px] font-semibold tracking-[-0.02em] text-[#0d1526]">
-                  File upload is Premium
-                </h3>
-                <p className="mt-3 max-w-[360px] text-[14px] leading-6 text-[#52627a]">
-                  Upgrade to unlock PDF and DOCX analysis. Text scans remain
-                  available on the Free plan.
-                </p>
-                {onUpgrade && (
-                  <button
-                    type="button"
-                    onClick={onUpgrade}
-                    disabled={isUpgrading}
-                    className="veriai-pressable mt-5 h-10 rounded-[9px] bg-[#1263F1] px-5 text-[13px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60"
-                  >
-                    {isUpgrading ? "Upgrading..." : "Upgrade account"}
-                  </button>
-                )}
+              <div className="absolute inset-0 z-10 grid place-items-center p-5 text-center sm:p-8">
+                <div className="w-full max-w-[390px] rounded-[14px] border border-[#cbd7ea] bg-white/95 px-5 py-6 shadow-[0_22px_54px_rgba(31,45,71,0.14)]">
+                  <UploadIcon className="mx-auto h-11 w-11 text-[#1263F1]" />
+                  <h3 className="mt-5 text-[20px] font-semibold tracking-[-0.02em] text-[#0d1526]">
+                    File upload is Premium
+                  </h3>
+                  <p className="mt-3 text-[14px] leading-6 text-[#52627a]">
+                    Upgrade to unlock PDF and DOCX analysis. Text scans remain
+                    available on the Free plan.
+                  </p>
+                  {onUpgrade && (
+                    <button
+                      type="button"
+                      onClick={onUpgrade}
+                      disabled={isUpgrading}
+                      className="veriai-pressable mt-5 h-10 rounded-[9px] bg-[#1263F1] px-5 text-[13px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60"
+                    >
+                      {isUpgrading ? "Upgrading..." : "Upgrade account"}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}
