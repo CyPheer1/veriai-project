@@ -290,7 +290,7 @@ export function Header({
             shrinkProgress > 0 ? "rgba(255, 255, 255, 0.75)" : "transparent",
         }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
           <button
             type="button"
             onClick={() => navigate("/")}
@@ -302,14 +302,6 @@ export function Header({
               }
             />
           </button>
-          <div className="hidden sm:block">
-            <p className="text-[15px] font-semibold tracking-[-0.01em] text-[#1d2a44]">
-              VeriAI Review
-            </p>
-            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6b7b94]">
-              Academic integrity
-            </p>
-          </div>
         </div>
 
         <div className="hidden lg:block" aria-hidden="true" />
