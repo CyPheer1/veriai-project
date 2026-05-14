@@ -680,21 +680,14 @@ export function InputPanel({
 
             {/* Floating status bar (hidden in highlight mode) */}
             {!isHighlightMode && (
-              <div
-                className={`pointer-events-none absolute inset-x-0 bottom-4 z-10 flex px-2 sm:justify-end sm:px-4 ${
-                  statusExpanded ? "justify-center" : "justify-end"
-                }`}
-              >
-                <div
-                  className={`pointer-events-auto flex h-10 items-center justify-end overflow-hidden rounded-full border border-[#cbd7e8]/85 bg-white/78 text-[12px] font-semibold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md transition-[max-width,opacity] duration-200 ${
-                    statusExpanded
-                      ? "max-w-[calc(100vw-32px)] pl-2 sm:max-w-[620px] sm:pl-4"
-                      : "w-10 max-w-10"
-                  }`}
-                  aria-label="Document status"
-                >
+              <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 px-4">
+                {statusExpanded ? (
                   <div
-                    className={`flex min-w-0 items-center gap-1 whitespace-nowrap pr-1 text-[12px] font-semibold sm:gap-2 sm:pr-3 ${statusExpanded ? "opacity-100" : "opacity-0"}`}
+                    className="pointer-events-auto mx-auto flex h-10 max-w-[calc(100vw-32px)] items-center justify-end overflow-hidden rounded-full border border-[#cbd7e8]/85 bg-white/78 pl-2 text-[12px] font-semibold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md sm:ml-auto sm:mr-0 sm:max-w-[620px] sm:pl-4"
+                    aria-label="Document status"
+                  >
+                  <div
+                    className="flex min-w-0 items-center gap-1 whitespace-nowrap pr-1 text-[12px] font-semibold sm:gap-2 sm:pr-3"
                   >
                     <span
                       className="inline-flex h-7 items-center gap-1 rounded-full px-1.5 text-[#274169] sm:gap-1.5 sm:px-2"
@@ -754,18 +747,25 @@ export function InputPanel({
                   </div>
                   <button
                     type="button"
-                    onClick={() => setStatusExpanded((v) => !v)}
+                    onClick={() => setStatusExpanded(false)}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[18px] font-bold text-[#274169] hover:bg-[#eef3f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-                    aria-label={
-                      statusExpanded
-                        ? "Hide document status"
-                        : "Show document status"
-                    }
-                    title={statusExpanded ? "Hide status" : "Show status"}
+                    aria-label="Hide document status"
+                    title="Hide status"
                   >
-                    {statusExpanded ? "›" : "‹"}
+                    ›
                   </button>
-                </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setStatusExpanded(true)}
+                    className="pointer-events-auto ml-auto flex h-10 w-10 items-center justify-center rounded-full border border-[#cbd7e8]/85 bg-white/78 text-[18px] font-bold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md hover:bg-[#eef3f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+                    aria-label="Show document status"
+                    title="Show status"
+                  >
+                    ‹
+                  </button>
+                )}
               </div>
             )}
           </div>
