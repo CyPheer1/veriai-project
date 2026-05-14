@@ -683,11 +683,11 @@ export function InputPanel({
               <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 px-4">
                 {statusExpanded ? (
                   <div
-                    className="pointer-events-auto mx-auto flex h-10 max-w-[calc(100vw-32px)] items-center justify-end overflow-hidden rounded-full border border-[#cbd7e8]/85 bg-white/78 pl-2 text-[12px] font-semibold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md sm:ml-auto sm:mr-0 sm:max-w-[620px] sm:pl-4"
+                    className="pointer-events-auto ml-auto flex h-10 max-w-full items-center justify-end overflow-hidden rounded-full border border-[#cbd7e8]/85 bg-white/78 pl-2 text-[11px] font-semibold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md sm:max-w-[620px] sm:pl-4 sm:text-[12px]"
                     aria-label="Document status"
                   >
                   <div
-                    className="flex min-w-0 items-center gap-1 whitespace-nowrap pr-1 text-[12px] font-semibold sm:gap-2 sm:pr-3"
+                    className="flex min-w-0 items-center gap-1 whitespace-nowrap pr-1 font-semibold sm:gap-2 sm:pr-3"
                   >
                     <span
                       className="inline-flex h-7 items-center gap-1 rounded-full px-1.5 text-[#274169] sm:gap-1.5 sm:px-2"
@@ -707,7 +707,7 @@ export function InputPanel({
                       title="Characters"
                       aria-label={`${characterCount.toLocaleString()} characters`}
                     >
-                      <span className="text-[12px] font-semibold text-[#64748b]">
+                      <span className="text-[11px] font-semibold text-[#64748b] sm:text-[12px]">
                         #
                       </span>
                       <span>{characterCount.toLocaleString()}</span>
@@ -725,7 +725,7 @@ export function InputPanel({
                       title="Export draft"
                     >
                       <DownloadIcon className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Export</span>
+                      <span>Export</span>
                     </button>
                     <button
                       type="button"
@@ -742,7 +742,7 @@ export function InputPanel({
                       title="Clear text"
                     >
                       <TrashIcon className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Clear</span>
+                      <span>Clear</span>
                     </button>
                   </div>
                   <button
