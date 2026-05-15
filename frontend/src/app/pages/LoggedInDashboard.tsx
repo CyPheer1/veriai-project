@@ -68,6 +68,9 @@ function normalizeScanTitle(value: string): string {
   return trimmed || "Untitled scan";
 }
 
+const ANALYSIS_FAILURE_MESSAGE =
+  "An error occurred during analysis. Please try again.";
+
 function ScanDock({
   history,
   activeId,
@@ -361,15 +364,11 @@ export function LoggedInDashboard() {
       const detail = await pollSubmissionResult(token, accepted.submissionId);
 
       if (detail.status === "ERROR") {
-        throw new Error(
-          detail.errorMessage ?? "Analysis failed in processing pipeline.",
-        );
+        throw new Error(ANALYSIS_FAILURE_MESSAGE);
       }
 
       if (!detail.frontendPayload) {
-        throw new Error(
-          "Backend did not return the expected frontend payload.",
-        );
+        throw new Error(ANALYSIS_FAILURE_MESSAGE);
       }
 
       const nextResults: ResultsData = {
@@ -405,9 +404,7 @@ export function LoggedInDashboard() {
       );
       void refreshUser().catch(() => {});
     } catch (error) {
-      setAnalysisError(
-        getErrorMessage(error, "Unable to analyze this content."),
-      );
+      setAnalysisError(ANALYSIS_FAILURE_MESSAGE);
     } finally {
       setIsAnalyzing(false);
     }

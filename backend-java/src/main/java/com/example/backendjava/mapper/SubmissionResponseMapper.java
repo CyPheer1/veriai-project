@@ -125,9 +125,7 @@ public class SubmissionResponseMapper {
         int humanScore = Math.max(0, 100 - aiScore);
         int confidence = Math.max(aiScore, humanScore);
 
-        String label = aiScore >= 75 ? "Likely AI-Generated"
-                : aiScore >= 45 ? "Mixed Content"
-                : "Likely Human-Written";
+        String label = resolveFrontendLabel(aiScore, chunks);
 
         boolean fullReportAvailable = submission.getUser() != null
                 && submission.getUser().getPlan() == UserPlan.PRO;
@@ -208,6 +206,23 @@ public class SubmissionResponseMapper {
                 layer3,
                 writingMetrics
         );
+    }
+
+    private String resolveFrontendLabel(int aiScore, List<SubmissionChunk> chunks) {
+        if (chunks != null && !chunks.isEmpty()) {
+            int aiChunks = (int) chunks.stream().filter(chunk -> isAi(chunk.getLabel())).count();
+            if (aiChunks == 0) {
+                return "Likely Human-Written";
+            }
+            if (aiChunks == chunks.size()) {
+                return "Likely AI-Generated";
+            }
+            return "Mixed Content";
+        }
+
+        return aiScore >= 75 ? "Likely AI-Generated"
+                : aiScore >= 45 ? "Mixed Content"
+                : "Likely Human-Written";
     }
 
     private FrontendWritingMetricsResponse buildWritingMetrics(
