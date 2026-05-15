@@ -13,6 +13,7 @@ public record SubmissionListItemResponse(
         Instant completedAt,
         String globalLabel,
         Double globalConfidence,
-        String errorMessage
+        String errorMessage,
+        String customTitle
 ) {
 }

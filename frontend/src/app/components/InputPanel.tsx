@@ -1,7 +1,23 @@
-import { useState, useRef } from "react";
-import { Type, Upload, FileText, X, Sparkles, ArrowRight } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
-import { useApp } from "../context/AppContext";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import {
+  DownloadIcon,
+  FontBoldIcon,
+  FontItalicIcon,
+  ListBulletIcon,
+  ResetIcon,
+  TextAlignCenterIcon,
+  TextAlignLeftIcon,
+  TextAlignRightIcon,
+  TrashIcon,
+  UploadIcon,
+} from "@radix-ui/react-icons";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import TextAlign from "@tiptap/extension-text-align";
+import Placeholder from "@tiptap/extension-placeholder";
+import Highlight from "@tiptap/extension-highlight";
+import { DocumentSearchButtonIcon } from "./DesignIcons";
 
 export type AnalyzePayload =
   | { mode: "text"; text: string }
@@ -9,254 +25,840 @@ export type AnalyzePayload =
 
 interface InputPanelProps {
   onAnalyze: (payload: AnalyzePayload) => void | Promise<void>;
+  onDraftChange?: () => void;
+  documentTitle?: string;
   isAnalyzing: boolean;
   errorMessage?: string | null;
+  userPlan?: string | null;
+  dailyCreditsRemaining?: number | null;
+  textWordLimit?: number | null;
+  premiumMonthlyPriceUsd?: number;
+  onUpgrade?: () => void;
+  isUpgrading?: boolean;
+  resetKey?: number;
+  /** When provided, applies sentence-level colour highlights directly in the editor */
+  highlightSegments?: { text: string; isAI: boolean }[];
+  onExitHighlight?: () => void;
+  /** Called when user selects a file; should return the extracted plain text */
+  onExtractFile?: (file: File) => Promise<string>;
+  /** When set, loads plain text into the editor (used when restoring a FREE scan) */
+  restoreText?: string | null;
 }
 
-export function InputPanel({ onAnalyze, isAnalyzing, errorMessage = null }: InputPanelProps) {
-  const { isDark } = useApp();
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const AI_HIGHLIGHT_COLOR = "#fee2e2";
+const HUMAN_HIGHLIGHT_COLOR = "#dcfce7";
+
+function formatFileSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+function countWords(value: string): number {
+  return value.trim() ? value.trim().split(/\s+/).length : 0;
+}
+
+function toExportFilename(title: string | undefined): string {
+  const normalized = (title ?? "untitled-scan")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+  return `${normalized || "untitled-scan"}.txt`;
+}
+
+function ToolbarButton({
+  children,
+  label,
+  onClick,
+  isActive = false,
+  disabled = false,
+}: {
+  children: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  isActive?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={isActive}
+      onClick={onClick}
+      disabled={disabled}
+      className={`veriai-icon-button flex h-9 w-9 items-center justify-center rounded-[7px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40 ${
+        isActive
+          ? "bg-[#edf4ff] text-[#1263F1]"
+          : "text-[#274169] hover:bg-[#eef3f9]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function InputPanel({
+  onAnalyze,
+  onDraftChange,
+  documentTitle,
+  isAnalyzing,
+  errorMessage = null,
+  userPlan = null,
+  dailyCreditsRemaining = null,
+  textWordLimit = null,
+  premiumMonthlyPriceUsd = 10,
+  onUpgrade,
+  isUpgrading = false,
+  resetKey = 0,
+  highlightSegments,
+  onExitHighlight,
+  onExtractFile,
+  restoreText,
+}: InputPanelProps) {
   const [mode, setMode] = useState<"text" | "file">("text");
-  const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [dragOver, setDragOver] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [isExtractingFile, setIsExtractingFile] = useState(false);
+  const [statusExpanded, setStatusExpanded] = useState(true);
+  const [plainText, setPlainText] = useState("");
+  const [isHighlightMode, setIsHighlightMode] = useState(false);
+  const isHighlightModeRef = useRef(false);
+  const isProgrammaticUpdateRef = useRef(false);
+  const [, forceUpdate] = useState(0);
+  const [showParagraphMenu, setShowParagraphMenu] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const paragraphMenuRef = useRef<HTMLDivElement>(null);
 
-  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const triggerUpdate = useCallback(() => forceUpdate((n) => n + 1), []);
 
-  const handleFileDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const dropped = e.dataTransfer.files[0];
-    if (dropped) {
-      setFile(dropped);
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ history: true }),
+      Underline,
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Placeholder.configure({ placeholder: "Paste academic text here..." }),
+      Highlight.configure({ multicolor: true }),
+    ],
+    editorProps: {
+      attributes: {
+        class:
+          "veriai-document-font min-h-[1180px] w-full px-[14%] py-[68px] text-[20px] font-medium leading-[1.82] tracking-[-0.012em] text-[#07112f] outline-none focus:outline-none",
+        spellcheck: "true",
+      },
+    },
+    onUpdate: ({ editor: e }) => {
+      if (isProgrammaticUpdateRef.current) {
+        // Programmatic update (setContent, setEditable, etc.) — ignore entirely
+        return;
+      }
+      if (isHighlightModeRef.current) {
+        // User actually typed while highlights were showing — auto-dismiss
+        isHighlightModeRef.current = false;
+        setIsHighlightMode(false);
+        onExitHighlight?.();
+        setPlainText(e.getText());
+        onDraftChange?.();
+        // Strip remaining highlight marks without disturbing cursor
+        setTimeout(() => {
+          const { from, to } = e.state.selection;
+          e.chain()
+            .selectAll()
+            .unsetMark("highlight")
+            .setTextSelection({ from, to })
+            .run();
+        }, 0);
+      } else {
+        setPlainText(e.getText());
+        onDraftChange?.();
+      }
+      setLocalError(null);
+    },
+    onSelectionUpdate: triggerUpdate,
+    onTransaction: triggerUpdate,
+  });
+
+  // Close paragraph menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        paragraphMenuRef.current &&
+        !paragraphMenuRef.current.contains(e.target as Node)
+      ) {
+        setShowParagraphMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Sync editable with isAnalyzing only — highlight mode no longer locks editing
+  useEffect(() => {
+    if (!editor) return;
+    isProgrammaticUpdateRef.current = true;
+    editor.setEditable(!isAnalyzing);
+    // Reset after a tick — setEditable dispatches a transaction that fires onUpdate
+    setTimeout(() => {
+      isProgrammaticUpdateRef.current = false;
+    }, 0);
+  }, [isAnalyzing, editor]);
+
+  // Apply highlight segments into the editor
+  useEffect(() => {
+    if (!editor) return;
+
+    if (!highlightSegments || highlightSegments.length === 0) {
+      // If we were in highlight mode and segments cleared (e.g. new analysis) → exit
+      if (isHighlightMode) {
+        isHighlightModeRef.current = false;
+        setIsHighlightMode(false);
+        // Strip marks but keep text visible during new analysis
+        setTimeout(() => {
+          isProgrammaticUpdateRef.current = true;
+          const { from, to } = editor.state.selection;
+          editor
+            .chain()
+            .selectAll()
+            .unsetMark("highlight")
+            .setTextSelection({ from, to })
+            .run();
+          setTimeout(() => {
+            isProgrammaticUpdateRef.current = false;
+          }, 0);
+        }, 0);
+      }
+      return;
+    }
+
+    // Build Tiptap JSON doc with highlight marks
+    const inlineNodes: object[] = [];
+    highlightSegments.forEach((seg, i) => {
+      inlineNodes.push({
+        type: "text",
+        marks: [
+          {
+            type: "highlight",
+            attrs: {
+              color: seg.isAI ? AI_HIGHLIGHT_COLOR : HUMAN_HIGHLIGHT_COLOR,
+            },
+          },
+        ],
+        text: seg.text,
+      });
+      if (i < highlightSegments.length - 1) {
+        inlineNodes.push({ type: "text", text: " " });
+      }
+    });
+
+    isHighlightModeRef.current = true;
+    isProgrammaticUpdateRef.current = true;
+    editor.commands.setContent({
+      type: "doc",
+      content: [{ type: "paragraph", content: inlineNodes }],
+    });
+
+    setTimeout(() => {
+      isProgrammaticUpdateRef.current = false;
+    }, 0);
+    setIsHighlightMode(true);
+  }, [highlightSegments, editor]);
+
+  // Reset editor when resetKey changes
+  useEffect(() => {
+    if (resetKey === 0 || !editor) return;
+    editor.commands.clearContent();
+    editor.setEditable(true);
+    isHighlightModeRef.current = false;
+    setIsHighlightMode(false);
+    setMode("text");
+    setFile(null);
+    setLocalError(null);
+    setPlainText("");
+    setStatusExpanded(true);
+  }, [resetKey, editor]);
+
+  // Restore plain text into editor (e.g. FREE user viewing an old scan)
+  useEffect(() => {
+    if (!editor || !restoreText) return;
+    isProgrammaticUpdateRef.current = true;
+    const html = restoreText
+      .split(/\n\n+/)
+      .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
+      .join("");
+    editor.commands.setContent(html || `<p>${restoreText}</p>`);
+    setPlainText(restoreText);
+    isHighlightModeRef.current = false;
+    setIsHighlightMode(false);
+    setTimeout(() => {
+      isProgrammaticUpdateRef.current = false;
+    }, 0);
+  }, [restoreText, editor]);
+
+  const wordCount = useMemo(() => countWords(plainText), [plainText]);
+  const characterCount = plainText.replace(/[\n\r]/g, "").length;
+
+  const isPro = userPlan?.toUpperCase() === "PRO";
+  const exceedsFreeWordLimit =
+    !isPro && textWordLimit != null && wordCount > textWordLimit;
+  const exceedsFreeCredits =
+    !isPro &&
+    dailyCreditsRemaining != null &&
+    wordCount > dailyCreditsRemaining;
+  const canSubmitText =
+    mode === "text" &&
+    !isHighlightMode &&
+    plainText.trim().length > 0 &&
+    !exceedsFreeWordLimit &&
+    !exceedsFreeCredits;
+  const canSubmitFile = mode === "file" && Boolean(file) && isPro;
+  const canExportDraft =
+    mode === "text" && !isHighlightMode && plainText.trim().length > 0;
+
+  const selectFile = (selectedFile: File | null) => {
+    setLocalError(null);
+    if (!selectedFile) {
+      setFile(null);
+      return;
+    }
+    if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
+      setFile(null);
+      setLocalError("Files must be 10MB or smaller.");
+      return;
+    }
+    setFile(selectedFile);
+    setMode("file");
+    onDraftChange?.();
+
+    // If extraction callback provided, extract text and load into editor
+    if (onExtractFile) {
+      setIsExtractingFile(true);
+      onExtractFile(selectedFile)
+        .then((text) => {
+          if (!editor) return;
+          isProgrammaticUpdateRef.current = true;
+          const html = text
+            .split(/\n\n+/)
+            .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
+            .join("");
+          editor.commands.setContent(html || `<p>${text}</p>`);
+          setPlainText(text);
+          setMode("text");
+          setFile(null);
+          isHighlightModeRef.current = false;
+          setIsHighlightMode(false);
+          setTimeout(() => {
+            isProgrammaticUpdateRef.current = false;
+          }, 0);
+          onDraftChange?.();
+        })
+        .catch((err: unknown) => {
+          setLocalError(
+            err instanceof Error
+              ? err.message
+              : "Could not extract text from file.",
+          );
+        })
+        .finally(() => {
+          setIsExtractingFile(false);
+        });
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) {
-      setFile(selected);
+  const submit = () => {
+    setLocalError(null);
+
+    if (mode === "file") {
+      if (!isPro) {
+        setLocalError(
+          `PDF and DOCX uploads are available on Premium ($${premiumMonthlyPriceUsd}/month).`,
+        );
+        return;
+      }
+      if (file) void onAnalyze({ mode: "file", file });
+      return;
     }
+
+    if (exceedsFreeWordLimit) {
+      setLocalError(
+        `Free text scans are limited to ${textWordLimit?.toLocaleString()} words.`,
+      );
+      return;
+    }
+
+    if (exceedsFreeCredits) {
+      setLocalError(
+        `This scan needs ${wordCount.toLocaleString()} credits, but you have ${dailyCreditsRemaining?.toLocaleString()} left today.`,
+      );
+      return;
+    }
+
+    if (plainText.trim())
+      void onAnalyze({ mode: "text", text: plainText.trim() });
   };
 
-  const fileSize = file ? `${(file.size / 1024).toFixed(1)} KB` : null;
-
-  // Spatial glass card
-  const cardStyle: React.CSSProperties = {
-    background: isDark ? "rgba(15,17,26,0.55)" : "rgba(255,255,255,0.65)",
-    backdropFilter: isDark ? "blur(40px) saturate(1.4)" : "blur(40px) saturate(1.3)",
-    WebkitBackdropFilter: isDark ? "blur(40px) saturate(1.4)" : "blur(40px) saturate(1.3)",
-    border: isDark
-      ? "1px solid rgba(255,255,255,0.06)"
-      : "1px solid rgba(255,255,255,0.80)",
-    boxShadow: isDark
-      ? "0 8px 32px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.04)"
-      : "0 8px 32px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
+  const exportDraft = () => {
+    const draft = plainText.trim();
+    if (!draft) return;
+    const blob = new Blob([draft], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = toExportFilename(documentTitle);
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
-  const tabBarBg = isDark ? "bg-[rgba(255,255,255,0.03)]" : "bg-[rgba(0,0,0,0.03)]";
-  const tabActive = isDark
-    ? "bg-[rgba(255,255,255,0.07)] text-[rgba(255,255,255,0.9)] shadow-sm"
-    : "bg-white text-[#0F111A] shadow-sm";
-  const tabDefault = isDark
-    ? "text-[rgba(255,255,255,0.35)] hover:text-[rgba(255,255,255,0.6)]"
-    : "text-[#6B7280] hover:text-[#374151]";
-  const textareaClass = isDark
-    ? "border-[rgba(255,255,255,0.04)] bg-[rgba(255,255,255,0.02)] text-[rgba(255,255,255,0.88)] placeholder-[rgba(255,255,255,0.15)] focus:border-[rgba(99,102,241,0.3)] focus:bg-[rgba(255,255,255,0.03)]"
-    : "border-[rgba(0,0,0,0.06)] bg-[rgba(255,255,255,0.5)] text-[#0F111A] placeholder-[#B0B7C3] focus:border-[rgba(99,102,241,0.3)] focus:bg-white";
-  const counterText = isDark ? "text-[rgba(255,255,255,0.18)]" : "text-[#B0B7C3]";
-  const dropZone = isDark
-    ? `border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.01)] hover:border-[rgba(99,102,241,0.2)] ${dragOver ? "border-[rgba(99,102,241,0.35)] bg-[rgba(99,102,241,0.04)]" : ""}`
-    : `border-[rgba(0,0,0,0.07)] bg-[rgba(0,0,0,0.01)] hover:border-[rgba(99,102,241,0.25)] ${dragOver ? "border-[rgba(99,102,241,0.35)] bg-[rgba(99,102,241,0.04)]" : ""}`;
-  const dropText = isDark ? "text-[rgba(255,255,255,0.6)]" : "text-[#4B5563]";
-  const dropMuted = isDark ? "text-[rgba(255,255,255,0.22)]" : "text-[#9CA3AF]";
-  const fileCard = isDark
-    ? "border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.015)]"
-    : "border-[rgba(0,0,0,0.05)] bg-white/50";
+  const toolbarDisabled = isAnalyzing || !editor || isHighlightMode;
 
-  const canSubmit = mode === "text" ? !!text.trim() : !!file;
+  const currentBlockLabel = editor?.isActive("heading", { level: 1 })
+    ? "Heading 1"
+    : editor?.isActive("heading", { level: 2 })
+      ? "Heading 2"
+      : editor?.isActive("heading", { level: 3 })
+        ? "Heading 3"
+        : "Paragraph";
 
   return (
-    <div className="rounded-2xl p-1" style={cardStyle}>
-      {/* Tab Switcher */}
-      <div className={`mb-1 flex items-center gap-1 rounded-xl p-1 ${tabBarBg}`}>
-        {[
-          { id: "text" as const, label: "Text Input", icon: Type },
-          { id: "file" as const, label: "File Upload", icon: Upload },
-        ].map(({ id, label, icon: Icon }) => (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[14px] border border-[#d7dfed] bg-[#eef3f8]">
+      {/* Top bar: tabs + analyze button */}
+      <div className="flex min-h-[72px] shrink-0 flex-col items-stretch justify-between gap-3 border-b border-[#d7dfed] bg-[#fbfcff] px-4 py-3 sm:h-[72px] sm:flex-row sm:items-center sm:gap-4 sm:px-[26px] sm:py-0">
+        <div
+          className="veriai-hide-scrollbar flex h-11 min-w-0 items-end gap-5 overflow-x-auto sm:h-full sm:flex-none sm:gap-8 sm:overflow-visible"
+          role="tablist"
+          aria-label="Analysis input mode"
+        >
           <button
-            key={id}
-            onClick={() => setMode(id)}
-            className={`relative flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[12px] transition-all ${
-              mode === id ? tabActive : tabDefault
+            type="button"
+            role="tab"
+            aria-selected={mode === "text"}
+            onClick={() => {
+              setMode("text");
+              setLocalError(null);
+            }}
+            className={`veriai-pressable flex h-full shrink-0 items-center gap-2 border-b-2 px-0 pt-1 text-[14px] font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] sm:gap-3 sm:text-[15px] ${
+              mode === "text"
+                ? "border-[#2563EB] text-[#2563EB]"
+                : "border-transparent text-[#52627a] hover:text-[#0d1526]"
             }`}
-            style={{ fontWeight: mode === id ? 500 : 400 }}
           >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
+            <ListBulletIcon className="h-5 w-5" />
+            Text input
           </button>
-        ))}
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "file"}
+            onClick={() => {
+              setMode("file");
+              setLocalError(null);
+            }}
+            className={`veriai-pressable flex h-full shrink-0 items-center gap-2 border-b-2 px-0 pt-1 text-[14px] font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] sm:gap-3 sm:text-[15px] ${
+              mode === "file"
+                ? "border-[#2563EB] text-[#2563EB]"
+                : "border-transparent text-[#52627a] hover:text-[#0d1526]"
+            }`}
+          >
+            <UploadIcon className="h-5 w-5" />
+            Upload file
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={submit}
+          disabled={isAnalyzing || (!canSubmitText && !canSubmitFile)}
+          className="veriai-pressable flex h-11 w-full min-w-[132px] items-center justify-center gap-2 rounded-[8px] bg-[#1263F1] px-4 text-[14px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[154px] sm:gap-3 sm:px-5 sm:text-[15px]"
+        >
+          <DocumentSearchButtonIcon className="h-5 w-5" />
+          {isAnalyzing
+            ? "Analyzing..."
+            : mode === "file"
+              ? "Analyze file"
+              : "Analyze text"}
+        </button>
       </div>
 
-      {/* Content Area */}
-      <AnimatePresence mode="wait">
-        {mode === "text" ? (
-          <motion.div
-            key="text"
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.15 }}
-          >
-            <div className="relative">
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Paste or type the text you want to analyze for AI-generated content..."
-                className={`h-[230px] w-full resize-none rounded-xl border p-5 text-[13px] outline-none transition-all ${textareaClass}`}
-                style={{ lineHeight: "1.8" }}
-              />
-              <div className={`absolute bottom-3 right-3 flex items-center gap-3 text-[10px] ${counterText}`}>
-                <span style={{ fontVariantNumeric: "tabular-nums" }}>{wordCount} words</span>
-                <span className={`h-3 w-px ${isDark ? "bg-white/8" : "bg-slate-200"}`} />
-                <span style={{ fontVariantNumeric: "tabular-nums" }}>{text.length} chars</span>
-              </div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="file"
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.15 }}
-          >
-            <input
-              ref={fileRef}
-              type="file"
-              className="hidden"
-              accept=".pdf,.docx"
-              onChange={handleFileSelect}
-            />
-            {!file ? (
-              <div
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleFileDrop}
-                onClick={() => fileRef.current?.click()}
-                className={`flex h-[230px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all ${dropZone}`}
-              >
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/8">
-                  <Upload className="h-6 w-6 text-indigo-400" />
-                </div>
-                <p className={`mb-1 text-[13px] ${dropText}`}>
-                  Drop your file here, or{" "}
-                  <span className="text-indigo-400">browse</span>
-                </p>
-                <p className={`text-[11px] ${dropMuted}`}>
-                  PDF, DOCX - Max 10MB
-                </p>
-              </div>
-            ) : (
-              <div className={`flex h-[230px] flex-col items-center justify-center rounded-xl border ${fileCard}`}>
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/8">
-                  <FileText className="h-6 w-6 text-emerald-400" />
-                </div>
-                <p className={`mb-0.5 text-[13px] ${isDark ? "text-white/75" : "text-slate-800"}`}>{file.name}</p>
-                <p className={`mb-3 text-[11px] ${isDark ? "text-white/25" : "text-slate-400"}`}>{fileSize}</p>
+      {mode === "text" ? (
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+          {/* Normal toolbar — always visible */}
+          <div className="veriai-hide-scrollbar flex min-h-[52px] shrink-0 items-center overflow-x-auto border-b border-[#d7dfed] bg-white px-5">
+            <div className="flex min-w-max items-center gap-1.5">
+              {/* Paragraph / Heading dropdown */}
+              <div ref={paragraphMenuRef} className="relative">
                 <button
-                  onClick={() => {
-                    setFile(null);
-                    if (fileRef.current) {
-                      fileRef.current.value = "";
-                    }
-                  }}
-                  className={`flex items-center gap-1 text-[11px] transition-all ${isDark ? "text-white/25 hover:text-red-400" : "text-slate-400 hover:text-red-500"}`}
+                  type="button"
+                  disabled={toolbarDisabled}
+                  onClick={() => setShowParagraphMenu((v) => !v)}
+                  className="veriai-pressable flex h-9 items-center gap-2 rounded-[7px] px-2.5 text-[14px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  <X className="h-3 w-3" /> Remove file
+                  {currentBlockLabel} <span className="text-[#64748b]">⌄</span>
                 </button>
+                {showParagraphMenu && (
+                  <div className="absolute left-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-[10px] border border-[#d7dfed] bg-white shadow-[0_8px_24px_rgba(31,45,71,0.12)]">
+                    {(
+                      [
+                        {
+                          label: "Paragraph",
+                          action: () =>
+                            editor?.chain().focus().setParagraph().run(),
+                        },
+                        {
+                          label: "Heading 1",
+                          action: () =>
+                            editor
+                              ?.chain()
+                              .focus()
+                              .toggleHeading({ level: 1 })
+                              .run(),
+                        },
+                        {
+                          label: "Heading 2",
+                          action: () =>
+                            editor
+                              ?.chain()
+                              .focus()
+                              .toggleHeading({ level: 2 })
+                              .run(),
+                        },
+                        {
+                          label: "Heading 3",
+                          action: () =>
+                            editor
+                              ?.chain()
+                              .focus()
+                              .toggleHeading({ level: 3 })
+                              .run(),
+                        },
+                      ] as { label: string; action: () => void }[]
+                    ).map((opt) => (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => {
+                          opt.action();
+                          setShowParagraphMenu(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-[13px] font-semibold hover:bg-[#f0f4fb] ${
+                          currentBlockLabel === opt.label
+                            ? "text-[#1263F1]"
+                            : "text-[#274169]"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+              <ToolbarButton
+                label="Bold"
+                onClick={() => editor?.chain().focus().toggleBold().run()}
+                isActive={editor?.isActive("bold") ?? false}
+                disabled={toolbarDisabled}
+              >
+                <FontBoldIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Italic"
+                onClick={() => editor?.chain().focus().toggleItalic().run()}
+                isActive={editor?.isActive("italic") ?? false}
+                disabled={toolbarDisabled}
+              >
+                <FontItalicIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Underline"
+                onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                isActive={editor?.isActive("underline") ?? false}
+                disabled={toolbarDisabled}
+              >
+                <span className="text-[15px] font-bold underline">U</span>
+              </ToolbarButton>
+
+              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+              <ToolbarButton
+                label="Bullet list"
+                onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                isActive={editor?.isActive("bulletList") ?? false}
+                disabled={toolbarDisabled}
+              >
+                <ListBulletIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Ordered list"
+                onClick={() =>
+                  editor?.chain().focus().toggleOrderedList().run()
+                }
+                isActive={editor?.isActive("orderedList") ?? false}
+                disabled={toolbarDisabled}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                >
+                  <path d="M2 2h1v3H2V3H1V2h1zm0 5h1.5a.5.5 0 0 1 0 1H2v.5h1.5a.5.5 0 0 1 0 1H2v1h2v1H1v-2a1 1 0 0 1 1-1V8a1 1 0 0 1-1-1V6h2v1H2zm0 5h1v.5H2v1h1V14H1v-1h1v-.5H1v-1h2v1H2zM5 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5zm0 5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8A.5.5 0 0 1 5 8.5zm0 5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5z" />
+                </svg>
+              </ToolbarButton>
+
+              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+              <ToolbarButton
+                label="Align left"
+                onClick={() =>
+                  editor?.chain().focus().setTextAlign("left").run()
+                }
+                isActive={
+                  (editor?.isActive({ textAlign: "left" }) ||
+                    (!editor?.isActive({ textAlign: "center" }) &&
+                      !editor?.isActive({ textAlign: "right" }) &&
+                      !editor?.isActive({ textAlign: "justify" }))) ??
+                  false
+                }
+                disabled={toolbarDisabled}
+              >
+                <TextAlignLeftIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Align center"
+                onClick={() =>
+                  editor?.chain().focus().setTextAlign("center").run()
+                }
+                isActive={editor?.isActive({ textAlign: "center" }) ?? false}
+                disabled={toolbarDisabled}
+              >
+                <TextAlignCenterIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Align right"
+                onClick={() =>
+                  editor?.chain().focus().setTextAlign("right").run()
+                }
+                isActive={editor?.isActive({ textAlign: "right" }) ?? false}
+                disabled={toolbarDisabled}
+              >
+                <TextAlignRightIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <div className="mx-1.5 h-8 w-px bg-[#d7dfed]" />
+
+              <ToolbarButton
+                label="Undo"
+                onClick={() => editor?.chain().focus().undo().run()}
+                disabled={toolbarDisabled || !editor?.can().undo()}
+              >
+                <ResetIcon className="h-4 w-4" />
+              </ToolbarButton>
+
+              <ToolbarButton
+                label="Redo"
+                onClick={() => editor?.chain().focus().redo().run()}
+                disabled={toolbarDisabled || !editor?.can().redo()}
+              >
+                <ResetIcon className="h-4 w-4 scale-x-[-1]" />
+              </ToolbarButton>
+            </div>
+          </div>
+
+          {/* Editor area — always present; Tiptap content shows highlights when in highlight mode */}
+          <div className="veriai-rich-editor relative min-h-0 flex-1 bg-white">
+            <div className="h-full overflow-y-auto bg-white">
+              <EditorContent editor={editor} />
+            </div>
+
+            {/* Floating status bar (hidden in highlight mode) */}
+            {!isHighlightMode && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 px-4">
+                {statusExpanded ? (
+                  <div
+                    className="pointer-events-auto ml-auto flex h-10 w-fit max-w-full items-center justify-end overflow-hidden rounded-full border border-[#cbd7e8]/85 bg-white/78 pl-2 text-[11px] font-semibold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md sm:max-w-[620px] sm:pl-4 sm:text-[12px]"
+                    aria-label="Document status"
+                  >
+                  <div
+                    className="flex min-w-0 items-center gap-1 whitespace-nowrap pr-1 font-semibold sm:gap-2 sm:pr-3"
+                  >
+                    <span
+                      className="inline-flex h-7 items-center gap-1 rounded-full px-1.5 text-[#274169] sm:gap-1.5 sm:px-2"
+                      title="Words"
+                      aria-label={`${wordCount.toLocaleString()} words`}
+                    >
+                      <ListBulletIcon className="h-3.5 w-3.5 text-[#64748b]" />
+                      <span>
+                        {wordCount.toLocaleString()}
+                        {!isPro && textWordLimit
+                          ? ` / ${textWordLimit.toLocaleString()}`
+                          : ""}
+                      </span>
+                    </span>
+                    <span
+                      className="inline-flex h-7 items-center gap-1 rounded-full px-1.5 text-[#274169] sm:gap-1.5 sm:px-2"
+                      title="Characters"
+                      aria-label={`${characterCount.toLocaleString()} characters`}
+                    >
+                      <span className="text-[11px] font-semibold text-[#64748b] sm:text-[12px]">
+                        #
+                      </span>
+                      <span>{characterCount.toLocaleString()}</span>
+                    </span>
+                    <span
+                      className="mx-0.5 h-5 w-px bg-[#cbd7e8] sm:mx-1"
+                      aria-hidden="true"
+                    />
+                    <button
+                      type="button"
+                      onClick={exportDraft}
+                      disabled={!canExportDraft || isAnalyzing}
+                      className="inline-flex h-7 items-center gap-1 rounded-full px-1.5 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent sm:gap-1.5 sm:px-2"
+                      aria-label="Export draft"
+                      title="Export draft"
+                    >
+                      <DownloadIcon className="h-3.5 w-3.5" />
+                      <span>Export</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        editor?.commands.clearContent();
+                        setPlainText("");
+                        setFile(null);
+                        setLocalError(null);
+                        onDraftChange?.();
+                      }}
+                      disabled={isAnalyzing}
+                      className="inline-flex h-7 items-center gap-1 rounded-full px-1.5 text-[12px] font-semibold text-[#274169] hover:bg-[#eef3f9] disabled:opacity-60 sm:gap-1.5 sm:px-2"
+                      aria-label="Clear text"
+                      title="Clear text"
+                    >
+                      <TrashIcon className="h-3.5 w-3.5" />
+                      <span>Clear</span>
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setStatusExpanded(false)}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[18px] font-bold text-[#274169] hover:bg-[#eef3f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+                    aria-label="Hide document status"
+                    title="Hide status"
+                  >
+                    ›
+                  </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setStatusExpanded(true)}
+                    className="pointer-events-auto ml-auto flex h-10 w-10 items-center justify-center rounded-full border border-[#cbd7e8]/85 bg-white/78 text-[18px] font-bold text-[#274169] shadow-[0_12px_34px_rgba(31,45,71,0.13)] backdrop-blur-md hover:bg-[#eef3f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+                    aria-label="Show document status"
+                    title="Show status"
+                  >
+                    ‹
+                  </button>
+                )}
               </div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Action Buttons */}
-      <div className="mt-1 flex gap-2">
-        <button
-          onClick={() => {
-            if (mode === "text" && text.trim()) {
-              void onAnalyze({ mode: "text", text: text.trim() });
-              return;
-            }
-
-            if (mode === "file" && file) {
-              void onAnalyze({ mode: "file", file });
-            }
-          }}
-          disabled={isAnalyzing || !canSubmit}
-          className={`relative flex flex-1 items-center justify-center gap-2.5 overflow-hidden rounded-xl px-6 py-3.5 text-[13px] text-white transition-all disabled:opacity-25 disabled:shadow-none ${canSubmit && !isAnalyzing ? "analyze-btn-animated" : "analyze-btn-static"}`}
-          style={{
-            fontWeight: 500,
-            boxShadow: canSubmit ? "0 4px 24px rgba(79,70,229,0.3)" : "none",
-          }}
-        >
-          {isAnalyzing ? (
-            <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              Analyzing Content...
-            </>
+          </div>
+        </div>
+      ) : (
+        <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
+          {isPro ? (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={isAnalyzing}
+              className="veriai-pressable flex flex-1 w-full flex-col items-center justify-center rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff] px-8 text-center hover:bg-[#f2f7ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isExtractingFile ? (
+                <>
+                  <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[#d8e3f2] border-t-[#1263F1]" />
+                  <span className="mt-5 text-[18px] font-semibold tracking-[-0.02em] text-[#0d1526]">
+                    Extracting text…
+                  </span>
+                  <span className="mt-2 text-[13px] text-[#52627a]">
+                    {file?.name}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <UploadIcon className="h-11 w-11 text-[#1263F1]" />
+                  <span className="mt-5 max-w-full">
+                    <span className="block truncate text-[20px] font-semibold tracking-[-0.02em] text-[#0d1526]">
+                      {file ? file.name : "Drop a PDF or DOCX here"}
+                    </span>
+                    <span className="mt-3 block text-[14px] leading-6 text-[#52627a]">
+                      {file
+                        ? formatFileSize(file.size)
+                        : "Click anywhere in this area to choose a document. Up to 10MB."}
+                    </span>
+                  </span>
+                </>
+              )}
+            </button>
           ) : (
-            <>
-              <Sparkles className="h-4 w-4" />
-              Analyze Content
-              <ArrowRight className="h-3.5 w-3.5" />
-            </>
+            <div className="relative flex min-h-[320px] flex-1 overflow-hidden rounded-[12px] border border-dashed border-[#9bb8f7] bg-[#f8fbff] sm:min-h-0">
+              <div className="absolute inset-4 rounded-[12px] border border-[#d7dfed] bg-white/80 p-5 blur-[3px] sm:inset-6">
+                <div className="h-8 w-44 rounded-[8px] bg-[#e7eef8]" />
+                <div className="mt-5 grid gap-3">
+                  <div className="h-4 rounded-full bg-[#dbe7f6]" />
+                  <div className="h-4 w-4/5 rounded-full bg-[#dbe7f6]" />
+                  <div className="h-4 w-2/3 rounded-full bg-[#dbe7f6]" />
+                </div>
+              </div>
+              <div className="absolute inset-0 z-10 grid place-items-center p-5 text-center sm:p-8">
+                <div className="w-full max-w-[390px] rounded-[14px] border border-[#cbd7ea] bg-white/95 px-5 py-6 shadow-[0_22px_54px_rgba(31,45,71,0.14)]">
+                  <UploadIcon className="mx-auto h-11 w-11 text-[#1263F1]" />
+                  <h3 className="mt-5 text-[20px] font-semibold tracking-[-0.02em] text-[#0d1526]">
+                    File upload is Premium
+                  </h3>
+                  <p className="mt-3 text-[14px] leading-6 text-[#52627a]">
+                    Upgrade to unlock PDF and DOCX analysis. Text scans remain
+                    available on the Free plan.
+                  </p>
+                  {onUpgrade && (
+                    <button
+                      type="button"
+                      onClick={onUpgrade}
+                      disabled={isUpgrading}
+                      className="veriai-pressable mt-5 h-10 rounded-[9px] bg-[#1263F1] px-5 text-[13px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60"
+                    >
+                      {isUpgrading ? "Upgrading..." : "Upgrade account"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
-        </button>
-
-        {(text.trim() || file) && !isAnalyzing && (
-          <button
-            onClick={() => {
-              setText("");
-              setFile(null);
-              if (fileRef.current) {
-                fileRef.current.value = "";
-              }
-            }}
-            className={`rounded-xl border px-4 py-3.5 text-[12px] transition-all ${
-              isDark
-                ? "border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.3)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[rgba(255,255,255,0.55)]"
-                : "border-[rgba(0,0,0,0.06)] text-[#9CA3AF] hover:bg-[rgba(0,0,0,0.03)] hover:text-[#6B7280]"
-            }`}
-          >
-            Clear
-          </button>
-        )}
-      </div>
-
-      {errorMessage && (
-        <p className={`mt-3 text-[11px] ${isDark ? "text-red-300/90" : "text-red-700"}`}>
-          {errorMessage}
-        </p>
+        </div>
       )}
 
-      <style>{`
-        .analyze-btn-animated {
-          background: linear-gradient(135deg, #4F46E5, #6366F1, #4F46E5);
-          background-size: 200% 200%;
-          animation: gradientShift 3s ease infinite;
-        }
-        .analyze-btn-static {
-          background: linear-gradient(135deg, #4F46E5, #6366F1);
-          background-size: 100% 100%;
-        }
-        @keyframes gradientShift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-      `}</style>
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        className="hidden"
+        onChange={(e) => selectFile(e.target.files?.[0] ?? null)}
+        disabled={!isPro || isAnalyzing}
+      />
+
+      {(localError || errorMessage) && (
+        <p
+          role="alert"
+          className="mx-5 mb-5 rounded-[10px] border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-bold text-red-700"
+        >
+          {localError || errorMessage}
+        </p>
+      )}
     </div>
   );
 }

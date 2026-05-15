@@ -3,6 +3,7 @@ package com.example.backendjava.service;
 import com.example.backendjava.dto.internal.InternalChunkResultRequest;
 import com.example.backendjava.dto.internal.InternalStatusUpdateRequest;
 import com.example.backendjava.dto.internal.InternalSubmissionResultRequest;
+import com.example.backendjava.dto.submission.ExtractTextResponse;
 import com.example.backendjava.dto.submission.SubmissionAcceptedResponse;
 import com.example.backendjava.dto.submission.SubmissionDetailResponse;
 import com.example.backendjava.dto.submission.SubmissionListItemResponse;
@@ -58,12 +59,13 @@ public class SubmissionService {
     @Transactional
     public SubmissionAcceptedResponse createTextSubmission(String email, TextAnalyzeRequest request) {
         User user = getUserForUpdate(email);
-        quotaService.consumeQuota(user);
 
         String text = normalizeText(request.text());
         if (text.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Text content is required");
         }
+
+        quotaService.consumeCredits(user, countWords(text));
 
         Submission submission = buildSubmission(user, SubmissionSourceType.TEXT, null, text);
         Submission saved = submissionRepository.save(submission);
@@ -90,7 +92,7 @@ public class SubmissionService {
         User user = getUserForUpdate(email);
         ExtractedContent extractedContent = fileExtractionService.extractText(file, user.getPlan());
 
-        quotaService.consumeQuota(user);
+        quotaService.consumeCredits(user, countWords(extractedContent.text()));
 
         Submission submission = buildSubmission(
                 user,
@@ -116,6 +118,13 @@ public class SubmissionService {
                 saved.getSubmittedAt(),
                 "Submission accepted and queued for AI processing"
         );
+    }
+
+    @Transactional(readOnly = true)
+    public ExtractTextResponse extractFileText(String email, MultipartFile file) {
+        User user = getUserByEmail(email);
+        ExtractedContent content = fileExtractionService.extractText(file, user.getPlan());
+        return new ExtractTextResponse(content.text(), countWords(content.text()), content.sourceFilename());
     }
 
     @Transactional(readOnly = true)
@@ -159,6 +168,17 @@ public class SubmissionService {
                 submissionsPage.getTotalElements(),
                 submissionsPage.getTotalPages()
         );
+    }
+
+    @Transactional
+    public void updateTitle(String email, UUID submissionId, String title) {
+        User user = getUserByEmail(email);
+        Submission submission = submissionRepository.findByIdAndUserId(submissionId, user.getId())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Submission not found"));
+        String trimmed = (title == null || title.isBlank()) ? null : title.trim();
+        submission.setSourceFilename(trimmed);
+        submission.setUpdatedAt(Instant.now());
+        submissionRepository.save(submission);
     }
 
     @Transactional

@@ -37,4 +37,9 @@ public class AuthController {
     public ResponseEntity<AuthUserResponse> me(Principal principal) {
         return ResponseEntity.ok(authService.me(principal.getName()));
     }
+
+    @PostMapping("/me/upgrade")
+    public ResponseEntity<AuthUserResponse> upgrade(Principal principal) {
+        return ResponseEntity.ok(authService.upgradeToPro(principal.getName()));
+    }
 }

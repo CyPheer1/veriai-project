@@ -1,634 +1,1259 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { InfoCircledIcon } from "@radix-ui/react-icons";
+import { ModelLogo } from "./DesignIcons";
 import {
-  Info,
-  AlignLeft,
-  FileText,
-  Clock,
-  RotateCcw,
-  Bot,
-  UserRound,
-  ShieldAlert,
-  ScanLine,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
-import { useApp } from "../context/AppContext";
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  AreaChart,
+  Area,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+} from "recharts";
 
-/* ─── Types ─────────────────────────────────────────────────────────────────── */
+function InfoTooltip({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span
+      className="relative inline-flex"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <InfoCircledIcon className="h-[14px] w-[14px] cursor-default text-[#9aacbf] transition-colors hover:text-[#1263F1]" />
+      {show && (
+        <span className="pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-50 w-[210px] -translate-x-1/2 rounded-[10px] border border-[#d7dfed] bg-white px-3 py-2.5 text-left text-[12px] font-medium leading-[1.55] text-[#52627a] shadow-[0_8px_28px_rgba(31,45,71,0.13)]">
+          {text}
+          <span
+            className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#d7dfed]"
+            style={{ marginTop: 0 }}
+          />
+          <span
+            className="absolute left-1/2 top-full -translate-x-1/2 border-[3.5px] border-transparent border-t-white"
+            style={{ marginTop: -1 }}
+          />
+        </span>
+      )}
+    </span>
+  );
+}
 
-interface Segment { text: string; isAI: boolean; }
-interface ModelAttribution { name: string; score: number; color?: string; accent?: string; }
+interface Segment {
+  text: string;
+  isAI: boolean;
+}
+interface ModelAttribution {
+  name: string;
+  score: number;
+}
+
+interface WritingCharacteristics {
+  vocabularyDiversity: number | null;
+  avgSentenceLength: number | null;
+  sentenceLengthVariance: number | null;
+  burstinessScore: number | null;
+  perplexity: number | null;
+  avgTokenEntropy: number | null;
+  logicalConnectorRatio: number | null;
+}
+
 export interface ResultsData {
-  aiScore: number; humanScore: number; confidence: number; label: string; model: string;
-  submittedText?: string; wordCount?: number;
+  aiScore: number;
+  humanScore: number;
+  confidence: number;
+  label: string;
+  model: string;
+  submittedText?: string;
+  wordCount?: number;
+  submittedAt?: string;
   modelAttributions?: ModelAttribution[];
   segments?: Segment[];
   chunks: { text: string; score: number }[];
   stats: { analyzed: number; flagged: number; clean: number };
+  fullReportAvailable?: boolean;
+  accessLevel?: "FREE" | "PREMIUM";
+  layer1Score?: number;
+  layer2Score?: number;
+  layer3Score?: number;
+  writingCharacteristics?: WritingCharacteristics | null;
 }
 
-/* ─── Spatial glass style helper ────────────────────────────────────────────── */
+const previewData: ResultsData = {
+  aiScore: 92,
+  humanScore: 8,
+  confidence: 92,
+  label: "Likely AI-generated",
+  model: "GPT-4",
+  wordCount: 1248,
+  submittedAt: "2025-05-14T10:32:00",
+  modelAttributions: [
+    { name: "GPT-4", score: 93 },
+    { name: "Claude 3", score: 89 },
+    { name: "Gemini 1.5", score: 91 },
+    { name: "Llama 3", score: 86 },
+  ],
+  chunks: [],
+  stats: { analyzed: 36, flagged: 18, clean: 18 },
+  layer1Score: 60,
+  layer2Score: 25,
+  layer3Score: 15,
+  segments: [
+    {
+      text: "The methodology section follows standard academic structure.",
+      isAI: false,
+    },
+    {
+      text: "Background context is grounded in cited literature.",
+      isAI: false,
+    },
+    {
+      text: "Theoretical framing references established frameworks accurately.",
+      isAI: false,
+    },
+    {
+      text: "The analysis presents insights with notable AI-like fluency.",
+      isAI: true,
+    },
+    {
+      text: "Conclusions offer novel framing that mirrors AI generation patterns.",
+      isAI: true,
+    },
+    {
+      text: "The discussion synthesises points in a structured, predictable manner.",
+      isAI: true,
+    },
+  ],
+  fullReportAvailable: true,
+  accessLevel: "PREMIUM",
+  writingCharacteristics: {
+    vocabularyDiversity: 0.61,
+    avgSentenceLength: 17.5,
+    sentenceLengthVariance: 29.0,
+    burstinessScore: 1.65,
+    perplexity: 42.0,
+    avgTokenEntropy: 3.8,
+    logicalConnectorRatio: 0.042,
+  },
+};
 
-function useGlass(isDark: boolean) {
-  return {
-    card: {
-      background: isDark ? "rgba(15,17,26,0.55)" : "rgba(255,255,255,0.65)",
-      backdropFilter: isDark ? "blur(40px) saturate(1.4)" : "blur(40px) saturate(1.3)",
-      WebkitBackdropFilter: isDark ? "blur(40px) saturate(1.4)" : "blur(40px) saturate(1.3)",
-      border: isDark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(255,255,255,0.80)",
-      boxShadow: isDark
-        ? "0 8px 32px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.04)"
-        : "0 8px 32px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
-    } as React.CSSProperties,
-    inner: {
-      background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
-      border: isDark ? "1px solid rgba(255,255,255,0.04)" : "1px solid rgba(0,0,0,0.05)",
-    } as React.CSSProperties,
-    textHeading: isDark ? "text-[rgba(255,255,255,0.92)]" : "text-[#0F111A]",
-    textBody: isDark ? "text-[rgba(255,255,255,0.58)]" : "text-[#4B5563]",
-    textMuted: isDark ? "text-[rgba(255,255,255,0.28)]" : "text-[#9CA3AF]",
-    textCaption: isDark ? "text-[rgba(255,255,255,0.2)]" : "text-[#B0B7C3]",
-    chipBrand: isDark
-      ? "bg-[rgba(99,102,241,0.1)] border-[rgba(99,102,241,0.18)] text-[rgba(165,180,252,0.85)]"
-      : "bg-[rgba(99,102,241,0.06)] border-[rgba(99,102,241,0.12)] text-[#4338CA]",
-    tagBg: isDark
-      ? "bg-[rgba(255,255,255,0.04)] text-[rgba(255,255,255,0.38)]"
-      : "bg-[rgba(0,0,0,0.04)] text-[#6B7280]",
-    statusAI: isDark
-      ? "bg-[rgba(220,38,38,0.08)] border-[rgba(220,38,38,0.15)] text-[rgba(252,165,165,0.8)]"
-      : "bg-[rgba(220,38,38,0.06)] border-[rgba(220,38,38,0.12)] text-[#B91C1C]",
-    statusHuman: isDark
-      ? "bg-[rgba(20,184,166,0.08)] border-[rgba(20,184,166,0.15)] text-[rgba(94,234,212,0.8)]"
-      : "bg-[rgba(20,184,166,0.06)] border-[rgba(20,184,166,0.12)] text-[#0F766E]",
-    statusMixed: isDark
-      ? "bg-[rgba(245,158,11,0.08)] border-[rgba(245,158,11,0.15)] text-[rgba(252,211,77,0.8)]"
-      : "bg-[rgba(245,158,11,0.06)] border-[rgba(245,158,11,0.12)] text-[#B45309]",
-    btnSecondary: isDark
-      ? "border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.4)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[rgba(255,255,255,0.65)]"
-      : "border-[rgba(0,0,0,0.07)] text-[#6B7280] hover:bg-[rgba(0,0,0,0.03)] hover:text-[#374151]",
-  };
+function clampScore(score: number): number {
+  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-/* ─── 3D Glass Ring Donut ───────────────────────────────────────────────────── */
+function toneMeta(tone: "human" | "mixed" | "ai") {
+  if (tone === "human") return { dot: "bg-[#2fa56d]", text: "text-[#17633f]" };
+  if (tone === "mixed") return { dot: "bg-[#f6b52d]", text: "text-[#8a5200]" };
+  return { dot: "bg-[#ef3a43]", text: "text-[#b32635]" };
+}
 
-function GlassRing({ aiScore, isDark, g }: { aiScore: number; isDark: boolean; g: ReturnType<typeof useGlass> }) {
-  const R = 78;
-  const STROKE = 10;
-  const SIZE = (R + STROKE) * 2 + 8;
-  const CX = SIZE / 2;
-  const CY = SIZE / 2;
-  const CIRC = 2 * Math.PI * R;
-  const aiDash = (aiScore / 100) * CIRC;
+function ScoreRing({ score }: { score: number }) {
+  const normalized = clampScore(score);
+  const angle = normalized * 3.6;
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative" style={{ width: SIZE, height: SIZE }}>
-        {/* Glow behind ring */}
-        <div
-          className="absolute inset-0 rounded-full"
-          style={{
-            background: `radial-gradient(circle, ${isDark ? "rgba(99,102,241,0.1)" : "rgba(99,102,241,0.08)"} 30%, transparent 70%)`,
-            filter: "blur(20px)",
-          }}
-        />
-
-        <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ transform: "rotate(-90deg)" }}>
-          <defs>
-            <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#4338CA" />
-              <stop offset="50%" stopColor="#6366F1" />
-              <stop offset="100%" stopColor="#818CF8" />
-            </linearGradient>
-            <filter id="ring-glow">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
-          {/* Track */}
-          <circle cx={CX} cy={CY} r={R} fill="none"
-            stroke={isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)"}
-            strokeWidth={STROKE}
-          />
-
-          {/* Human arc */}
-          <motion.circle cx={CX} cy={CY} r={R} fill="none"
-            stroke={isDark ? "rgba(20,184,166,0.15)" : "rgba(20,184,166,0.12)"}
-            strokeWidth={STROKE - 3}
-            strokeLinecap="round"
-            strokeDasharray={`${((100 - aiScore) / 100) * CIRC - 4} ${CIRC - (((100 - aiScore) / 100) * CIRC - 4)}`}
-            strokeDashoffset={-(aiDash + 2)}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 1.0 }}
-          />
-
-          {/* AI arc — glowing 3D glass */}
-          <motion.circle cx={CX} cy={CY} r={R} fill="none"
-            stroke="url(#ring-grad)"
-            strokeWidth={STROKE}
-            strokeLinecap="round"
-            strokeDasharray={CIRC}
-            filter="url(#ring-glow)"
-            initial={{ strokeDashoffset: CIRC }}
-            animate={{ strokeDashoffset: CIRC - aiDash + 2 }}
-            transition={{ duration: 1.4, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.2 }}
-          />
-        </svg>
-
-        {/* Center label */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <motion.span
-            style={{
-              fontSize: "33px",
-              fontWeight: 700,
-              letterSpacing: "-1px",
-              lineHeight: 1,
-              color: isDark ? "rgba(255,255,255,0.93)" : "#0F111A",
-            }}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.45, delay: 0.75 }}
-          >
-            {aiScore}%
-          </motion.span>
-          <motion.span
-            style={{
-              fontSize: "10px",
-              fontWeight: 600,
-              marginTop: "6px",
-              letterSpacing: "0.12em",
-              textTransform: "uppercase" as const,
-              color: isDark ? "rgba(255,255,255,0.30)" : "#9CA3AF",
-            }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            transition={{ delay: 0.95 }}
-          >
-            {aiScore >= 75 ? "HIGH LIKELIHOOD" : aiScore >= 45 ? "MIXED SIGNAL" : "LIKELY HUMAN"}
-          </motion.span>
-        </div>
+    <div
+      className="relative flex h-[96px] w-[96px] shrink-0 items-center justify-center rounded-full sm:h-[122px] sm:w-[122px]"
+      style={{
+        background: `conic-gradient(#f7a51c 0deg ${angle}deg, #e8edf5 ${angle}deg 360deg)`,
+      }}
+      aria-label={`Confidence ${normalized}%`}
+      role="img"
+    >
+      <div className="flex h-[74px] w-[74px] flex-col items-center justify-center rounded-full bg-white sm:h-[94px] sm:w-[94px]">
+        <span className="text-[26px] font-bold leading-none tracking-[-0.045em] text-[#07112f] sm:text-[34px]">
+          {normalized}%
+        </span>
       </div>
-
-      {/* Split label */}
-      <motion.div
-        className={`flex items-center gap-3 text-[11px] ${g.textBody}`}
-        style={{ marginTop: "-4px" }}
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-        transition={{ delay: 1.05 }}
-      >
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-[6px] w-[6px] rounded-full" style={{ backgroundColor: "rgba(20,184,166,0.6)" }} />
-          Human {100 - aiScore}%
-        </span>
-        <span className={g.textCaption}>|</span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-[6px] w-[6px] rounded-full" style={{ background: "linear-gradient(135deg, #4338CA, #6366F1)" }} />
-          AI {aiScore}%
-        </span>
-      </motion.div>
     </div>
   );
 }
 
-/* ─── Model Attribution — Glowing Pills ─────────────────────────────────────── */
-
-function ModelPill({ name, score, rank, isDark, g }: {
-  name: string; score: number; rank: number; isDark: boolean; g: ReturnType<typeof useGlass>;
-}) {
-  const intensities = [1, 0.6, 0.38, 0.22];
-  const opacity = intensities[rank] ?? 0.15;
+function MiniBars({ tone }: { tone: "human" | "mixed" | "ai" }) {
+  const color =
+    tone === "human"
+      ? "bg-[#1263F1]"
+      : tone === "mixed"
+        ? "bg-[#1263F1]"
+        : "bg-[#1263F1]";
+  const heights = [
+    12, 17, 21, 14, 28, 11, 9, 18, 13, 25, 15, 10, 20, 16, 12, 19, 14, 9, 17,
+    13,
+  ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: rank * 0.1 + 0.3, duration: 0.35 }}
-    >
-      <div className="mb-1.5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={g.textCaption}
-            style={{ fontSize: "9px", fontWeight: 700, fontVariantNumeric: "tabular-nums", width: "14px", letterSpacing: "0.05em" }}
-          >
-            {String(rank + 1).padStart(2, "0")}
-          </span>
-          <span className={g.textBody}
-            style={{ fontSize: "11px", fontWeight: rank === 0 ? 600 : 400, letterSpacing: "0.04em", textTransform: "uppercase" }}
-          >
-            {name}
-          </span>
-        </div>
-        <span className={g.textBody}
-          style={{ fontSize: "11px", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}
-        >
-          {score}%
-        </span>
-      </div>
-      {/* Glowing pill track */}
-      <div className="overflow-hidden rounded-full" style={{
-        height: "5px",
-        background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)",
-      }}>
-        <motion.div
-          style={{
-            height: "100%",
-            borderRadius: "9999px",
-            background: rank === 0
-              ? "linear-gradient(to right, #4338CA, #6366F1, #818CF8)"
-              : `rgba(99,102,241,${opacity})`,
-            boxShadow: rank === 0
-              ? `0 0 12px rgba(99,102,241,0.4)`
-              : `0 0 6px rgba(99,102,241,${opacity * 0.5})`,
-          }}
-          initial={{ width: 0 }}
-          animate={{ width: `${score}%` }}
-          transition={{ delay: rank * 0.1 + 0.45, duration: 0.75, ease: "easeOut" }}
+    <div className="mt-4 flex h-8 items-end gap-1">
+      {heights.map((height, index) => (
+        <span
+          key={index}
+          className={`${color} w-[3px] rounded-t-[2px]`}
+          style={{ height: `${height}px`, opacity: 0.25 + (index % 5) * 0.14 }}
         />
-      </div>
-    </motion.div>
+      ))}
+    </div>
   );
 }
 
-/* ─── Ethereal Sentence Highlight ───────────────────────────────────────────── */
+export function ResultsPanel({
+  data,
+  isAnalyzing = false,
+  onUpgrade,
+  isUpgrading = false,
+}: {
+  data?: ResultsData | null;
+  isAnalyzing?: boolean;
+  onUpgrade?: () => void;
+  isUpgrading?: boolean;
+}) {
+  const [activeTab, setActiveTab] = useState<"analysis" | "report">("analysis");
+  const [reportSections, setReportSections] = useState({
+    verdict: true,
+    models: true,
+    highlights: true,
+    layers: true,
+    interpretation: true,
+  });
+  const [reportStep, setReportStep] = useState(0);
 
-function EtherealSentence({ seg, idx, isDark }: { seg: Segment; idx: number; isDark: boolean }) {
-  if (seg.isAI) {
+  if (!data && !isAnalyzing) {
     return (
-      <motion.div
-        initial={{ opacity: 0, x: -4 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.04 * idx + 0.35, duration: 0.45 }}
-        style={{
-          display: "block",
-          padding: "8px 14px",
-          marginBottom: "6px",
-          borderRadius: "6px",
-          borderLeft: "2px solid rgba(220,60,60,0.55)",
-          background: isDark
-            ? "rgba(220,60,60,0.06)"
-            : "rgba(220,60,60,0.04)",
-          fontSize: "13px",
-          lineHeight: "1.75",
-          color: isDark ? "rgba(255,255,255,0.82)" : "#1E293B",
-        }}
-      >
-        {seg.text}
-      </motion.div>
+      <div className="flex h-full flex-col items-center justify-center rounded-[14px] border border-dashed border-[#d7dfed] bg-white/60 px-5 text-center sm:px-8">
+        <div className="flex h-14 w-14 items-center justify-center rounded-[14px] bg-[#e7eef8] text-[#1f5cc4]">
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+        </div>
+        <h3 className="mt-5 text-[17px] font-semibold text-[#0d1526]">
+          No results yet
+        </h3>
+        <p className="mt-2 max-w-[24ch] text-[13px] leading-6 text-[#64748b]">
+          Paste or upload a document, then press{" "}
+          <strong className="whitespace-nowrap text-[#0d1526]">Analyze</strong>.
+        </p>
+      </div>
     );
   }
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -4 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.04 * idx + 0.35, duration: 0.45 }}
-      style={{
-        display: "block",
-        padding: "8px 14px",
-        marginBottom: "6px",
-        borderRadius: "6px",
-        borderLeft: "2px solid rgba(20,184,166,0.55)",
-        background: isDark
-          ? "rgba(20,184,166,0.05)"
-          : "rgba(20,184,166,0.04)",
-        fontSize: "13px",
-        lineHeight: "1.75",
-        color: isDark ? "rgba(255,255,255,0.88)" : "#0F172A",
-      }}
-    >
-      {seg.text}
-    </motion.div>
-  );
-}
+  if (isAnalyzing) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center rounded-[14px] border border-[#d7dfed] bg-white/70 px-8 text-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-[3px] border-[#d8e3f2] border-t-[#1263F1]" />
+        <h3 className="mt-5 text-[17px] font-semibold text-[#0d1526]">
+          Analyzing text
+        </h3>
+        <p className="mt-2 max-w-[30ch] text-[13px] leading-6 text-[#64748b]">
+          The result panel will update when the detection pipeline finishes.
+        </p>
+      </div>
+    );
+  }
 
-/* ─── Main ResultsPanel ────────────────────────────────────────────────────── */
-
-export function ResultsPanel({ data }: { data: ResultsData }) {
-  const { isDark } = useApp();
-  const g = useGlass(isDark);
-  const [showInfo, setShowInfo] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-
-  const wordCount = data.wordCount ?? 350;
-  const submittedText = data.submittedText ??
-    "The implications of artificial intelligence on modern education systems cannot be overstated. As we navigate the complexities of integrating technology into traditional learning environments, educators must remain vigilant about preserving the integrity of academic work. However, critics argue that the over-reliance on automated tools may diminish the value of critical thinking skills that are fundamental to intellectual growth. In my own experience teaching high school students, I've noticed a growing trend where students prefer to use AI rather than develop their own analytical frameworks. The research conducted by Johnson et al. (2024) demonstrates a statistically significant correlation between AI usage in academic writing and decreased originality scores. I genuinely believe that we need to find a middle ground — one that embraces innovation while preserving the authenticity of human thought and expression. Ultimately, the responsibility falls on institutions to create clear, enforceable policies that both leverage the benefits of AI assistance and uphold the standards of original scholarship.";
-
-  const modelAttributions: ModelAttribution[] = data.modelAttributions ?? [
-    { name: "GPT-4 Turbo", score: 62 },
-    { name: "Claude 3 Opus", score: 18 },
-    { name: "Gemini 1.5 Pro", score: 13 },
-    { name: "Llama 3 70B", score: 7 },
+  const display = data ?? previewData;
+  const score = clampScore(isAnalyzing ? 32 : display.aiScore);
+  const models = display.modelAttributions ?? [];
+  const chunks = display.chunks ?? [];
+  const fullReportAvailable = display.fullReportAvailable !== false;
+  const shownModels = fullReportAvailable ? models : [];
+  const shownChunks = fullReportAvailable ? chunks : previewData.chunks;
+  const analysisLayers = [
+    {
+      label: "RoBERTa Classifier",
+      score: display.layer1Score ?? 0,
+      tone: "ai" as const,
+    },
+    {
+      label: "Stylistic Analysis",
+      score: fullReportAvailable ? (display.layer2Score ?? 0) : 62,
+      tone: "mixed" as const,
+    },
+    {
+      label: "Statistical Analysis",
+      score: fullReportAvailable ? (display.layer3Score ?? 0) : 45,
+      tone: "human" as const,
+    },
   ];
-
-  const segments: Segment[] = data.segments ?? [
-    { text: "The implications of artificial intelligence on modern education systems cannot be overstated.", isAI: true },
-    { text: "As we navigate the complexities of integrating technology into traditional learning environments, educators must remain vigilant about preserving the integrity of academic work.", isAI: true },
-    { text: "However, critics argue that the over-reliance on automated tools may diminish the value of critical thinking skills that are fundamental to intellectual growth.", isAI: true },
-    { text: "In my own experience teaching high school students, I've noticed a growing trend where students prefer to use AI rather than develop their own analytical frameworks.", isAI: false },
-    { text: "The research conducted by Johnson et al. (2024) demonstrates a statistically significant correlation between AI usage in academic writing and decreased originality scores.", isAI: true },
-    { text: "I genuinely believe that we need to find a middle ground — one that embraces innovation while preserving the authenticity of human thought and expression.", isAI: false },
-    { text: "Ultimately, the responsibility falls on institutions to create clear, enforceable policies that both leverage the benefits of AI assistance and uphold the standards of original scholarship.", isAI: true },
+  const rawSegments = display.segments ?? [];
+  const humanSegments = rawSegments.filter((s) => !s.isAI);
+  const aiSegments = rawSegments.filter((s) => s.isAI);
+  const primaryModel = models[0]?.name ?? display.model;
+  const isHumanResult = (display.aiScore ?? 0) < 50;
+  const submittedDate = display.submittedAt
+    ? new Date(display.submittedAt).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Not submitted";
+  const setReportSection = (
+    key: keyof typeof reportSections,
+    value: boolean,
+  ) => {
+    setReportSections((current) => ({ ...current, [key]: value }));
+  };
+  const reportSteps: {
+    key: keyof typeof reportSections;
+    question: string;
+    block: string;
+    detail: string;
+  }[] = [
+    {
+      key: "verdict",
+      question: "Include the verdict summary?",
+      block: "Verdict summary",
+      detail: "AI signal, label, top model, and submission date.",
+    },
+    {
+      key: "models",
+      question: "Include model attribution?",
+      block: "Model attribution",
+      detail:
+        "Ranked confidence scores for GPT, Claude, Gemini, and Llama signals.",
+    },
+    {
+      key: "highlights",
+      question: "Include sentence evidence?",
+      block: "Sentence evidence",
+      detail:
+        "Counts for likely human-written, uncertain, and likely AI-generated sentences.",
+    },
+    {
+      key: "layers",
+      question: "Include detection layers?",
+      block: "Detection layers",
+      detail:
+        "RoBERTa classifier, stylistic analysis, and statistical analysis contributions.",
+    },
+    {
+      key: "interpretation",
+      question: "Include interpretation guidance?",
+      block: "Interpretation note",
+      detail:
+        "Responsible academic review language that frames the result as probabilistic.",
+    },
   ];
+  const isPreviewStep = reportStep >= reportSteps.length;
+  const currentReportStep =
+    reportSteps[Math.min(reportStep, reportSteps.length - 1)];
+  const reportText = [
+    "Veri4i review report",
+    reportSections.verdict
+      ? `Verdict: ${display.label}. AI signal: ${score}%. Top model: ${primaryModel}. Date: ${submittedDate}.`
+      : null,
+    reportSections.interpretation
+      ? "Interpretation: The submitted text shows a high AI-generation signal. Review highlighted sentences and layer scores before making an academic decision."
+      : null,
+    reportSections.models
+      ? `Model attribution: ${models
+          .slice(0, 4)
+          .map((model) => `${model.name} ${clampScore(model.score)}%`)
+          .join(", ")}.`
+      : null,
+    reportSections.highlights
+      ? "Sentence evidence: 12 likely human-written sentences, 5 uncertain sentences, 7 likely AI-generated sentences."
+      : null,
+    reportSections.layers
+      ? `Detection layers: ${chunks
+          .slice(0, 3)
+          .map((chunk) => `${chunk.text} ${clampScore(chunk.score)}%`)
+          .join(", ")}.`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const downloadReport = () => {
+    const blob = new Blob([reportText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "veri4i-review-report.txt";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
 
-  const aiSentences = segments.filter((s) => s.isAI).length;
-  const humanSentences = segments.filter((s) => !s.isAI).length;
+  // Chart data
+  const layerChartData = analysisLayers.map((l) => ({
+    name: l.label.split(" ")[0],
+    score: clampScore(l.score),
+  }));
 
-  const previewText = submittedText.slice(0, 180) + (submittedText.length > 180 ? "..." : "");
-  const needsExpand = submittedText.length > 180;
+  const wc = display.writingCharacteristics;
+  const radarData = wc
+    ? [
+        {
+          metric: "Vocabulary",
+          value: Math.min(100, Math.round((wc.vocabularyDiversity ?? 0) * 100)),
+        },
+        {
+          metric: "Variation",
+          value: Math.min(100, Math.round(wc.sentenceLengthVariance ?? 0)),
+        },
+        {
+          metric: "Burstiness",
+          value: Math.min(100, Math.round((wc.burstinessScore ?? 0) * 25)),
+        },
+        {
+          metric: "Unpredictability",
+          value: Math.min(100, Math.round((wc.perplexity ?? 0) / 2)),
+        },
+        {
+          metric: "Entropy",
+          value: Math.min(100, Math.round((wc.avgTokenEntropy ?? 0) * 16)),
+        },
+      ]
+    : [];
 
-  const scoreStatus =
-    data.aiScore >= 75
-      ? { label: "AI-Generated", cls: g.statusAI, icon: Bot }
-      : data.aiScore >= 45
-      ? { label: "Mixed Content", cls: g.statusMixed, icon: ScanLine }
-      : { label: "Human-Written", cls: g.statusHuman, icon: UserRound };
-
-  const StatusIcon = scoreStatus.icon;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="space-y-4"
-    >
-      {/* 1. INPUT HEADER */}
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="rounded-2xl p-5"
-        style={g.card}
+  const tabHeader = (
+    <div className="flex h-[58px] shrink-0 items-center overflow-x-auto border-b border-[#d7dfed] bg-[#fbfcff]/75 px-4 veriai-hide-scrollbar sm:px-7">
+      <div
+        className="flex h-full gap-8 sm:gap-12"
+        role="tablist"
+        aria-label="Result view"
       >
-        <div className="mb-3.5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-              style={{ background: isDark ? "rgba(99,102,241,0.1)" : "rgba(99,102,241,0.06)" }}>
-              <AlignLeft className="h-3.5 w-3.5" style={{ color: "#6366F1" }} />
-            </div>
-            <span className={g.textBody} style={{ fontSize: "12px", fontWeight: 500 }}>
-              Submitted Text
-            </span>
-          </div>
-          <span className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] ${scoreStatus.cls}`}
-            style={{ fontWeight: 600, letterSpacing: "0.03em", textTransform: "uppercase" }}>
-            <StatusIcon className="h-3 w-3" />
-            {scoreStatus.label}
-          </span>
-        </div>
-
-        <div className="rounded-xl p-4" style={g.inner}>
-          <p className={g.textBody} style={{ fontSize: "12px", lineHeight: "1.7" }}>
-            {expanded ? submittedText : previewText}
-          </p>
-          {needsExpand && (
-            <button
-              onClick={() => setExpanded((v) => !v)}
-              className="mt-2 flex items-center gap-1 text-[10px] transition-colors"
-              style={{ color: "#6366F1" }}
-            >
-              {expanded ? <><ChevronUp className="h-3 w-3" /> Collapse</> : <><ChevronDown className="h-3 w-3" /> Expand full text</>}
-            </button>
-          )}
-        </div>
-
-        <div className="mt-3.5 flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {[
-              { icon: FileText, label: `${wordCount} words` },
-              { icon: Clock, label: "Just now" },
-              { icon: ScanLine, label: `${data.confidence}% confidence` },
-            ].map((chip) => (
-              <span key={chip.label} className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[10px] ${g.tagBg}`}>
-                <chip.icon className="h-3 w-3" />
-                {chip.label}
-              </span>
-            ))}
-          </div>
-          <button className={`flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-[11px] transition-all ${g.btnSecondary}`}
-            style={{ fontWeight: 500 }}>
-            <RotateCcw className="h-3 w-3" />
-            Re-analyze
-          </button>
-        </div>
-      </motion.div>
-
-      {/* 2. HIGH-LEVEL METRICS */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {/* LEFT: Global AI Probability */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08, duration: 0.4 }}
-          className="rounded-2xl p-6"
-          style={g.card}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "analysis"}
+          onClick={() => setActiveTab("analysis")}
+          className={`border-b-2 px-1 text-[16px] font-semibold transition-colors ${
+            activeTab === "analysis"
+              ? "border-[#1263F1] text-[#1263F1]"
+              : "border-transparent text-[#52627a] hover:text-[#0d1526]"
+          }`}
         >
-          <div className="mb-6 flex items-center justify-between">
-            <span className={g.textCaption}
-              style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" }}>
-              Global AI Probability
-            </span>
-            <Info className="h-3.5 w-3.5" style={{ color: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)" }} />
-          </div>
+          Analysis
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "report"}
+          onClick={() => setActiveTab("report")}
+          className={`border-b-2 px-1 text-[16px] font-semibold transition-colors ${
+            activeTab === "report"
+              ? "border-[#1263F1] text-[#1263F1]"
+              : "border-transparent text-[#52627a] hover:text-[#0d1526]"
+          }`}
+        >
+          Report
+        </button>
+      </div>
+    </div>
+  );
 
-          <div className="flex justify-center">
-            <GlassRing aiScore={data.aiScore} isDark={isDark} g={g} />
+  if (activeTab === "report" && !fullReportAvailable) {
+    return (
+      <div className="grid h-full min-h-0 grid-rows-[58px_1fr] overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)]">
+        {tabHeader}
+        <section className="relative min-h-0 overflow-hidden">
+          {/* Blurred step-1 question wizard */}
+          <div className="pointer-events-none h-full select-none overflow-hidden blur-[3px]">
+            <div className="grid h-full min-h-0 grid-rows-[1fr_auto] px-4 py-5 sm:px-7 sm:py-6">
+              <div className="flex min-h-0 items-center justify-center">
+                <div className="w-full max-w-[560px] rounded-[14px] border border-[#d7dfed] bg-[#f8fafc]/75 p-6 shadow-[0_18px_42px_rgba(31,45,71,0.08)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="veriai-mono text-[12px] font-semibold text-[#7185a3]">
+                      Question 1 of 5
+                    </span>
+                    <span className="rounded-[8px] border border-[#d7dfed] bg-white px-2.5 py-1 text-[12px] font-semibold text-[#274169]">
+                      Verdict summary
+                    </span>
+                  </div>
+                  <h2 className="mt-6 text-[24px] font-semibold leading-[1.15] tracking-[-0.035em] text-[#07112f]">
+                    Include the verdict summary?
+                  </h2>
+                  <p className="mt-3 text-[14px] font-medium leading-7 text-[#52627a]">
+                    AI signal, label, top model, and submission date.
+                  </p>
+                  <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      className="rounded-[12px] border border-[#1263F1] bg-[#edf4ff] px-4 py-4 text-left"
+                    >
+                      <span className="block text-[15px] font-semibold text-[#1263F1]">
+                        Include
+                      </span>
+                      <span className="mt-1 block text-[12px] font-medium leading-5 text-[#7185a3]">
+                        Add this block to the final report
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-[12px] border border-[#d7dfed] bg-white px-4 py-4 text-left"
+                    >
+                      <span className="block text-[15px] font-semibold text-[#274169]">
+                        Skip
+                      </span>
+                      <span className="mt-1 block text-[12px] font-medium leading-5 text-[#7185a3]">
+                        Leave this block out
+                      </span>
+                    </button>
+                  </div>
+                  <div className="mt-5 rounded-[12px] border border-[#d7dfed] bg-white p-4">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7185a3]">
+                      Block preview
+                    </span>
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                      {(
+                        [
+                          ["Verdict", "AI generated"],
+                          ["Top model", "GPT-4"],
+                          ["Date", "May 14, 2025"],
+                        ] as [string, string][]
+                      ).map(([label, value]) => (
+                        <div
+                          key={label}
+                          className="rounded-[9px] border border-[#d7dfed] bg-[#f8fafc]/75 px-3 py-2.5"
+                        >
+                          <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#7185a3]">
+                            {label}
+                          </span>
+                          <strong className="mt-1 block truncate text-[12px] font-semibold text-[#07112f]">
+                            {value}
+                          </strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between border-t border-[#d7dfed] pt-4">
+                <button
+                  type="button"
+                  className="flex h-10 items-center gap-2 rounded-[9px] border border-[#d7dfed] bg-white px-4 text-[14px] font-semibold text-[#274169] opacity-45"
+                >
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  className="flex h-10 items-center gap-2 rounded-[9px] bg-[#1263F1] px-4 text-[14px] font-semibold text-white"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
           </div>
+          {/* Upgrade overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-white/48 px-4 sm:px-8">
+            <div className="max-w-[360px] rounded-[14px] border border-[#cbd7ea] bg-white p-5 text-center shadow-[0_22px_54px_rgba(31,45,71,0.16)]">
+              <h2 className="text-[16px] font-semibold text-[#07112f]">
+                Report export is Premium
+              </h2>
+              <p className="mt-2 text-[13px] font-medium leading-6 text-[#52627a]">
+                Upgrade to unlock attribution, sentence evidence, statistics,
+                and downloadable reports for this scan.
+              </p>
+              {onUpgrade && (
+                <button
+                  type="button"
+                  onClick={onUpgrade}
+                  disabled={isUpgrading}
+                  className="veriai-pressable mt-4 h-10 rounded-[9px] bg-[#1263F1] px-5 text-[13px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60"
+                >
+                  {isUpgrading ? "Upgrading..." : "Upgrade account"}
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
-          <div className="mt-6 grid grid-cols-3 rounded-xl overflow-hidden" style={g.inner}>
-            {[
-              { label: "SCANNED", value: data.stats.analyzed },
-              { label: "FLAGGED", value: data.stats.flagged },
-              { label: "CLEAN", value: data.stats.clean },
-            ].map((s, i) => (
-              <div key={s.label} className="flex flex-col items-center py-3.5"
-                style={{
-                  borderRight: i < 2
-                    ? isDark ? "1px solid rgba(255,255,255,0.04)" : "1px solid rgba(0,0,0,0.05)"
-                    : "none",
-                }}>
-                <span className={g.textHeading}
-                  style={{ fontSize: "18px", fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
-                  <motion.span key={s.value} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35 }}>{s.value}</motion.span>
+  if (activeTab === "report" && fullReportAvailable) {
+    return (
+      <div className="grid h-full min-h-0 grid-rows-[58px_1fr] overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)]">
+        {tabHeader}
+        <section className="min-h-0 overflow-hidden">
+          {!isPreviewStep ? (
+            <div className="grid h-full min-h-0 grid-rows-[1fr_auto] px-4 py-5 sm:px-7 sm:py-6">
+              <div className="flex min-h-0 items-center justify-center">
+                <div className="w-full max-w-[560px] rounded-[14px] border border-[#d7dfed] bg-[#f8fafc]/75 p-6 shadow-[0_18px_42px_rgba(31,45,71,0.08)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="veriai-mono text-[12px] font-semibold text-[#7185a3]">
+                      Question {reportStep + 1} of {reportSteps.length}
+                    </span>
+                    <span className="rounded-[8px] border border-[#d7dfed] bg-white px-2.5 py-1 text-[12px] font-semibold text-[#274169]">
+                      {currentReportStep.block}
+                    </span>
+                  </div>
+                  <h2 className="mt-6 text-[24px] font-semibold leading-[1.15] tracking-[-0.035em] text-[#07112f]">
+                    {currentReportStep.question}
+                  </h2>
+                  <p className="mt-3 text-[14px] font-medium leading-7 text-[#52627a]">
+                    {currentReportStep.detail}
+                  </p>
+                  <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {(
+                      [
+                        [true, "Include", "Add this block to the final report"],
+                        [false, "Skip", "Leave this block out"],
+                      ] as [boolean, string, string][]
+                    ).map(([value, label, help]) => {
+                      const selected =
+                        reportSections[currentReportStep.key] === value;
+                      return (
+                        <button
+                          key={String(value)}
+                          type="button"
+                          onClick={() =>
+                            setReportSection(
+                              currentReportStep.key,
+                              Boolean(value),
+                            )
+                          }
+                          className={`rounded-[12px] border px-4 py-4 text-left transition-colors ${
+                            selected
+                              ? "border-[#1263F1] bg-[#edf4ff] text-[#1263F1]"
+                              : "border-[#d7dfed] bg-white text-[#274169] hover:bg-[#f7fbff]"
+                          }`}
+                        >
+                          <span className="block text-[15px] font-semibold">
+                            {label}
+                          </span>
+                          <span className="mt-1 block text-[12px] font-medium leading-5 text-[#7185a3]">
+                            {help}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-5 rounded-[12px] border border-[#d7dfed] bg-white p-4">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7185a3]">
+                      Block preview
+                    </span>
+                    {currentReportStep.key === "verdict" && (
+                      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        {(
+                          [
+                            ["Verdict", display.label],
+                            ["Top model", primaryModel],
+                            ["Date", submittedDate],
+                          ] as [string, string][]
+                        ).map(([label, value]) => (
+                          <div
+                            key={label}
+                            className="rounded-[9px] border border-[#d7dfed] bg-[#f8fafc]/75 px-3 py-2.5"
+                          >
+                            <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#7185a3]">
+                              {label}
+                            </span>
+                            <strong className="mt-1 block truncate text-[12px] font-semibold text-[#07112f]">
+                              {value}
+                            </strong>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {currentReportStep.key === "models" && (
+                      <div className="mt-3 grid gap-2">
+                        {models.slice(0, 4).map((model) => (
+                          <div
+                            key={model.name}
+                            className="grid grid-cols-[1fr_auto] items-center gap-3 text-[12px] font-semibold"
+                          >
+                            <span className="truncate text-[#274169]">
+                              {model.name}
+                            </span>
+                            <span className="veriai-mono text-[#1263F1]">
+                              {clampScore(model.score)}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {currentReportStep.key === "highlights" && (
+                      <div className="mt-3 grid gap-2 text-[12px] font-semibold text-[#274169]">
+                        <div className="flex justify-between">
+                          <span>Likely human-written</span>
+                          <span>12 sentences</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Uncertain</span>
+                          <span>5 sentences</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Likely AI-generated</span>
+                          <span>7 sentences</span>
+                        </div>
+                      </div>
+                    )}
+                    {currentReportStep.key === "layers" && (
+                      <div className="mt-3 grid gap-2">
+                        {chunks.slice(0, 3).map((chunk) => (
+                          <div
+                            key={chunk.text}
+                            className="grid grid-cols-[1fr_auto] items-center gap-3 text-[12px] font-semibold"
+                          >
+                            <span className="truncate text-[#274169]">
+                              {chunk.text}
+                            </span>
+                            <span className="veriai-mono text-[#1263F1]">
+                              {clampScore(chunk.score)}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {currentReportStep.key === "interpretation" && (
+                      <p className="mt-3 text-[13px] font-medium leading-6 text-[#274169]">
+                        The submitted text shows a high AI-generation signal.
+                        Review highlighted sentences and layer scores before
+                        making an academic decision.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between border-t border-[#d7dfed] pt-4">
+                <button
+                  type="button"
+                  onClick={() => setReportStep((step) => Math.max(0, step - 1))}
+                  disabled={reportStep === 0}
+                  className="flex h-10 items-center gap-2 rounded-[9px] border border-[#d7dfed] bg-white px-4 text-[14px] font-semibold text-[#274169] hover:bg-[#f7fbff] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setReportStep((step) =>
+                      Math.min(reportSteps.length, step + 1),
+                    )
+                  }
+                  className="flex h-10 items-center gap-2 rounded-[9px] bg-[#1263F1] px-4 text-[14px] font-semibold text-white shadow-[0_14px_26px_-20px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5]"
+                >
+                  {reportStep === reportSteps.length - 1 ? "Preview" : "Next"} →
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid h-full min-h-0 grid-rows-[auto_1fr] px-4 py-5 sm:px-7 sm:py-6">
+              <div className="flex flex-col gap-3 border-b border-[#d7dfed] pb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <div>
+                  <h2 className="text-[20px] font-semibold tracking-[-0.025em] text-[#07112f]">
+                    Report preview
+                  </h2>
+                  <p className="mt-1 text-[13px] font-medium text-[#64748b]">
+                    Review selected blocks before downloading.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setReportStep(reportSteps.length - 1)}
+                    className="h-10 rounded-[9px] border border-[#d7dfed] bg-white px-4 text-[14px] font-semibold text-[#274169] hover:bg-[#f7fbff]"
+                  >
+                    ← Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={downloadReport}
+                    className="h-10 rounded-[9px] bg-[#1263F1] px-4 text-[14px] font-semibold text-white shadow-[0_14px_26px_-20px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5]"
+                  >
+                    Download
+                  </button>
+                </div>
+              </div>
+              <div className="min-h-0 overflow-y-auto py-5">
+                <pre className="veriai-document-font whitespace-pre-wrap rounded-[12px] border border-[#d7dfed] bg-[#f8fafc]/75 p-5 text-[14px] font-medium leading-7 text-[#274169]">
+                  {reportText}
+                </pre>
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
+    );
+  }
+
+  // Analysis tab
+  return (
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[14px] border border-[#a6b5cd]/70 bg-white/88 shadow-[0_22px_70px_rgba(45,67,98,0.1),inset_0_1px_0_rgba(255,255,255,0.9)]">
+      {tabHeader}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {/* Verdict section */}
+        <section className="border-b border-[#d7dfed]">
+          <div className="grid h-auto min-h-[140px] grid-cols-[100px_1fr] items-center gap-3 px-4 py-4 sm:h-[180px] sm:grid-cols-[142px_1fr] sm:gap-5 sm:px-7 sm:py-0">
+            <ScoreRing score={score} />
+            <div className="min-w-0">
+              <h2 className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.02em] text-[#ef3a43] sm:gap-3 sm:text-[20px]">
+                <span className="h-3.5 w-3.5 rounded-full bg-[#ef3a43]" />
+                {display.label}
+              </h2>
+              <p className="mt-2 max-w-[38ch] text-[13px] font-medium leading-6 text-[#152342] sm:mt-3 sm:text-[14px]">
+                {fullReportAvailable
+                  ? "The full ensemble result includes model attribution, sentence evidence, and analysis-layer scores."
+                  : "Free analysis uses the layer 1 detector and returns the global score and label."}
+              </p>
+              <p className="mt-4 flex items-start gap-2 text-[12px] font-medium leading-5 text-[#64748b]">
+                <InfoCircledIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#7c8aa5]" />
+                <span>
+                  Probabilistic signal only. Review evidence before making an
+                  academic judgment.
                 </span>
-                <span className={g.textCaption}
-                  style={{ fontSize: "9px", marginTop: "4px", fontWeight: 700, letterSpacing: "0.12em" }}>
-                  {s.label}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Confidence across text (AreaChart) — PRO + has chunks */}
+        {fullReportAvailable && chunks.length > 0 && (
+          <section className="border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
+            <div className="flex items-center justify-between pb-3">
+              <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                Confidence across text{" "}
+                <InfoTooltip text="Per-chunk AI confidence score across the document. Red peaks indicate likely AI-generated passages; blue troughs indicate likely human-written ones." />
+              </h2>
+              <span className="text-[12px] font-medium text-[#64748b]">
+                {chunks.length} chunks
+              </span>
+            </div>
+            <ResponsiveContainer width="100%" height={80}>
+              <AreaChart
+                data={chunks.map((c, i) => ({ i: i + 1, score: c.score }))}
+                margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="chunkGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef3a43" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#ef3a43" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="i" hide />
+                <YAxis domain={[0, 100]} hide />
+                <Tooltip
+                  formatter={(v) => [`${v}%`, "AI confidence"]}
+                  contentStyle={{
+                    fontSize: 12,
+                    borderRadius: 8,
+                    border: "1px solid #d7dfed",
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="score"
+                  stroke="#ef3a43"
+                  strokeWidth={1.5}
+                  fill="url(#chunkGrad)"
+                  dot={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </section>
+        )}
+
+        {/* Confidence across text — FREE blurred preview */}
+        {!fullReportAvailable && (
+          <section className="border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
+            <div className="pointer-events-none select-none blur-[3px]">
+              <div className="flex items-center justify-between pb-3">
+                <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                  Confidence across text
+                </h2>
+                <span className="text-[12px] font-medium text-[#64748b]">
+                  8 chunks
                 </span>
               </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* RIGHT: Model Attribution */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.14, duration: 0.4 }}
-          className="rounded-2xl p-6"
-          style={g.card}
-        >
-          <div className="mb-6 flex items-center justify-between">
-            <span className={g.textCaption}
-              style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" }}>
-              Model Attribution
-            </span>
-            <div className="relative">
-              <button onClick={() => setShowInfo((v) => !v)} className="flex items-center justify-center rounded-md transition-opacity hover:opacity-70">
-                <Info className="h-3.5 w-3.5" style={{ color: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)" }} />
-              </button>
-              <AnimatePresence>
-                {showInfo && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.94, y: -4 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.94, y: -4 }}
-                    transition={{ duration: 0.14 }}
-                    className="absolute right-0 top-7 z-30 w-60 rounded-xl p-3.5"
-                    style={{
-                      ...g.card,
-                      boxShadow: "0 16px 48px rgba(0,0,0,0.2)",
-                    }}
-                  >
-                    <p className={g.textBody} style={{ fontSize: "11px", lineHeight: "1.65" }}>
-                      Scores represent stylometric similarity to each model's known output patterns across 12 independent classifiers.
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <ResponsiveContainer width="100%" height={80}>
+                <AreaChart
+                  data={[42, 61, 78, 88, 95, 82, 74, 65].map((s, i) => ({
+                    i: i + 1,
+                    score: s,
+                  }))}
+                  margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient
+                      id="chunkGradFree"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="#ef3a43"
+                        stopOpacity={0.25}
+                      />
+                      <stop offset="95%" stopColor="#ef3a43" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="i" hide />
+                  <YAxis domain={[0, 100]} hide />
+                  <Area
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#ef3a43"
+                    strokeWidth={1.5}
+                    fill="url(#chunkGradFree)"
+                    dot={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-          </div>
+          </section>
+        )}
 
-          <div className="space-y-5">
-            {modelAttributions.map((m, i) => (
-              <ModelPill key={m.name} name={m.name} score={m.score} rank={i} isDark={isDark} g={g} />
-            ))}
-          </div>
+        {/* Model attribution */}
+        {!isHumanResult && (
+          <section className="relative grid min-h-0 grid-rows-[auto_1fr] border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
+            <div className="flex items-center justify-between pb-3">
+              <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                Model attribution{" "}
+                <InfoTooltip text="Estimates which AI model most likely generated this text based on statistical pattern matching. Results are probabilistic, not definitive." />
+              </h2>
+              <span className="text-[12px] font-medium text-[#64748b]">
+                ranked by confidence
+              </span>
+            </div>
+            {fullReportAvailable ? (
+              <div className="grid grid-cols-1 content-stretch gap-2.5 sm:grid-cols-2">
+                {shownModels.slice(0, 4).map((model) => {
+                  const modelScore = clampScore(model.score);
+                  const scoreColor =
+                    modelScore >= 90 ? "text-[#b32635]" : "text-[#07112f]";
+                  return (
+                    <article
+                      key={model.name}
+                      className="grid min-h-[76px] content-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium text-[#07112f]">
+                          <ModelLogo
+                            name={model.name}
+                            className="h-6 w-6 shrink-0"
+                          />
+                          <span className="truncate">{model.name}</span>
+                        </span>
+                        <span
+                          className={`veriai-mono text-[13px] font-semibold ${scoreColor}`}
+                        >
+                          {modelScore}%
+                        </span>
+                      </div>
+                      <span className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5ebf4]">
+                        <span
+                          className="veriai-bar-fill block h-full rounded-full bg-[#1263F1]"
+                          style={{ width: `${modelScore}%` }}
+                        />
+                      </span>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="pointer-events-none select-none blur-[3px]">
+                <div className="grid grid-cols-1 content-stretch gap-2.5 sm:grid-cols-2">
+                  {previewData.modelAttributions.slice(0, 4).map((model) => {
+                    const modelScore = clampScore(model.score);
+                    const scoreColor =
+                      modelScore >= 90 ? "text-[#b32635]" : "text-[#07112f]";
+                    return (
+                      <article
+                        key={model.name}
+                        className="grid min-h-[76px] content-between rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 p-3"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium text-[#07112f]">
+                            <ModelLogo
+                              name={model.name}
+                              className="h-6 w-6 shrink-0"
+                            />
+                            <span className="truncate">{model.name}</span>
+                          </span>
+                          <span
+                            className={`veriai-mono text-[13px] font-semibold ${scoreColor}`}
+                          >
+                            {modelScore}%
+                          </span>
+                        </div>
+                        <span className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5ebf4]">
+                          <span
+                            className="veriai-bar-fill block h-full rounded-full bg-[#1263F1]"
+                            style={{ width: `${modelScore}%` }}
+                          />
+                        </span>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            transition={{ delay: 0.85 }}
-            className="mt-5 rounded-lg px-3 py-2.5"
-            style={g.inner}
+        {/* Sentence-level highlights */}
+        <section className="relative border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
+          <div
+            className={`grid min-h-0 grid-rows-[auto_1fr] ${!fullReportAvailable ? "pointer-events-none select-none blur-[3px]" : ""}`}
           >
-            <p className={g.textCaption} style={{ fontSize: "10px" }}>
-              +8 additional models tested — each scored below 5% attribution threshold.
+            <div className="flex items-center justify-between gap-3 pb-3">
+              <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                Sentence-level highlights{" "}
+                <InfoTooltip text="Each chunk of text is scored individually. Green = likely human-written. Red = likely AI-generated." />
+              </h2>
+              <span className="shrink-0 text-[12px] font-medium text-[#64748b]">
+                {fullReportAvailable
+                  ? `${humanSegments.length + aiSegments.length} ${
+                      humanSegments.length + aiSegments.length === 1
+                        ? "sentence"
+                        : "sentences"
+                    }`
+                  : "19 sentences"}
+              </span>
+            </div>
+            {fullReportAvailable ? (
+              <div className="grid content-stretch gap-[9px]">
+                {[
+                  {
+                    tone: "human" as const,
+                    label: "Likely human-written",
+                    count: humanSegments.length,
+                  },
+                  {
+                    tone: "ai" as const,
+                    label: "Likely AI-generated",
+                    count: aiSegments.length,
+                  },
+                ].map(({ tone, label, count }) => {
+                  const meta = toneMeta(tone);
+                  return (
+                    <div
+                      key={tone}
+                      className="grid grid-cols-[18px_1fr] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5 sm:grid-cols-[18px_1fr_auto]"
+                    >
+                      <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
+                      <span className="text-[14px] font-medium text-[#07112f]">
+                        {label}
+                      </span>
+                      <span className="col-start-2 text-[12px] font-medium text-[#274169] sm:col-start-auto">
+                        {count} {count === 1 ? "sentence" : "sentences"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="grid content-stretch gap-[9px]">
+                {[
+                  {
+                    tone: "human" as const,
+                    label: "Likely human-written",
+                    count: 12,
+                  },
+                  {
+                    tone: "ai" as const,
+                    label: "Likely AI-generated",
+                    count: 7,
+                  },
+                ].map(({ tone, label, count }) => {
+                  const meta = toneMeta(tone);
+                  return (
+                    <div
+                      key={tone}
+                      className="grid grid-cols-[18px_1fr] items-center gap-3 rounded-[10px] border border-[#d7dfed] bg-[#f8fafc]/70 px-3.5 py-2.5 sm:grid-cols-[18px_1fr_auto]"
+                    >
+                      <span className={`h-3 w-3 rounded-full ${meta.dot}`} />
+                      <span className="text-[14px] font-medium text-[#07112f]">
+                        {label}
+                      </span>
+                      <span className="col-start-2 text-[12px] font-medium text-[#274169] sm:col-start-auto">
+                        {count} sentences
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Writing characteristics — FREE blurred preview (human results only) */}
+        {isHumanResult && !fullReportAvailable && (
+          <section className="border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
+            <div className="pointer-events-none select-none blur-[3px]">
+              <div className="pb-3">
+                <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                  Writing characteristics
+                </h2>
+              </div>
+              <ResponsiveContainer width="100%" height={180}>
+                <RadarChart
+                  data={[
+                    { metric: "Vocabulary", value: 61 },
+                    { metric: "Variation", value: 44 },
+                    { metric: "Burstiness", value: 58 },
+                    { metric: "Unpredictability", value: 72 },
+                    { metric: "Entropy", value: 53 },
+                  ]}
+                  margin={{ top: 8, right: 24, left: 24, bottom: 8 }}
+                >
+                  <PolarGrid stroke="#e5ebf4" />
+                  <PolarAngleAxis
+                    dataKey="metric"
+                    tick={{ fontSize: 10, fill: "#7185a3", fontWeight: 500 }}
+                  />
+                  <PolarRadiusAxis
+                    domain={[0, 100]}
+                    tick={false}
+                    axisLine={false}
+                  />
+                  <Radar
+                    dataKey="value"
+                    stroke="#1263F1"
+                    fill="#1263F1"
+                    fillOpacity={0.12}
+                    strokeWidth={1.5}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+        )}
+
+        {/* Writing characteristics (RadarChart) — human results + PRO only */}
+        {isHumanResult && fullReportAvailable && radarData.length > 0 && (
+          <section className="border-b border-[#d7dfed] px-4 pb-[14px] pt-4 sm:px-[22px]">
+            <div className="flex items-center justify-between pb-3">
+              <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                Writing characteristics
+                <InfoTooltip text="Linguistic and statistical features that characterise this text as human-written. Higher values indicate stronger human signals." />
+              </h2>
+            </div>
+            <ResponsiveContainer width="100%" height={180}>
+              <RadarChart
+                data={radarData}
+                margin={{ top: 8, right: 24, left: 24, bottom: 8 }}
+              >
+                <PolarGrid stroke="#e5ebf4" />
+                <PolarAngleAxis
+                  dataKey="metric"
+                  tick={{ fontSize: 10, fill: "#7185a3", fontWeight: 500 }}
+                />
+                <PolarRadiusAxis
+                  domain={[0, 100]}
+                  tick={false}
+                  axisLine={false}
+                />
+                <Radar
+                  dataKey="value"
+                  stroke="#1263F1"
+                  fill="#1263F1"
+                  fillOpacity={0.12}
+                  strokeWidth={1.5}
+                />
+                <Tooltip
+                  formatter={(v) => [`${v}`, "Human signal"]}
+                  contentStyle={{
+                    fontSize: 12,
+                    borderRadius: 8,
+                    border: "1px solid #d7dfed",
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </section>
+        )}
+
+        {/* Analysis layers (BarChart) */}
+        <section className="relative px-4 pb-[14px] pt-4 sm:px-[22px]">
+          <div
+            className={`grid min-h-0 grid-rows-[auto_1fr] ${!fullReportAvailable ? "pointer-events-none select-none blur-[3px]" : ""}`}
+          >
+            <div className="flex items-center justify-between gap-3 pb-3">
+              <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[#07112f]">
+                Analysis layers{" "}
+                <InfoTooltip text="RoBERTa: fine-tuned transformer classifier (primary signal). Stylistic: linguistic feature analysis. Statistical: perplexity and entropy scoring." />
+              </h2>
+              <span className="shrink-0 text-[12px] font-medium text-[#64748b]">
+                signal mix
+              </span>
+            </div>
+            <ResponsiveContainer width="100%" height={140}>
+              <BarChart
+                data={layerChartData}
+                barCategoryGap="28%"
+                maxBarSize={48}
+                margin={{ top: 12, right: 2, left: 2, bottom: 0 }}
+              >
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 11, fill: "#7185a3", fontWeight: 500 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis domain={[0, 100]} hide />
+                <Tooltip
+                  cursor={{ fill: "rgba(18,99,241,0.05)" }}
+                  formatter={(value) => [`${value}%`, "AI signal"]}
+                  contentStyle={{
+                    fontSize: 12,
+                    borderRadius: 8,
+                    border: "1px solid #d7dfed",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                  }}
+                />
+                <Bar dataKey="score" radius={[6, 6, 0, 0]}>
+                  {layerChartData.map((entry, i) => (
+                    <Cell
+                      key={i}
+                      fill={
+                        entry.score >= 65
+                          ? "#ef3a43"
+                          : entry.score >= 45
+                            ? "#f6b52d"
+                            : "#1263F1"
+                      }
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <p className="mt-1 text-center text-[11px] font-medium text-[#9aacbf]">
+              {analysisLayers[0] &&
+                `RoBERTa ${clampScore(analysisLayers[0].score)}% · Stylistic ${clampScore(analysisLayers[1]?.score ?? 0)}% · Statistical ${clampScore(analysisLayers[2]?.score ?? 0)}%`}
             </p>
-          </motion.div>
+          </div>
+        </section>
 
-          <p className={g.textCaption}
-            style={{ fontSize: "10px", marginTop: "14px", fontStyle: "italic", lineHeight: "1.6" }}>
-            Attribution is probabilistic. Results reflect pattern similarity, not definitive model identification.
-          </p>
-        </motion.div>
+        {/* Upgrade overlay — sticky at bottom of scroll container */}
+        {!fullReportAvailable && (
+          <div className="sticky bottom-0 flex items-center justify-center bg-gradient-to-t from-white/95 to-white/60 px-4 pb-4 pt-8">
+            <div className="rounded-[14px] border border-[#cbd7ea] bg-white px-5 py-6 text-center shadow-[0_22px_54px_rgba(31,45,71,0.16)] sm:px-7">
+              <p className="text-[16px] font-semibold text-[#07112f]">
+                Unlock the full report
+              </p>
+              <p className="mt-2 max-w-[28ch] text-[13px] font-medium leading-6 text-[#52627a]">
+                Attribution, sentence evidence, and analysis layers are Premium.
+              </p>
+              {onUpgrade && (
+                <button
+                  type="button"
+                  onClick={onUpgrade}
+                  disabled={isUpgrading}
+                  className="veriai-pressable mt-4 h-10 rounded-[9px] bg-[#1263F1] px-6 text-[13px] font-bold text-white shadow-[0_14px_28px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60"
+                >
+                  {isUpgrading ? "Upgrading..." : "Upgrade account"}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* 3. SEMANTIC BREAKDOWN */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.22, duration: 0.45 }}
-        className="rounded-2xl p-6"
-        style={g.card}
-      >
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className={g.textHeading} style={{ fontSize: "14px", fontWeight: 600 }}>
-              Semantic Breakdown
-            </span>
-            <span className={`rounded-md border px-2 py-0.5 text-[9px] ${g.chipBrand}`}
-              style={{ fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-              Sentence-level
-            </span>
-          </div>
-
-          <div className="flex items-center gap-5">
-            <div className="flex items-center gap-2">
-              <span className="inline-block rounded-full" style={{
-                width: "8px", height: "8px",
-                background: isDark ? "rgba(20,184,166,0.5)" : "rgba(20,184,166,0.4)",
-                boxShadow: `0 0 6px ${isDark ? "rgba(20,184,166,0.3)" : "rgba(20,184,166,0.2)"}`,
-              }} />
-              <span className={g.textBody} style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                Human
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-block rounded-full" style={{
-                width: "8px", height: "8px",
-                background: isDark ? "rgba(220,80,80,0.5)" : "rgba(220,60,60,0.4)",
-                boxShadow: `0 0 6px ${isDark ? "rgba(220,80,80,0.3)" : "rgba(220,60,60,0.2)"}`,
-              }} />
-              <span className={g.textBody} style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                AI-Generated
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className={`mb-5 h-px ${isDark ? "bg-[rgba(255,255,255,0.04)]" : "bg-[rgba(0,0,0,0.05)]"}`} />
-
-        {/* Ethereal text analysis */}
-        <div className="rounded-xl p-5" style={g.inner}>
-          <div style={{ fontSize: "13.5px", lineHeight: "1.8" }}>
-            {segments.map((seg, i) => (
-              <EtherealSentence key={i} seg={seg} idx={i} isDark={isDark} />
-            ))}
-          </div>
-        </div>
-
-        {/* Summary pills */}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {[
-            {
-              icon: Bot, label: `${aiSentences} AI sentences`,
-              style: isDark
-                ? { bg: "rgba(220,60,60,0.06)", border: "rgba(220,60,60,0.12)", color: "rgba(252,165,165,0.75)" }
-                : { bg: "rgba(220,60,60,0.05)", border: "rgba(220,60,60,0.1)", color: "#B91C1C" },
-            },
-            {
-              icon: UserRound, label: `${humanSentences} human sentences`,
-              style: isDark
-                ? { bg: "rgba(20,184,166,0.06)", border: "rgba(20,184,166,0.12)", color: "rgba(94,234,212,0.75)" }
-                : { bg: "rgba(20,184,166,0.05)", border: "rgba(20,184,166,0.1)", color: "#0F766E" },
-            },
-            {
-              icon: ScanLine, label: `${data.confidence}% avg. confidence`,
-              style: isDark
-                ? { bg: "rgba(99,102,241,0.08)", border: "rgba(99,102,241,0.15)", color: "rgba(165,180,252,0.8)" }
-                : { bg: "rgba(99,102,241,0.06)", border: "rgba(99,102,241,0.12)", color: "#4338CA" },
-            },
-            {
-              icon: ShieldAlert,
-              label: data.aiScore >= 75 ? "High risk" : data.aiScore >= 45 ? "Medium risk" : "Low risk",
-              style: isDark
-                ? { bg: "rgba(245,158,11,0.06)", border: "rgba(245,158,11,0.12)", color: "rgba(252,211,77,0.75)" }
-                : { bg: "rgba(245,158,11,0.06)", border: "rgba(245,158,11,0.12)", color: "#B45309" },
-            },
-          ].map((pill, i) => (
-            <motion.span
-              key={pill.label}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.55 + 0.07 * i, duration: 0.3 }}
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5"
-              style={{
-                fontSize: "10px", fontWeight: 600,
-                background: pill.style.bg,
-                border: `1px solid ${pill.style.border}`,
-                color: pill.style.color,
-                letterSpacing: "0.02em",
-              }}
-            >
-              <pill.icon style={{ width: "10px", height: "10px" }} />
-              {pill.label}
-            </motion.span>
-          ))}
-        </div>
-      </motion.div>
-    </motion.div>
+    </div>
   );
 }

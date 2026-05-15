@@ -1,0 +1,11 @@
+**/.git
+**/.idea
+**/.vscode
+**/.DS_Store
+**/*.pyc
+**/__pycache__
+**/node_modules
+**/dist
+**/build
+**/target
+**/.env

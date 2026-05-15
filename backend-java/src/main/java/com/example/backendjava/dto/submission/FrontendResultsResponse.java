@@ -13,6 +13,12 @@ public record FrontendResultsResponse(
         List<FrontendModelAttributionResponse> modelAttributions,
         List<FrontendSegmentResponse> segments,
         List<FrontendChunkScoreResponse> chunks,
-        FrontendStatsResponse stats
+        FrontendStatsResponse stats,
+        Boolean fullReportAvailable,
+        String accessLevel,
+        Integer layer1Score,
+        Integer layer2Score,
+        Integer layer3Score,
+        FrontendWritingMetricsResponse writingCharacteristics
 ) {
 }

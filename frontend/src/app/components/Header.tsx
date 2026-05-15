@@ -1,218 +1,342 @@
-import { Shield, Sun, Moon, LogOut, ChevronDown, LayoutDashboard, Clock, BookOpen } from "lucide-react";
-import { useApp } from "../context/AppContext";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import {
+  BellIcon,
+  CheckCircledIcon,
+  CrossCircledIcon,
+  ExitIcon,
+  Pencil1Icon,
+  QuestionMarkCircledIcon,
+  UpdateIcon,
+} from "@radix-ui/react-icons";
+import { useApp } from "../context/AppContext";
 
 interface HeaderProps {
-  variant?: "guest" | "auth";
+  variant?: "landing" | "login" | "dashboard";
+  contextTitle?: string;
+  onContextTitleChange?: (title: string) => void;
+  contextDetail?: string;
+  contextStatus?: string;
+  usageLabel?: string;
+  onContextTitleBlur?: () => void;
 }
 
-export function Header({ variant = "auth" }: HeaderProps) {
-  const { isDark, toggleTheme, isLoggedIn, logout, user } = useApp();
+export function Logo({
+  className = "h-[60px] w-auto",
+}: {
+  className?: string;
+}) {
+  return (
+    <img
+      src="/assets/veri4i-logo.png"
+      alt="veri4i"
+      className={className}
+      draggable={false}
+    />
+  );
+}
+
+export function Header({
+  variant = "landing",
+  contextTitle = "Dashboard",
+  onContextTitleChange,
+  contextDetail,
+  contextStatus,
+  usageLabel,
+  onContextTitleBlur,
+}: HeaderProps) {
   const navigate = useNavigate();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { isLoggedIn, user, logout, upgradeToPro } = useApp();
+  const [scrollY, setScrollY] = useState(0);
+  const [openPanel, setOpenPanel] = useState<"help" | "notifications" | null>(
+    null,
+  );
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
-  // Spatial glass tokens
-  const islandBg = isDark
-    ? "bg-[rgba(15,17,26,0.80)] backdrop-blur-[40px] border-[rgba(255,255,255,0.07)]"
-    : "bg-[rgba(255,255,255,0.85)] backdrop-blur-[40px] border-[rgba(255,255,255,0.90)]";
-  const islandShadow = isDark
-    ? "shadow-[0_8px_40px_rgba(0,0,0,0.50),inset_0_1px_0_rgba(255,255,255,0.04)]"
-    : "shadow-[0_8px_32px_rgba(0,0,0,0.08),0_1px_3px_rgba(0,0,0,0.04)]";
-  const textPrimary = isDark ? "text-[rgba(255,255,255,0.88)]" : "text-[#0F111A]";
-  const textSecondary = isDark ? "text-[rgba(255,255,255,0.4)]" : "text-[#6B7280]";
-  const navActive = isDark
-    ? "bg-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.92)]"
-    : "bg-[rgba(99,102,241,0.08)] text-[#4338CA]";
-  const navDefault = isDark
-    ? "text-[rgba(255,255,255,0.38)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.7)]"
-    : "text-[#6B7280] hover:bg-[rgba(0,0,0,0.04)] hover:text-[#374151]";
-  const themeBtn = isDark
-    ? "text-[rgba(255,255,255,0.3)] hover:text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.06)]"
-    : "text-[#9CA3AF] hover:text-[#4B5563] hover:bg-[rgba(0,0,0,0.04)]";
-  const dropdownBg = isDark
-    ? "bg-[rgba(12,12,18,0.92)] backdrop-blur-[40px] border-[rgba(255,255,255,0.07)]"
-    : "bg-[rgba(255,255,255,0.92)] backdrop-blur-[40px] border-[rgba(0,0,0,0.08)] shadow-[0_16px_64px_rgba(0,0,0,0.12)]";
+  useEffect(() => {
+    if (variant === "dashboard") return;
 
-  const navItems = [
-    { label: "Dashboard", icon: LayoutDashboard },
-    { label: "History", icon: Clock },
-    { label: "Docs", icon: BookOpen },
-  ];
+    const onScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [variant]);
+
+  if (variant === "dashboard") {
+    const accountUsage =
+      usageLabel ??
+      (user?.plan?.toUpperCase() === "PRO"
+        ? "Unlimited credits"
+        : `${(user?.dailyCreditsRemaining ?? 0).toLocaleString()} / ${(user?.dailyCreditLimit ?? 3000).toLocaleString()} credits`);
+    const planLabel = user?.plan ? user.plan.toUpperCase() : "FREE";
+    const isPro = user?.plan?.toUpperCase() === "PRO";
+    const creditRemaining = user?.dailyCreditsRemaining ?? 0;
+    const creditLimit = user?.dailyCreditLimit ?? 3000;
+    const creditAngle = isPro
+      ? 360
+      : Math.round((creditRemaining / Math.max(creditLimit, 1)) * 360);
+    const creditRingStyle = `conic-gradient(#2563eb 0deg ${creditAngle}deg, #d8e3f2 ${creditAngle}deg 360deg)`;
+    const handleUpgrade = async () => {
+      setIsUpgrading(true);
+      try {
+        await upgradeToPro();
+      } finally {
+        setIsUpgrading(false);
+      }
+    };
+    const statusTone = contextStatus?.toLowerCase().includes("fail")
+      ? "text-[#b32635]"
+      : contextStatus?.toLowerCase().includes("analyz")
+        ? "text-[#1263F1]"
+        : contextStatus?.toLowerCase().includes("draft")
+          ? "text-[#64748b]"
+          : "text-[#17633f]";
+
+    return (
+      <header className="sticky top-0 z-20 border-b border-[#d8e0ec] bg-[#fbfcff]/88 backdrop-blur-xl">
+        <div className="grid h-[72px] w-full grid-cols-[1fr_auto] items-center gap-3 px-4 sm:px-6 lg:gap-4">
+          <div className="flex min-w-0 items-center justify-start md:hidden">
+            <div
+              className="rounded-[10px] p-0.5 text-[11px] font-bold text-[#274169] shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+              style={{ background: creditRingStyle }}
+              aria-label={`${accountUsage}, ${planLabel} plan`}
+            >
+              <span className="block rounded-[8px] bg-white/95 px-3 py-[6px] shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
+                <span className="text-[#2563EB]">{accountUsage}</span>
+              </span>
+            </div>
+          </div>
+          <div className="hidden min-w-0 items-center justify-start gap-3 text-[14px] font-semibold text-[#274169] md:flex">
+            {onContextTitleChange ? (
+              <input
+                value={contextTitle}
+                onChange={(event) => onContextTitleChange(event.target.value)}
+                onBlur={(event) => {
+                  if (!event.target.value.trim()) {
+                    onContextTitleChange?.("Untitled scan");
+                  }
+                  onContextTitleBlur?.();
+                }}
+                aria-label="Scan title"
+                className="h-5 w-[104px] shrink-0 rounded-[5px] border border-transparent bg-transparent p-0 font-semibold leading-5 text-[#0d1526] outline-none transition-colors hover:bg-[#eef3f9]/70 focus:border-[#1263F1] focus:bg-white focus:px-1 focus:ring-2 focus:ring-[#1263F1]/10"
+              />
+            ) : (
+              <span className="max-w-[240px] truncate text-[#0d1526]">
+                {contextTitle}
+              </span>
+            )}
+            {contextDetail && (
+              <>
+                <span className="hidden text-[#94a3b8] xl:inline">•</span>
+                <span className="hidden xl:inline">{contextDetail}</span>
+              </>
+            )}
+            {contextStatus && (
+              <>
+                <span className="hidden text-[#94a3b8] xl:inline">•</span>
+                <span
+                  className={`hidden items-center gap-1.5 xl:flex ${statusTone}`}
+                >
+                  {contextStatus === "Saved" && (
+                    <CheckCircledIcon className="h-3.5 w-3.5" />
+                  )}
+                  {contextStatus === "Draft" && (
+                    <Pencil1Icon className="h-3.5 w-3.5" />
+                  )}
+                  {contextStatus === "Analyzing" && (
+                    <UpdateIcon className="h-3.5 w-3.5 animate-spin" />
+                  )}
+                  {contextStatus === "Failed" && (
+                    <CrossCircledIcon className="h-3.5 w-3.5" />
+                  )}
+                  {contextStatus}
+                </span>
+              </>
+            )}
+          </div>
+          <div className="flex min-w-0 items-center justify-end gap-3 text-[#111827]">
+            <div
+              className="hidden rounded-[10px] p-0.5 text-[14px] font-semibold text-[#274169] shadow-[0_1px_2px_rgba(15,23,42,0.04)] md:block"
+              style={{ background: creditRingStyle }}
+              aria-label={`${accountUsage}, ${planLabel} plan`}
+            >
+              <span className="block rounded-[8px] bg-white/95 px-[18px] py-[7px] shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
+                <span className="font-bold text-[#2563EB]">{accountUsage}</span>
+                <span className="ml-1 text-[#52627a]">{planLabel}</span>
+              </span>
+            </div>
+            {!isPro && (
+              <button
+                type="button"
+                onClick={handleUpgrade}
+                disabled={isUpgrading}
+                className="hidden h-9 rounded-[9px] bg-[#1263F1] px-3 text-[12px] font-bold text-white shadow-[0_12px_24px_-18px_rgba(18,99,241,0.95)] hover:bg-[#0d54d5] disabled:opacity-60 lg:block"
+              >
+                {isUpgrading ? "Upgrading..." : "Upgrade"}
+              </button>
+            )}
+            <div className="relative hidden xl:block">
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenPanel((panel) => (panel === "help" ? null : "help"))
+                }
+                aria-label="Help"
+                aria-expanded={openPanel === "help"}
+                className="veriai-icon-button flex h-9 w-9 items-center justify-center rounded-[9px] text-[#274169] hover:bg-[#eef3f9]"
+              >
+                <QuestionMarkCircledIcon className="h-5 w-5" />
+              </button>
+              {openPanel === "help" && (
+                <div className="absolute right-0 top-11 z-30 w-[280px] rounded-[14px] border border-[#d8e0ec] bg-white p-4 text-left shadow-[0_22px_54px_rgba(31,45,71,0.16)]">
+                  <p className="text-[13px] font-semibold text-[#0d1526]">
+                    Dashboard help
+                  </p>
+                  <p className="mt-2 text-[12px] font-medium leading-5 text-[#52627a]">
+                    Free accounts get 3,000 daily credits, one credit per word,
+                    and reset every day. Premium unlocks unlimited credits,
+                    PDF/DOCX upload, and the full ensemble report.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="relative hidden xl:block">
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenPanel((panel) =>
+                    panel === "notifications" ? null : "notifications",
+                  )
+                }
+                aria-label="Notifications"
+                aria-expanded={openPanel === "notifications"}
+                className="veriai-icon-button flex h-9 w-9 items-center justify-center rounded-[9px] text-[#274169] hover:bg-[#eef3f9]"
+              >
+                <BellIcon className="h-5 w-5" />
+              </button>
+              {openPanel === "notifications" && (
+                <div
+                  className="absolute right-0 top-11 z-30 w-[280px] rounded-[14px] border border-[#d8e0ec] bg-white p-4 shadow-[0_22px_54px_rgba(31,45,71,0.16)]"
+                  aria-label="Notifications panel"
+                >
+                  <p className="text-[13px] font-semibold text-[#0d1526]">
+                    Notifications
+                  </p>
+                  <div className="mt-6 flex flex-col items-center justify-center gap-3 pb-2 text-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1f5fb]">
+                      <BellIcon className="h-5 w-5 text-[#94a3b8]" />
+                    </div>
+                    <p className="text-[13px] font-semibold text-[#52627a]">
+                      No notifications
+                    </p>
+                    <p className="max-w-[18ch] text-[12px] font-medium leading-5 text-[#94a3b8]">
+                      You're all caught up for now.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex min-w-0 items-center gap-2 border-l border-[#d8e0ec] pl-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#edf4ff] text-[12px] font-bold text-[#193b8f]">
+                {user?.initials ?? "AK"}
+              </span>
+              <span className="hidden max-w-[180px] truncate text-[13px] font-semibold text-[#172033] xl:block">
+                {user?.name ?? user?.email ?? "Reviewer"}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                navigate("/");
+              }}
+              className="veriai-icon-button flex h-9 items-center justify-center gap-2 rounded-lg px-3 text-[13px] font-semibold text-[#42526f] hover:bg-[#eef3f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+            >
+              <ExitIcon className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </header>
+    );
+  }
+
+  const clamp = (value: number, min: number, max: number) =>
+    Math.min(Math.max(value, min), max);
+  const shrinkEnd = 140;
+  const shrinkProgress = clamp(scrollY / shrinkEnd, 0, 1);
+
+  const headerHeight = 84 - 24 * shrinkProgress;
+  const containerWidth = 1390 - (1390 - 980) * shrinkProgress;
+  const containerRadius = 18 + 28 * shrinkProgress;
+  const containerPaddingY = 18 - 6 * shrinkProgress;
+  const containerPaddingX = 24 + 12 * shrinkProgress;
 
   return (
-    <header className="sticky top-0 z-50 flex justify-center px-4 pt-4 pb-2">
-      <div className={`flex items-center gap-1.5 rounded-full border px-2 py-1.5 ${islandBg} ${islandShadow}`}>
-        {/* Logo */}
-        <button
-          onClick={() => navigate(isLoggedIn ? "/dashboard" : "/")}
-          className="flex items-center gap-2 pl-2 pr-3"
-        >
-          <div
-            className="flex h-7 w-7 items-center justify-center rounded-lg"
-            style={{
-              background: "linear-gradient(135deg, #4F46E5, #6366F1)",
-              boxShadow: "0 2px 12px rgba(79,70,229,0.3)",
-            }}
+    <header
+      className="sticky top-0 z-20 backdrop-blur-xl"
+      style={{
+        height: `${headerHeight}px`,
+        borderBottom: `1px solid rgba(215, 224, 238, ${1 - shrinkProgress})`,
+        backgroundColor: `rgba(251, 252, 255, ${0.92 * (1 - shrinkProgress)})`,
+        transition: "height 700ms cubic-bezier(0.23,1,0.32,1)",
+      }}
+    >
+      <div
+        className="mx-auto flex items-center justify-between gap-4 transition-[max-width,box-shadow,border-color,background-color,padding] duration-700 ease-out"
+        style={{
+          maxWidth: `${containerWidth}px`,
+          paddingTop: `${containerPaddingY}px`,
+          paddingBottom: `${containerPaddingY}px`,
+          paddingLeft: `${containerPaddingX}px`,
+          paddingRight: `${containerPaddingX}px`,
+          borderRadius: `${containerRadius}px`,
+          border:
+            shrinkProgress > 0
+              ? "1px solid rgba(215, 224, 238, 0.7)"
+              : "1px solid transparent",
+          boxShadow:
+            shrinkProgress > 0 ? "0 14px 36px rgba(15,23,42,0.12)" : "none",
+          backgroundColor:
+            shrinkProgress > 0 ? "rgba(255, 255, 255, 0.75)" : "transparent",
+        }}
+      >
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="veriai-icon-button rounded-[14px] p-1.5"
           >
-            <Shield className="h-3.5 w-3.5 text-white" />
-          </div>
-          <span className={`text-[14px] tracking-tight ${textPrimary}`} style={{ fontWeight: 600 }}>
-            Veri<span style={{ color: "#6366F1" }}>AI</span>
-          </span>
-        </button>
+            <Logo
+              className={
+                shrinkProgress > 0 ? "h-[40px] w-auto" : "h-[46px] w-auto"
+              }
+            />
+          </button>
+        </div>
 
-        {/* Separator */}
-        <div className={`h-5 w-px ${isDark ? "bg-white/[0.06]" : "bg-black/[0.06]"}`} />
+        <div className="hidden lg:block" aria-hidden="true" />
 
-        {/* Nav items */}
-        {variant === "auth" && isLoggedIn && (
-          <nav className="hidden items-center gap-0.5 px-1 md:flex">
-            {navItems.map((item, i) => (
-              <button
-                key={item.label}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] transition-all ${
-                  i === 0 ? navActive : navDefault
-                }`}
-                style={{ fontWeight: i === 0 ? 500 : 400 }}
-              >
-                <item.icon className="h-3 w-3" />
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        )}
-
-        {variant === "guest" && !isLoggedIn && (
-          <nav className="hidden items-center gap-0.5 px-1 md:flex">
-            <button className={`rounded-full px-3.5 py-1.5 text-[12px] ${navActive}`} style={{ fontWeight: 500 }}>
-              Analyze
-            </button>
-            <button className={`rounded-full px-3.5 py-1.5 text-[12px] ${navDefault}`}>
-              Pricing
-            </button>
-            <button className={`rounded-full px-3.5 py-1.5 text-[12px] ${navDefault}`}>
-              API
-            </button>
-          </nav>
-        )}
-
-        {/* Separator */}
-        <div className={`h-5 w-px ${isDark ? "bg-white/[0.06]" : "bg-black/[0.06]"}`} />
-
-        {/* Theme toggle */}
-        <button
-          onClick={toggleTheme}
-          className={`flex h-7 w-7 items-center justify-center rounded-full transition-all ${themeBtn}`}
-          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-        >
-          <AnimatePresence mode="wait">
-            {isDark ? (
-              <motion.div
-                key="sun"
-                initial={{ opacity: 0, rotate: -90, scale: 0.8 }}
-                animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                exit={{ opacity: 0, rotate: 90, scale: 0.8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Sun className="h-3.5 w-3.5" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="moon"
-                initial={{ opacity: 0, rotate: 90, scale: 0.8 }}
-                animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                exit={{ opacity: 0, rotate: -90, scale: 0.8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Moon className="h-3.5 w-3.5" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </button>
-
-        {/* Guest actions */}
-        {variant === "guest" && !isLoggedIn && (
-          <>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(isLoggedIn ? "/dashboard" : "/login")}
+            className="veriai-pressable h-[40px] rounded-[10px] border border-transparent px-3 text-[14px] font-semibold text-[#0f1a2f] hover:border-[#d7e0ee] hover:bg-white"
+          >
+            {isLoggedIn ? "Dashboard" : "Sign in"}
+          </button>
+          {variant === "landing" && (
             <button
-              onClick={() => navigate("/login")}
-              className={`rounded-full px-3.5 py-1.5 text-[12px] transition-all ${navDefault}`}
-              style={{ fontWeight: 500 }}
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="veriai-pressable hidden h-[44px] items-center rounded-[10px] bg-[#2563EB] px-5 text-[14px] font-semibold text-white shadow-[0_12px_26px_-18px_rgba(37,99,235,0.9)] hover:bg-[#1554df] sm:inline-flex"
             >
-              Log In
+              Get started
             </button>
-            <button
-              onClick={() => navigate("/login")}
-              className="rounded-full px-4 py-1.5 text-[12px] text-white transition-all"
-              style={{
-                fontWeight: 500,
-                background: "linear-gradient(135deg, #4F46E5, #6366F1)",
-                boxShadow: "0 2px 12px rgba(79,70,229,0.3)",
-              }}
-            >
-              Get Started
-            </button>
-          </>
-        )}
-
-        {/* Auth user menu */}
-        {variant === "auth" && isLoggedIn && user && (
-          <div className="relative">
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className={`flex items-center gap-1.5 rounded-full p-1 pr-2 transition-all ${
-                isDark ? "hover:bg-white/[0.05]" : "hover:bg-slate-100"
-              }`}
-            >
-              <div
-                className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] text-white"
-                style={{ fontWeight: 600, background: "linear-gradient(135deg, #4F46E5, #6366F1)" }}
-              >
-                {user.initials}
-              </div>
-              <ChevronDown
-                className={`h-3 w-3 transition-transform ${dropdownOpen ? "rotate-180" : ""} ${textSecondary}`}
-              />
-            </button>
-
-            <AnimatePresence>
-              {dropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                  transition={{ duration: 0.15 }}
-                  className={`absolute right-0 top-full mt-2 w-52 rounded-2xl border p-1.5 ${dropdownBg}`}
-                >
-                  <div className={`px-3 py-2.5 border-b mb-1 ${isDark ? "border-white/[0.06]" : "border-slate-100"}`}>
-                    <div className={`text-[12px] ${textPrimary}`} style={{ fontWeight: 500 }}>{user.name}</div>
-                    <div className={`text-[11px] ${textSecondary} truncate`}>{user.email}</div>
-                  </div>
-                  {["Profile Settings", "Billing", "API Keys"].map((item) => (
-                    <button
-                      key={item}
-                      className={`w-full text-left rounded-lg px-3 py-2 text-[12px] transition-all ${
-                        isDark ? "text-white/55 hover:bg-white/[0.05] hover:text-white/85" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                  <div className={`border-t mt-1 pt-1 ${isDark ? "border-white/[0.06]" : "border-slate-100"}`}>
-                    <button
-                      onClick={() => { logout(); navigate("/"); setDropdownOpen(false); }}
-                      className="w-full text-left flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] text-red-400 hover:bg-red-500/[0.06] transition-all"
-                    >
-                      <LogOut className="h-3 w-3" />
-                      Sign out
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );

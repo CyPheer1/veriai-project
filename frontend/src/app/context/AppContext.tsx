@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import {
   AuthUserResponse,
+  createCheckoutSessionRequest,
   getErrorMessage,
   loginRequest,
   meRequest,
@@ -14,6 +15,12 @@ interface AppUser {
   initials: string;
   plan: string;
   dailySubmissionCount: number;
+  dailyCreditLimit: number | null;
+  dailyCreditsUsed: number;
+  dailyCreditsRemaining: number | null;
+  creditResetDate: string;
+  textWordLimit: number | null;
+  premiumMonthlyPriceUsd: number;
 }
 
 interface AppContextType {
@@ -25,6 +32,7 @@ interface AppContextType {
   clearAuthError: () => void;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, plan?: string) => Promise<void>;
+  upgradeToPro: () => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   token: string | null;
@@ -32,7 +40,7 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType>({
-  isDark: true,
+  isDark: false,
   toggleTheme: () => {},
   isLoggedIn: false,
   authLoading: false,
@@ -40,6 +48,7 @@ const AppContext = createContext<AppContextType>({
   clearAuthError: () => {},
   login: async () => {},
   register: async () => {},
+  upgradeToPro: async () => {},
   logout: () => {},
   refreshUser: async () => {},
   token: null,
@@ -51,7 +60,7 @@ const TOKEN_STORAGE_KEY = "veriai.auth.token";
 const USER_STORAGE_KEY = "veriai.auth.user";
 
 function getStoredTheme(): boolean {
-  return localStorage.getItem(THEME_STORAGE_KEY) !== "light";
+  return false;
 }
 
 function getStoredToken(): string | null {
@@ -112,6 +121,12 @@ function mapUser(user: AuthUserResponse): AppUser {
     initials: toInitials(name, user.email),
     plan: user.plan,
     dailySubmissionCount: user.dailySubmissionCount,
+    dailyCreditLimit: user.dailyCreditLimit ?? null,
+    dailyCreditsUsed: user.dailyCreditsUsed ?? user.dailySubmissionCount ?? 0,
+    dailyCreditsRemaining: user.dailyCreditsRemaining ?? null,
+    creditResetDate: user.creditResetDate ?? new Date().toISOString().slice(0, 10),
+    textWordLimit: user.textWordLimit ?? null,
+    premiumMonthlyPriceUsd: user.premiumMonthlyPriceUsd ?? 10,
   };
 }
 
@@ -126,13 +141,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const isLoggedIn = Boolean(token);
 
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem(THEME_STORAGE_KEY, "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem(THEME_STORAGE_KEY, "light");
-    }
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem(THEME_STORAGE_KEY, "light");
   }, [isDark]);
 
   const clearSession = () => {
@@ -169,7 +179,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [token]);
 
-  const toggleTheme = () => setIsDark((prev) => !prev);
+  const toggleTheme = () => setIsDark(false);
 
   const login = async (email: string, password: string) => {
     setAuthLoading(true);
@@ -209,6 +219,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const upgradeToPro = async () => {
+    if (!token) {
+      throw new Error("Please sign in before upgrading.");
+    }
+
+    setAuthLoading(true);
+    setAuthError(null);
+
+    try {
+      const checkout = await createCheckoutSessionRequest(token);
+      window.location.assign(checkout.url);
+    } catch (error) {
+      const message = getErrorMessage(error, "Unable to upgrade account.");
+      setAuthError(message);
+      throw new Error(message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const logout = () => {
     clearSession();
     setAuthError(null);
@@ -227,6 +257,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clearAuthError,
         login,
         register,
+        upgradeToPro,
         logout,
         refreshUser,
         token,

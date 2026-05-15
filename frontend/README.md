@@ -181,7 +181,7 @@ const [isAnalyzing, setIsAnalyzing] = useState(false);
 |--------|--------|-----------|
 | Analyze Content | `handleAnalyze()` | InputPanel |
 | Log In to Save Scans | `navigate("/login")` | Sidebar |
-| Create free account | `navigate("/login")` | Sidebar |
+| Create account | `navigate("/signup")` | Sidebar |
 
 ---
 
@@ -438,7 +438,7 @@ interface SidebarProps {
 - Titre : "Unlock Full Access"
 - 4 features avec icônes
 - Bouton "Log In to Save Scans" → `navigate("/login")`
-- Lien "Create free account" → `navigate("/login")`
+- Lien "Create account" → `navigate("/signup")`
 
 **Limits card** :
 - Scans per day : 5
@@ -478,7 +478,7 @@ Mini-graphique SVG pour tendances.
 | Bouton | Action | Variant |
 |--------|--------|---------|
 | Log In to Save Scans | `navigate("/login")` | Guest |
-| Create free account | `navigate("/login")` | Guest |
+| Create account | `navigate("/signup")` | Guest |
 | View all | (non implémenté) | Auth |
 | Scan history item | (non implémenté) | Auth |
 

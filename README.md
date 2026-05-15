@@ -194,7 +194,9 @@ veriai-project/
 | `POSTGRES_DB/USER/PASSWORD` | veriai / veriai_user / veriai_dev_password | Accès DB |
 | `JWT_SECRET` | veriai-dev-jwt-secret-change-in-production | Signature JWT |
 | `JWT_EXPIRATION_SECONDS` | 86400 | 24 heures |
-| `FREE_PLAN_DAILY_LIMIT` | 3 | Quota FREE |
+| `FREE_PLAN_DAILY_CREDITS` | 3000 | Credits FREE par jour |
+| `FREE_PLAN_TEXT_WORD_LIMIT` | 1000 | Limite de mots par scan texte FREE |
+| `PREMIUM_MONTHLY_PRICE_USD` | 10 | Prix mensuel Premium affiché |
 | `HUGGINGFACE_MODEL_NAME` | mehddii/roberta-aigt-finetuning-v4 | Modèle principal |
 | `GPT2_MODEL_NAME` | gpt2-medium | Layer 3 |
 | `FULL_MODE_LAYER1/2/3_WEIGHT` | 0.6 / 0.2 / 0.2 | Pondération |
@@ -226,6 +228,68 @@ docker compose up --build
 # Chercher dans les logs : "Models loaded at FastAPI startup"
 # et "Worker process initialized with loaded models"
 ```
+
+---
+
+## 10. Déploiement GCP (Cloud Run + Terraform)
+
+### Prérequis
+
+- Un projet GCP actif
+- `gcloud` et `terraform` installés
+- Une base PostgreSQL managée (Supabase/Neon)
+
+### Étapes rapides
+
+1) Configure les variables Terraform:
+
+```bash
+cp infra/terraform/terraform.tfvars.example infra/terraform/terraform.tfvars
+```
+
+2) Initialise et applique l'infra:
+
+```bash
+cd infra/terraform
+terraform init
+terraform apply
+```
+
+3) Build + push des images (première fois avec URL placeholder):
+
+```bash
+export PROJECT_ID=your-gcp-project-id
+export REGION=europe-west3
+export BACKEND_URL=https://placeholder.example
+./deploy.sh
+```
+
+4) Re-applique pour déployer Cloud Run:
+
+```bash
+terraform apply
+```
+
+5) Récupère l'URL backend et rebuild du frontend:
+
+```bash
+terraform output backend_url
+export BACKEND_URL=https://your-backend-url
+./deploy.sh
+terraform apply
+```
+
+6) Si le frontend continue à appeler `placeholder.example`, rebuild l'image frontend avec un tag unique, mets ce tag exact dans `frontend_image`, puis relance `terraform apply`. Ne réutilise pas `frontend:latest` pour ce dernier cutover.
+
+### Notes importantes
+
+- Les images sont poussées dans Artifact Registry: `REGION-docker.pkg.dev/PROJECT_ID/veriai-images/...`
+- Le connecteur VPC utilise `PRIVATE_RANGES_ONLY` pour garder l'accès internet (téléchargement des modèles)
+- Si le backend répond `403` sur `OPTIONS` après ajout du domaine, mets `frontend_url` sur l'origine exacte du navigateur, par exemple `https://veri4i.tech`. En transition, tu peux utiliser `backend_cors_allowed_origins` avec plusieurs origines séparées par des virgules.
+- Pour un domaine personnalisé frontend, déploie le service frontend dans une région Cloud Run compatible, par exemple `europe-west1`, puis mappe le domaine sur ce service frontend.
+- Si l'infra existe déjà dans GCP mais que la machine a perdu `terraform.tfstate`, il faut importer les ressources existantes dans Terraform avant de relancer `terraform apply`.
+- Si la région frontend diffère, garde les images dans le dépôt Artifact Registry principal, par défaut `veriai-images`.
+- Les secrets ne sont pas commités (Terraform lit `terraform.tfvars`)
 
 ### Accès
 | Service | URL |

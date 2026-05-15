@@ -14,6 +14,7 @@ public class AppProperties {
     private Quota quota = new Quota();
     private AiService aiService = new AiService();
     private Internal internal = new Internal();
+    private Billing billing = new Billing();
 
     @Getter
     @Setter
@@ -31,7 +32,9 @@ public class AppProperties {
     @Getter
     @Setter
     public static class Quota {
-        private int freeDailyLimit = 3;
+        private int freeDailyCredits = 3000;
+        private int freeTextWordLimit = 1000;
+        private int premiumMonthlyPriceUsd = 10;
     }
 
     @Getter
@@ -45,5 +48,19 @@ public class AppProperties {
     @Setter
     public static class Internal {
         private String serviceToken = "change-me-internal-token";
+    }
+
+    @Getter
+    @Setter
+    public static class Billing {
+        private boolean enabled = false;
+        private boolean directUpgradeEnabled = false;
+        private String stripeSecretKey;
+        private String stripeWebhookSecret;
+        private String stripePriceId;
+        private String checkoutMode = "payment";
+        private String appPublicUrl = "http://localhost:3000";
+        private String successPath = "/billing/success";
+        private String cancelPath = "/billing/cancel";
     }
 }

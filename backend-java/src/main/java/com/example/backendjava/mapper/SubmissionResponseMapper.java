@@ -5,6 +5,7 @@ import com.example.backendjava.dto.submission.ChunkResponse;
 import com.example.backendjava.dto.submission.FrontendChunkScoreResponse;
 import com.example.backendjava.dto.submission.FrontendModelAttributionResponse;
 import com.example.backendjava.dto.submission.FrontendResultsResponse;
+import com.example.backendjava.dto.submission.FrontendWritingMetricsResponse;
 import com.example.backendjava.dto.submission.FrontendSegmentResponse;
 import com.example.backendjava.dto.submission.FrontendStatsResponse;
 import com.example.backendjava.dto.submission.LayerScoresResponse;
@@ -14,6 +15,7 @@ import com.example.backendjava.entity.ResultLabel;
 import com.example.backendjava.entity.Submission;
 import com.example.backendjava.entity.SubmissionChunk;
 import com.example.backendjava.entity.SubmissionResult;
+import com.example.backendjava.entity.UserPlan;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
@@ -43,7 +45,8 @@ public class SubmissionResponseMapper {
                 submission.getCompletedAt(),
                 result != null ? labelAsString(result.getGlobalLabel()) : null,
                 result != null ? toDouble(result.getGlobalConfidence()) : null,
-                submission.getErrorMessage()
+                submission.getErrorMessage(),
+                submission.getSourceFilename()
         );
     }
 
@@ -107,7 +110,8 @@ public class SubmissionResponseMapper {
                 submission.getCompletedAt(),
                 submission.getErrorMessage(),
                 analysisResult,
-                frontendPayload
+                frontendPayload,
+                submission.getSourceFilename()
         );
     }
 
@@ -121,9 +125,40 @@ public class SubmissionResponseMapper {
         int humanScore = Math.max(0, 100 - aiScore);
         int confidence = Math.max(aiScore, humanScore);
 
-        String label = aiScore >= 75 ? "Likely AI-Generated"
-                : aiScore >= 45 ? "Mixed Content"
-                : "Likely Human-Written";
+        String label = resolveFrontendLabel(aiScore, chunks);
+
+        boolean fullReportAvailable = submission.getUser() != null
+                && submission.getUser().getPlan() == UserPlan.PRO;
+
+        int layer1 = result.getLayer1Score() != null ? toPercent(result.getLayer1Score()) : 0;
+        int layer2 = result.getLayer2Score() != null ? toPercent(result.getLayer2Score()) : 0;
+        int layer3 = result.getLayer3Score() != null ? toPercent(result.getLayer3Score()) : 0;
+
+        Map<String, Object> stylisticAgg = parseObjectMap(result.getStylisticFeatures());
+        Map<String, Object> statisticalAgg = parseObjectMap(result.getStatisticalFeatures());
+        FrontendWritingMetricsResponse writingMetrics = buildWritingMetrics(stylisticAgg, statisticalAgg);
+
+        if (!fullReportAvailable) {
+            return new FrontendResultsResponse(
+                    aiScore,
+                    humanScore,
+                    confidence,
+                    label,
+                    "Layer 1 detector",
+                    submission.getOriginalText(),
+                    submission.getWordCount(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    new FrontendStatsResponse(0, 0, 0),
+                    false,
+                    "FREE",
+                    layer1,
+                    0,
+                    0,
+                    writingMetrics
+            );
+        }
 
         List<Map.Entry<String, Double>> sortedAttributions = modelAttribution.entrySet().stream()
                 .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
@@ -163,8 +198,51 @@ public class SubmissionResponseMapper {
                 modelAttributionItems,
                 segments,
                 chunkScores,
-                stats
+                stats,
+                true,
+                "PREMIUM",
+                layer1,
+                layer2,
+                layer3,
+                writingMetrics
         );
+    }
+
+    private String resolveFrontendLabel(int aiScore, List<SubmissionChunk> chunks) {
+        if (chunks != null && !chunks.isEmpty()) {
+            int aiChunks = (int) chunks.stream().filter(chunk -> isAi(chunk.getLabel())).count();
+            if (aiChunks == 0) {
+                return "Likely Human-Written";
+            }
+            if (aiChunks == chunks.size()) {
+                return "Likely AI-Generated";
+            }
+            return "Mixed Content";
+        }
+
+        return aiScore >= 75 ? "Likely AI-Generated"
+                : aiScore >= 45 ? "Mixed Content"
+                : "Likely Human-Written";
+    }
+
+    private FrontendWritingMetricsResponse buildWritingMetrics(
+            Map<String, Object> stylistic,
+            Map<String, Object> statistical) {
+        return new FrontendWritingMetricsResponse(
+                extractDouble(stylistic, "type_token_ratio"),
+                extractDouble(stylistic, "avg_sentence_length"),
+                extractDouble(stylistic, "sentence_length_variance"),
+                extractDouble(stylistic, "burstiness_score"),
+                extractDouble(statistical, "perplexity"),
+                extractDouble(statistical, "avg_token_entropy"),
+                extractDouble(stylistic, "logical_connector_ratio")
+        );
+    }
+
+    private Double extractDouble(Map<String, Object> map, String key) {
+        Object val = map.get(key);
+        if (val instanceof Number n) return n.doubleValue();
+        return null;
     }
 
     private Map<String, Double> parseDoubleMap(String json) {
