@@ -60,7 +60,7 @@ const TOKEN_STORAGE_KEY = "veriai.auth.token";
 const USER_STORAGE_KEY = "veriai.auth.user";
 
 function getStoredTheme(): boolean {
-  return localStorage.getItem(THEME_STORAGE_KEY) === "dark";
+  return false;
 }
 
 function getStoredToken(): string | null {
@@ -141,13 +141,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const isLoggedIn = Boolean(token);
 
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem(THEME_STORAGE_KEY, "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem(THEME_STORAGE_KEY, "light");
-    }
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem(THEME_STORAGE_KEY, "light");
   }, [isDark]);
 
   const clearSession = () => {
@@ -184,7 +179,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [token]);
 
-  const toggleTheme = () => setIsDark((prev) => !prev);
+  const toggleTheme = () => setIsDark(false);
 
   const login = async (email: string, password: string) => {
     setAuthLoading(true);

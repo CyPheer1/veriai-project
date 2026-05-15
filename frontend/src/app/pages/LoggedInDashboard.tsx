@@ -90,9 +90,9 @@ function ScanDock({
       className={`fixed inset-y-0 left-0 z-40 flex min-h-0 w-[260px] shrink-0 flex-col border-r border-[#d8e2ee] bg-[#f6f9fd] px-3 py-3 shadow-[8px_0_34px_-32px_rgba(31,45,71,0.45)] transition-transform duration-300 ease-out md:relative md:inset-auto md:z-auto md:w-[220px] md:translate-x-0 md:transition-none ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
     >
       {/* Logo row */}
-      <div className="flex items-center justify-between py-2">
+      <div className="flex items-center justify-between py-2 md:justify-center">
         <div
-          className="hidden h-10 w-10 items-center justify-center md:flex"
+          className="hidden h-10 w-full items-center justify-center md:flex"
           title="veri4i"
         >
           <img
