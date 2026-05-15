@@ -1,0 +1,264 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "GCP Monitoring",
+      "tooltip": "Open Google Cloud Monitoring",
+      "type": "link",
+      "url": "https://console.cloud.google.com/monitoring?project=standard-lab-493119"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Cloud Run",
+      "tooltip": "Open Cloud Run services",
+      "type": "link",
+      "url": "https://console.cloud.google.com/run?project=standard-lab-493119"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcm"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "aliasBy": "{{service_name}}",
+          "alignmentPeriod": "60s",
+          "crossSeriesReducer": "REDUCE_SUM",
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcm"
+          },
+          "filters": [
+            "resource.label.service_name",
+            "=~",
+            "veriai-.*"
+          ],
+          "groupBys": [
+            "resource.label.service_name"
+          ],
+          "metricKind": "DELTA",
+          "metricType": "run.googleapis.com/request_count",
+          "perSeriesAligner": "ALIGN_RATE",
+          "projectName": "standard-lab-493119",
+          "queryType": "metrics",
+          "refId": "A",
+          "resourceType": "cloud_run_revision",
+          "unit": "1"
+        }
+      ],
+      "title": "Cloud Run request rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcm"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "aliasBy": "{{service_name}}",
+          "alignmentPeriod": "60s",
+          "crossSeriesReducer": "REDUCE_SUM",
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcm"
+          },
+          "filters": [
+            "resource.label.service_name",
+            "=~",
+            "veriai-.*"
+          ],
+          "groupBys": [
+            "resource.label.service_name"
+          ],
+          "metricKind": "DELTA",
+          "metricType": "run.googleapis.com/container/billable_instance_time",
+          "perSeriesAligner": "ALIGN_RATE",
+          "projectName": "standard-lab-493119",
+          "queryType": "metrics",
+          "refId": "A",
+          "resourceType": "cloud_run_revision",
+          "unit": "s{instance}"
+        }
+      ],
+      "title": "Running instance time",
+      "type": "stat"
+    },
+    {
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "VeriAI deployed services: frontend, backend, AI service, detection worker, and detection beat. The datasource uses the Cloud Run service account and Google Cloud Monitoring. If a panel is empty, generate traffic on https://veri4i.tech and wait a few minutes for Cloud Monitoring to ingest points.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "12.0.0",
+      "title": "How to read this dashboard",
+      "type": "text"
+    }
+  ],
+  "preload": false,
+  "refresh": "1m",
+  "schemaVersion": 41,
+  "tags": [
+    "veriai",
+    "cloud-run"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "VeriAI GCP Overview",
+  "uid": "veriai-gcp-overview",
+  "version": 1
+}
